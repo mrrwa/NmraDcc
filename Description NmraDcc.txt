@@ -1,0 +1,103 @@
+------------------------------------------------------------------------
+
+ OpenDCC - NmraDcc 
+
+ Copyright (c) 2008 Alex Shepherd
+
+ This source file is subject of the GNU general public license 2,
+ that is available at the world-wide-web at
+ http:www.gnu.org/licenses/gpl.txt
+------------------------------------------------------------------------
+
+ file:      Description NmraDcc.txt
+ author:    
+ webpage:   
+ history:   
+------------------------------------------------------------------------
+Call the DCC pin function to define which External Interrupt and Pin to use and also to enable the Pull-Up
+Dcc.pin(0, 2, 1);
+
+Call the main DCC Init function to enable the DCC Receiver
+
+Dcc.init( MAN_ID_DIY, 10, FLAGS_OUTPUT_ADDRESS_MODE | FLAGS_DCC_ACCESSORY_DECODER, 0 )
+
+MAN_ID_DIY = 0x0D (CV8 defined in NmraDcc.h)
+FLAGS_OUTPUT_ADDRESS_MODE = 0x40  (CV29/541 bit 6 defined in NmraDcc.h)
+FLAGS_DCC_ACCESSORY_DECODER = 0x80  (CV 29/541 bit 7 defined in NmraDcc.h)
+------------------------------------------------------------------------
+You MUST call the NmraDcc.process() method frequently from the Arduino loop() 
+function for correct library operation
+
+Dcc.process();
+------------------------------------------------------------------------
+This function is called whenever a normal DCC Turnout Packet is received
+
+notifyDccAccState( uint16_t Addr, uint16_t BoardAddr, uint8_t OutputAddr, uint8_t State)
+
+Addr = Decoder address
+BoardAddr = Address of this decoder
+OutputAddr = Address of Turnout on this decoder
+State = 
+------------------------------------------------------------------------
+This function is called whenever a DCC Signal Aspect Packet is received
+
+notifyDccSigState( uint16_t Addr, uint8_t OutputIndex, uint8_t State)
+
+Addr = Decoder address
+OutputIndex = Address of Signal Aspect
+State = 
+------------------------------------------------------------------------
+notifyDccFunc( uint16_t Addr, uint8_t FuncNum, uint8_t FuncState)
+
+Addr = Decoder address
+FuncNum =
+FuncState = 
+------------------------------------------------------------------------
+Perform a decoder total reset
+
+notifyDccReset(uint8_t hardReset )
+
+hardReset = 
+ ------------------------------------------------------------------------
+The decoder receives a Idle packet and should do nothing
+
+notifyDccIdle(void)
+ ------------------------------------------------------------------------
+A locomotive packet is received
+
+notifyDccSpeed( uint16_t Addr, uint8_t Speed, uint8_t ForwardDir, uint8_t MaxSpeed )
+ 
+Addr = Address received
+Speed = Requested speed
+ForwardDir = True if loco moves forward
+MaxSpeed = 
+------------------------------------------------------------------------
+Checks if a CV is present in the table and is writable
+
+notifyCVValid( uint16_t CV, uint8_t Writable )
+ 
+CV = The number of the requested CV
+Writable = True is CV is writable
+------------------------------------------------------------------------
+Read a CV value from the decoder table
+
+notifyCVRead( uint16_t CV)
+
+CV = The number of the requested CV 
+------------------------------------------------------------------------
+Write a CV with Value to the decoder table
+
+notifyCVWrite( uint16_t CV, uint8_t Value)
+
+CV = The number of the requested CV 
+Value = Value to be written into the requested CV
+------------------------------------------------------------------------
+Check if the CV written to the table has the correct value
+
+notifyCVChange( uint16_t CV, uint8_t Value)
+ 
+CV = The number of the requested CV 
+Value = Value of the changed requested CV
+------------------------------------------------------------------------
+notifyCVAck(void)
+

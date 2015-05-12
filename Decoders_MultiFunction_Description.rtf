@@ -1,0 +1,157 @@
+{\rtf1\ansi\ansicpg1252\deff0\deflang1033{\fonttbl{\f0\fswiss\fprq2\fcharset0 Calibri;}}
+{\*\generator Msftedit 5.41.15.1515;}\viewkind4\uc1\pard\sl276\slmult1\b\f0\fs24 Decoder Configuration Details\par
+\par
+\b0 The multfunction decoder examples all for 4 functions to be assigned to any of the 17 available pins: on/off control, single line blinking with variable rate, servo control with start position/stop position/transit rate CV setting and end to end control via the function (on/off), and paired line blinking with variable rate.\par
+\par
+When first loaded the decoder is set to short DCC address 24 (or 17 in Decoder_17LED_1Function).  The decoder can be reset to the original parameters by loading CV 120 with 120 (decimal). This will reset everything including the decoder address, when the pushbutton on the Pro Mini is pushed (reset) or by powering the decoder off then on. You will know when the default CV setting are being reset as the decoder will flash Digital Pin 14 (A0) for one second.\par
+The decoder address can be changed to another \ul\b short\ulnone\b0  DCC address by changing CV 1.\par
+\par
+\b The 7 Servo 10 LED decoder configuration\par
+\par
+\b0 Arduino Pro Mini Pins are set as follows: 3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19\par
+\ul\b Pro Mini Pin\ulnone\b0\tab        \ul\b Function\par
+\ulnone\b0 3\tab\tab\tab F0 Servo\par
+4\tab\tab\tab F1 Servo\par
+5\tab\tab\tab F2 Servo\par
+6\tab\tab\tab F3 Servo\par
+7\tab\tab\tab F4 Servo\par
+8\tab\tab\tab F5 Servo\par
+9\tab\tab\tab F6 Servo\par
+10\tab\tab\tab F7 Single LED Blink\par
+11\tab\tab\tab F8 Single LED Blink\par
+12\tab\tab\tab F9 Single LED On/Off\par
+13\tab\tab\tab F10 Single LED On/Off\par
+14\tab\tab\tab F11 Single LED Blink\par
+15\tab\tab\tab F12 Single LED Blink\par
+16\tab\tab\tab F13 Double LED Blink F13 and F14 LEDs (Pins 16 & 17)\par
+17\tab\tab\tab F14 Single LED Blink (Ignored because of F13)\par
+18\tab\tab\tab F15 Double LED Blink F15 and F16 LEDs (Pins 18 & 19)\par
+19\tab\tab\tab F16 Single LED Blink (Ignored because of F15)\par
+(Blink rates are set differently for demonstration purposes)\par
+\par
+Correspondingly by way of example, for the 7 Servo 10 LED decoder configuration, CV\rquote s are initially set to the following:\par
+\par
+\ul\b\{CV number, Value\}    Description\par
+\ulnone\b0   \{1, 24\}  Decoder Initial Address\par
+  \{30, 2\}, //F0 Config  0=On/Off,1=Blink,2=Servo,3=Double LED Blink\par
+  \{31, 1\},    //F0 Rate  Blink=Eate,PWM=Rate,Servo=Rate\par
+  \{32, 28\},   //F0  Start Position F0=0\par
+  \{33, 140\},  //F0  End Position   F0=1\par
+  \{34, 28\},   //F0  Current Position\par
+  \{35, 2\},  //F1 Config  0=On/Off,1=Blink,2=Servo,3=Double LED Blink\par
+  \{36, 1\},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate\par
+  \{37, 28\},   //  Start Position Fx=0\par
+  \{38, 140\},  //  End Position   Fx=1\par
+  \{39, 28\},  //  Current Position\par
+  \{40, 2\},  //F2 Config  0=On/Off,1=Blink,2=Servo,3=Double LED Blink\par
+  \{41, 1\},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate\par
+  \{42, 28\},   //  Start Position Fx=0\par
+  \{43, 140\},  //  End Position   Fx=1\par
+  \{44, 28\},    //  Current Position\par
+  \{45, 2\}, //F3 Config  0=On/Off,1=Blink,2=Servo,3=Double LED Blink\par
+  \{46, 1\},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate\par
+  \{47, 28\},   //  Start Position Fx=0\par
+  \{48, 140\},  //  End Position   Fx=1\par
+  \{49, 28\},    //  Current Position\par
+  \{50, 2\}, //F4 Config  0=On/Off,1=Blink,2=Servo,3=Double LED Blink\par
+  \{51, 1\},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate\par
+  \{52, 28\},    //  Start Position Fx=0\par
+  \{53, 140\},    //  End Position   Fx=1\par
+  \{54, 28\},    //  Current Position\par
+  \{55, 2\}, //F5 Config  0=On/Off,1=Blink,2=Servo,3=Double LED Blink\par
+  \{56, 1\},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate\par
+  \{57, 28\},    //  Start Position Fx=0\par
+  \{58, 140\},    //  End Position   Fx=1\par
+  \{59, 28\},    //  Current Position\par
+  \{60, 2\}, //F6 Config  0=On/Off,1=Blink,2=Servo,3=Double LED Blink\par
+  \{61, 1\},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate\par
+  \{62, 28\},    //  Start Position Fx=0\par
+  \{63, 140\},    //  End Position   Fx=1\par
+  \{64, 28\},    //  Current Position\par
+  \{65, 1\}, //F7 Config  0=On/Off,1=Blink,2=Servo,3=Double LED Blink\par
+  \{66, 1\},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate\par
+  \{67, 1\},   //  Start Position Fx=0\par
+  \{68,35\},  //  End Position   Fx=1\par
+  \{69, 1\},    //  Current Position\par
+  \{70, 1\}, //F8 Config  0=On/Off,1=Blink,2=Servo,3=Double LED Blink\par
+  \{71, 1\},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate\par
+  \{72, 1\},   //  Start Position Fx=0\par
+  \{73, 100\},  //  End Position   Fx=1\par
+  \{74, 1\},    //  Current Position\par
+  \{75, 0\}, //F9 Config  0=On/Off,1=Blink,2=Servo,3=Double LED Blink\par
+  \{76, 1\},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate\par
+  \{77, 1\},   //  Start Position Fx=0\par
+  \{78, 10\},  //  End Position   Fx=1\par
+  \{79, 1\},    //  Current Position\par
+  \{80, 0\}, //F10 Config  0=On/Off,1=Blink,2=Servo,3=Double LED Blink\par
+  \{81, 1\},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate\par
+  \{82, 1\},   //  Start Position Fx=0\par
+  \{83, 5\},  //  End Position   Fx=1\par
+  \{84, 1\},    //  Current Position\par
+  \{85, 1\}, //F11 Config  0=On/Off,1=Blink,2=Servo,3=Double LED Blink\par
+  \{86, 1\},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate\par
+  \{87, 1\},   //  Start Position Fx=0\par
+  \{88, 5\},  //  End Position   Fx=1\par
+  \{89, 1\},    //  Current Position\par
+  \{90, 1\}, //F12 Config  0=On/Off,1=Blink,2=Servo,3=Double LED Blink\par
+  \{91, 1\},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate\par
+  \{92, 1\},   //  Start Position Fx=0\par
+  \{93, 20\},  //  End Position   Fx=1\par
+  \{94, 1\},    //  Current Position\par
+  \{95, 3\}, //F13 Config  0=On/Off,1=Blink,2=Servo,3=Double LED Blink\par
+  \{96, 1\},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate\par
+  \{97, 1\},   //  Start Position Fx=0\par
+  \{98, 35\},  //  End Position   Fx=1\par
+  \{99, 2\},    //  Current Position\par
+  \{100, 0\}, //F14 Config  0=On/Off,1=Blink,2=Servo,3=Double LED Blink\par
+  \{101, 1\},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate\par
+  \{102, 1\},   //  Start Position Fx=0\par
+  \{103, 4\},  //  End Position   Fx=1\par
+  \{104, 1\},    //  Current Position\par
+  \{105, 3\}, //F15 Config  0=On/Off,1=Blink,2=Servo,3=Double LED Blink\par
+  \{106, 1\},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate\par
+  \{107, 1\},   //  Start Position Fx=0\par
+  \{108, 60\},  //  End Position   Fx=1\par
+  \{109, 20\},    //  Current Position\par
+  \{110, 0\}, //F16 Config  0=On/Off,1=Blink,2=Servo,3=Double LED Blink\par
+  \{111, 1\},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate\par
+  \{112, 1\},   //  Start Position Fx=0\par
+  \{113, 4\},  //  End Position   Fx=1\par
+  \{114, 1\},    //  Current Position\par
+  \{120, 0\}   Master Reset CV When set to 120 and Power cycled resets all CV\rquote s\par
+\par
+Each Function is controlled by a maximum of 5 CV\rquote s. \par
+For example \b F0\b0  is initially set for \b servo\b0  control:\par
+  \{30, 2\},     // F0  Pin Function Configuration  2=Servo\par
+  \{31, 1\},     // F0  Rate  Blink=Rate, Servo=Rate\par
+  \{32, 28\},   // F0  Start Position  F0=0  Initially 26\par
+  \{33, 140\},  // F0  End Position   F0=1  Initially 140\par
+  \{34, 28\},    // F0  Current Position or State\par
+\par
+\b F7\b0  is initially set for \b single LED blinking\b0  control:\par
+  \{65, 1\},    // F7 Pin Function Configuration  1=Blink\par
+  \{66, 1\},    // Rate  Blink  1= Slowest\par
+  \{67, 1\},    //  Start Count Set to 1 or 0\par
+  \{68,35\},   //  End Count 2-255 -- 255 = Slow Blink\par
+  \{69, 1\},    //  Current State of LED\par
+\par
+\b F13\b0  is initially set for \b double LED blinking control\b0  of F13 and F14 LED Pins:\par
+  \{95, 3\},    // F13 Pin Function Configuration  3=Double LED Blink\par
+  \{96, 1\},    // Rate  Blink  1= Slowest\par
+  \{97, 1\},    //  Start Count Set to 1 or 0\par
+  \{98, 35\},  //  End Count 2-255 -- 255 = Slow Blink\par
+  \{99, 2\},    //  Current State of LED\par
+\par
+\b F9\b0  is initially set for \b single LED On/Off\b0  control:\par
+  \{75, 0\},    //  F9 Pin Function Configuration  0=On/Off\par
+  \{76, 1\},    //  Ignored\par
+  \{77, 1\},    //  Ignored\par
+  \{78, 10\},  //  Ignored\par
+  \{79, 1\},    //  Ignored\par
+\par
+Before changing the CV settings take a look at the initial settings and make small changes first to observe the effects. This should give modelers a starting point, and a better understanding for customizing their decoders.\par
+\par
+Please also note there is a new 17 LED (On/Off) decoder configuration (Decoder_17LED_4Function), which while providing the 17 LED on/off control like the very first decoder (Decoder_17LED_1Function) introduced in this project, whichh ONLY has on/off control. However, this new version can be reconfigured via CV control to perform the other functions too.\par
+\pard\par
+}
+ 

@@ -155,6 +155,14 @@ class NmraDcc
 
 };
 
+/************************************************************************************
+    Call-back functions
+************************************************************************************/
+
+#if defined (__cplusplus)
+	extern "C" {
+#endif
+
 extern void notifyDccReset(uint8_t hardReset ) __attribute__ ((weak));
 extern void notifyDccIdle(void) __attribute__ ((weak));
 
@@ -175,4 +183,9 @@ extern void    notifyCVChange( uint16_t CV, uint8_t Value) __attribute__ ((weak)
 extern void    notifyCVResetFactoryDefault(void) __attribute__ ((weak));
 
 extern void    notifyCVAck(void) __attribute__ ((weak));
+
+#if defined (__cplusplus)
+}
+#endif
+
 #endif

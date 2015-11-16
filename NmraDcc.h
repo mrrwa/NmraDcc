@@ -14,6 +14,10 @@
 // author:    Alex Shepherd
 // webpage:   http://opendcc.org/
 // history:   2008-03-20 Initial Version
+//            2014 Added getAddr to NmraDcc  Geoff Bunza
+//            2015-11-06 Martin Pischky (martin@pischky.de):
+//                       Experimental Version to support 14 speed steps
+//                       and new signature of notifyDccSpeed and notifyDccFunc
 //
 //------------------------------------------------------------------------
 //
@@ -27,6 +31,9 @@
 
 // Uncomment the following line to Enable MutliFunction Decoder Operations
 #define NMRA_DCC_PROCESS_MULTIFUNCTION
+
+// Uncomment the following line to Enable 14 Speed Step Support
+//#define NMRA_DCC_ENABLE_14_SPEED_STEP_MODE
 
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
@@ -83,13 +90,45 @@ typedef struct
 #define CV_29_CONFIG                          29
 #define MAXCV                                 E2END     // the upper limit of the CV value currently defined to max memory.
 
+typedef enum {
+    CV29_LOCO_DIR            = 0b00000001,	/** bit 0: Locomotive Direction: "0" = normal, "1" = reversed */
+    CV29_F0_LOCATION         = 0b00000010,	/** bit 1: F0 location: "0" = bit 4 in Speed and Direction instructions, "1" = bit 4 in function group one instruction */
+    CV29_APS								 = 0b00000100,	/** bit 2: Alternate Power Source (APS) "0" = NMRA Digital only, "1" = Alternate power source set by CV12 */
+    CV29_ADV_ACK             = 0b00001000, 	/** bit 3: ACK, Advanced Acknowledge mode enabled if 1, disabled if 0 */
+    CV29_SPEED_TABLE_ENABLE  = 0b00010000, 	/** bit 4: STE, Speed Table Enable, "0" = values in CVs 2, 4 and 6, "1" = Custom table selected by CV 25 */
+    CV29_EXT_ADDRESSING      = 0b00100000,	/** bit 5: "0" = one byte addressing, "1" = two byte addressing */
+    CV29_OUTPUT_ADDRESS_MODE = 0b01000000,	/** bit 6: "0" = Decoder Address Mode "1" = Output Address Mode */
+    CV29_ACCESSORY_DECODER   = 0b10000000,	/** bit 7: "0" = Multi-Function Decoder Mode "1" = Accessory Decoder Mode */
+} CV_29_BITS;
+
+typedef enum {
+#ifdef NMRA_DCC_ENABLE_14_SPEED_STEP_MODE
+    SPEED_STEP_14 = 15,			/**< ESTOP=0, 1 to 15 */
+#endif
+    SPEED_STEP_28 = 29,			/**< ESTOP=0, 1 to 29 */
+    SPEED_STEP_128 = 127		/**< ESTOP=0, 1 to 127 */ 
+} DCC_SPEED_STEPS;
+
+typedef enum {
+    DCC_DIR_REV = 0,     /** The locomotive to go in the reverse direction */
+    DCC_DIR_FWD = 1,     /** The locomotive should move in the forward direction */
+} DCC_DIRECTION;
+
+typedef enum {
+    DCC_ADDR_SHORT,      /** Short address is used. The range is 0 to 127. */
+    DCC_ADDR_LONG,       /** Long Address is used. The range is 1 to 10239 */
+} DCC_ADDR_TYPE;
+
 typedef enum
 {
 	FN_0_4 = 1,
 	FN_5_8,
 	FN_9_12,
 	FN_13_20,
-	FN_21_28
+	FN_21_28,
+#ifdef NMRA_DCC_ENABLE_14_SPEED_STEP_MODE
+  FN_0				 /** function light is controlled by base line package (14 speed steps) */
+#endif  
 } FN_GROUP;
 
 #define FN_BIT_00	0x10
@@ -139,11 +178,12 @@ class NmraDcc
 #define FLAGS_OUTPUT_ADDRESS_MODE		0x40  // CV 29/541 bit 6
 #define FLAGS_DCC_ACCESSORY_DECODER	0x80  // CV 29/541 bit 7
 	void pin( uint8_t ExtIntNum, uint8_t ExtIntPinNum, uint8_t EnablePullup); 
-    void init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, uint8_t OpsModeAddressBaseCV );
-    uint8_t process();
-    uint8_t getCV( uint16_t CV );
-    uint8_t setCV( uint16_t CV, uint8_t Value);
+  void init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, uint8_t OpsModeAddressBaseCV );
+  uint8_t process();
+  uint8_t getCV( uint16_t CV );
+  uint8_t setCV( uint16_t CV, uint8_t Value);
 	uint8_t isSetCVReady( void );
+	uint16_t getAddr(void);
 	
 // #define DCC_DEBUG
 #ifdef DCC_DEBUG
@@ -166,8 +206,10 @@ class NmraDcc
 extern void notifyDccReset(uint8_t hardReset ) __attribute__ ((weak));
 extern void notifyDccIdle(void) __attribute__ ((weak));
 
-extern void notifyDccSpeed( uint16_t Addr, uint8_t Speed, uint8_t ForwardDir, uint8_t MaxSpeed ) __attribute__ ((weak));
-extern void notifyDccFunc( uint16_t Addr, FN_GROUP FuncGrp, uint8_t FuncState) __attribute__ ((weak));
+extern void notifyDccSpeed( uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DIRECTION Dir, DCC_SPEED_STEPS SpeedSteps ) __attribute__ ((weak));
+extern void notifyDccSpeedRaw( uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Raw) __attribute__ ((weak));
+
+extern void notifyDccFunc( uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint8_t FuncState) __attribute__ ((weak));
 
 extern void notifyDccAccState( uint16_t Addr, uint16_t BoardAddr, uint8_t OutputAddr, uint8_t State ) __attribute__ ((weak));
 

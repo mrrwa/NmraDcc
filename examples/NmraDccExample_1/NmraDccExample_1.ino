@@ -12,7 +12,7 @@ struct CVPair
   uint16_t  CV;
   uint8_t   Value;
 };
-  
+
 CVPair FactoryDefaultCVs [] =
 {
   {CV_ACCESSORY_DECODER_ADDRESS_LSB, 1},
@@ -93,7 +93,8 @@ void setup()
   Dcc.pin(0, 2, 1);
   
   // Call the main DCC Init function to enable the DCC Receiver
-  Dcc.init( MAN_ID_DIY, 10, FLAGS_OUTPUT_ADDRESS_MODE | FLAGS_DCC_ACCESSORY_DECODER, 0 );
+  Dcc.init( MAN_ID_DIY, 10, CV29_ACCESSORY_DECODER | CV29_OUTPUT_ADDRESS_MODE, 0 );
+
   Serial.println("Init Done");
 }
 

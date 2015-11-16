@@ -14,6 +14,10 @@
 // author:    Alex Shepherd
 // webpage:   http://opendcc.org/
 // history:   2011-06-26 Initial Version copied in from OpenDCC
+//            2014 Added getAddr to NmraDcc  Geoff Bunza
+//            2015-11-06 Martin Pischky (martin@pischky.de):
+//                       Experimental Version to support 14 speed steps
+//                       and new signature of notifyDccSpeed and notifyDccFunc
 //
 //------------------------------------------------------------------------
 //
@@ -260,13 +264,13 @@ uint16_t getMyAddr(void)
 
   CV29Value = readCV( CV_29_CONFIG ) ;
 
-  if( CV29Value & 0b10000000 )  // Accessory Decoder? 
+  if( CV29Value & CV29_ACCESSORY_DECODER )  // Accessory Decoder? 
     Addr = ( readCV( CV_ACCESSORY_DECODER_ADDRESS_MSB ) << 6 ) | readCV( CV_ACCESSORY_DECODER_ADDRESS_LSB ) ;
 
   else   // Multi-Function Decoder?
   {
-    if( CV29Value & 0b00100000 )  // Two Byte Address?
-      Addr = ( readCV( CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB ) << 8 ) | readCV( CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB ) ;
+    if( CV29Value & CV29_EXT_ADDRESSING )  // Two Byte Address?
+      Addr = ( ( readCV( CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB ) - 192 ) << 8 ) | readCV( CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB ) ;
 
     else
       Addr = readCV( 1 ) ;
@@ -345,10 +349,12 @@ void processDirectOpsOperation( uint8_t Cmd, uint16_t CVAddr, uint8_t Value )
 }
 
 #ifdef NMRA_DCC_PROCESS_MULTIFUNCTION
-void processMultiFunctionMessage( uint16_t Addr, uint8_t Cmd, uint8_t Data1, uint8_t Data2 )
+void processMultiFunctionMessage( uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Cmd, uint8_t Data1, uint8_t Data2 )
 {
   uint8_t  speed ;
   uint16_t CVAddr ;
+  DCC_DIRECTION dir ;
+  DCC_SPEED_STEPS speedSteps ;
 
   uint8_t  CmdMasked = Cmd & 0b11100000 ;
 
@@ -407,61 +413,90 @@ void processMultiFunctionMessage( uint16_t Addr, uint8_t Cmd, uint8_t Data1, uin
       {
         switch( Data1 & 0b01111111 )
         {
-        case 0b00000000:  
-          speed = 1 ;
+        case 0b00000000:  // 0=STOP
+          speed = 1 ;     // => 1
           break ;
 
-        case 0b00000001:  
-          speed = 0 ;
+        case 0b00000001:  // 1=EMERGENCY_STOP
+          speed = 0 ;     // => 0
           break ;
 
-        default:
-          speed = (Data1 & 0b01111111) - 1 ;
+        default:          // 2..127
+          speed = (Data1 & 0b01111111) ;
         }
-
-        notifyDccSpeed( Addr, speed, Data1 & 0b10000000, 127 ) ;
+        dir = (DCC_DIRECTION) ((Data1 & 0b10000000) >> 7) ;
+        notifyDccSpeed( Addr, AddrType, speed, dir, SPEED_STEP_128 ) ;
       }
     }
     break;
 
   case 0b01000000:
   case 0b01100000:
+    //TODO should we cache this info in DCC_PROCESSOR_STATE.Flags ?
+#ifdef NMRA_DCC_ENABLE_14_SPEED_STEP_MODE
+    speedSteps = (readCV( CV_29_CONFIG ) & CV29_F0_LOCATION) ? SPEED_STEP_28 : SPEED_STEP_14 ;
+#else
+    speedSteps = SPEED_STEP_28 ;
+#endif    
     if( notifyDccSpeed )
     {
       switch( Cmd & 0b00011111 )
       {
-      case 0b00000000:  
-      case 0b00010000:
-        speed = 1 ;
+      case 0b00000000:    // 0 0000 = STOP   
+      case 0b00010000:    // 1 0000 = STOP
+        speed = 1 ;       // => 1
         break ;
 
-      case 0b00000001:  
-      case 0b00010001:
-        speed = 0 ;
+      case 0b00000001:    // 0 0001 = EMERGENCY STOP
+      case 0b00010001:    // 1 0001 = EMERGENCY STOP
+        speed = 0 ;       // => 0
         break ;
 
       default:
-        // This speed is not quite right as 14 bit mode can happen and we should check CV29 but... 
-        speed = (((Cmd & 0b00001111) << 1 ) | ((Cmd & 0b00010000) >> 4)) - 2 ;
+#ifdef NMRA_DCC_ENABLE_14_SPEED_STEP_MODE
+        if( speedSteps == SPEED_STEP_14 )
+        {
+          speed = (Cmd & 0b00001111) ; // => 2..15
+        }
+        else
+        {
+#endif
+          speed = (((Cmd & 0b00001111) << 1 ) | ((Cmd & 0b00010000) >> 4)) - 2 ; // => 2..29
+#ifdef NMRA_DCC_ENABLE_14_SPEED_STEP_MODE
+        }    
+#endif        
       }
-
-      notifyDccSpeed( Addr, speed, Cmd & 0b00100000, 28 ) ;
+      dir = (DCC_DIRECTION) ((Cmd & 0b00100000) >> 5) ;
+      notifyDccSpeed( Addr, AddrType, speed, dir, speedSteps ) ;
     }
+    if( notifyDccSpeedRaw )
+    	notifyDccSpeedRaw(Addr, AddrType, Cmd );
 
+#ifdef NMRA_DCC_ENABLE_14_SPEED_STEP_MODE
+    if( notifyDccFunc && (speedSteps == SPEED_STEP_14) )
+    {
+      // function light is controlled by this package
+      uint8_t fn0 = (Cmd & 0b00010000) ;
+      notifyDccFunc( Addr, AddrType, FN_0, fn0 ) ;
+    }
     break;
+#endif
 
   case 0b10000000:  // Function Group 0..4
     if( notifyDccFunc )
-      notifyDccFunc( Addr, FN_0_4, Cmd & 0b00011111 ) ;
+    { 
+        // function light is controlled by this package (28 or 128 speed steps)
+        notifyDccFunc( Addr, AddrType, FN_0_4, Cmd & 0b00011111 ) ;
+    }
     break;
 
   case 0b10100000:  // Function Group 5..8
     if( notifyDccFunc)
     {
       if (Cmd & 0b00010000 )
-        notifyDccFunc( Addr, FN_5_8,  Cmd & 0b00001111 ) ;
+        notifyDccFunc( Addr, AddrType, FN_5_8,  Cmd & 0b00001111 ) ;
       else
-        notifyDccFunc( Addr, FN_9_12, Cmd & 0b00001111 ) ;
+        notifyDccFunc( Addr, AddrType, FN_9_12, Cmd & 0b00001111 ) ;
     }
     break;
 
@@ -470,12 +505,12 @@ void processMultiFunctionMessage( uint16_t Addr, uint8_t Cmd, uint8_t Data1, uin
   	{
   	case 0B00011110:
   	  if( notifyDccFunc )
-	    notifyDccFunc( Addr, FN_13_20, Data1 ) ;
+	    notifyDccFunc( Addr, AddrType, FN_13_20, Data1 ) ;
 	  break;
 	  
   	case 0B00011111:
   	  if( notifyDccFunc )
-	    notifyDccFunc( Addr, FN_21_28, Data1 ) ;
+	    notifyDccFunc( Addr, AddrType, FN_21_28, Data1 ) ;
 	  break;
   	}
     break;
@@ -620,7 +655,7 @@ void execDccProcessor( DCC_MSG * pDccMsg )
 #ifdef NMRA_DCC_PROCESS_MULTIFUNCTION
       // Multi Function Decoders (7-bit address)
       else if( pDccMsg->Data[0] < 128 )
-        processMultiFunctionMessage( pDccMsg->Data[0], pDccMsg->Data[1], pDccMsg->Data[2], pDccMsg->Data[3] ) ;  
+        processMultiFunctionMessage( pDccMsg->Data[0], DCC_ADDR_SHORT, pDccMsg->Data[1], pDccMsg->Data[2], pDccMsg->Data[3] ) ;  
 
       // Basic Accessory Decoders (9-bit) & Extended Accessory Decoders (11-bit)
       else if( pDccMsg->Data[0] < 192 )
@@ -666,18 +701,15 @@ void execDccProcessor( DCC_MSG * pDccMsg )
       else if( pDccMsg->Data[0] < 232 )
       {
         uint16_t Address ;
-        Address = ( pDccMsg->Data[0] << 8 ) | pDccMsg->Data[1];
-        processMultiFunctionMessage( Address, pDccMsg->Data[2], pDccMsg->Data[3], pDccMsg->Data[4] ) ;  
+        Address = ( ( pDccMsg->Data[0] - 192 ) << 8 ) | pDccMsg->Data[1];
+        //TODO should we convert Address to 1 .. 10239 ?
+        processMultiFunctionMessage( Address, DCC_ADDR_LONG, pDccMsg->Data[2], pDccMsg->Data[3], pDccMsg->Data[4] ) ;  
       }
 #endif
 #ifdef NMRA_DCC_PROCESS_SERVICEMODE
     }
 #endif
   }
-}
-
-void initDccProcessor( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, uint8_t OpsModeAddressBaseCV )
-{
 }
 
 NmraDcc::NmraDcc()
@@ -710,7 +742,7 @@ void NmraDcc::init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, ui
   DccProcState.Flags = Flags ;
   DccProcState.OpsModeAddressBaseCV = OpsModeAddressBaseCV ;
 
-  uint8_t cv29Mask = Flags & 0b11000000 ; // peal off the top two bits
+  uint8_t cv29Mask = Flags & (CV29_ACCESSORY_DECODER | CV29_OUTPUT_ADDRESS_MODE) ; // peal off the top two bits
 
   writeCV( 7, VersionId ) ;
   writeCV( 8, ManufacturerId ) ;
@@ -730,6 +762,11 @@ uint8_t NmraDcc::getCV( uint16_t CV )
 uint8_t NmraDcc::setCV( uint16_t CV, uint8_t Value)
 {
   return writeCV(CV,Value);
+}
+
+uint16_t NmraDcc::getAddr(void)
+{
+  return getMyAddr();
 }
 
 uint8_t NmraDcc::isSetCVReady(void)

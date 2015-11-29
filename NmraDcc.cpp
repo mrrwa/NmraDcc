@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------
 //
-// OpenDCC - NmraDcc.cpp 
+// Model Railroading with Arduino - NmraDcc.cpp 
 //
-// Copyright (c) 2011 Alex Shepherd
+// Copyright (c) 2008 - 2105 Alex Shepherd
 //
 // This source file is subject of the GNU general public license 2,
 // that is available at the world-wide-web at
@@ -12,8 +12,9 @@
 //
 // file:      NmraDcc.cpp
 // author:    Alex Shepherd
-// webpage:   http://opendcc.org/
-// history:   2011-06-26 Initial Version copied in from OpenDCC
+// webpage:   http://mrrwa.org/
+// history:   2008-03-20 Initial Version
+//            2011-06-26 Migrated into Arduino library from OpenDCC codebase
 //            2014 Added getAddr to NmraDcc  Geoff Bunza
 //            2015-11-06 Martin Pischky (martin@pischky.de):
 //                       Experimental Version to support 14 speed steps
@@ -23,6 +24,7 @@
 //
 // purpose:   Provide a simplified interface to decode NMRA DCC packets
 //			  and build DCC Mobile and Stationary Decoders
+//
 //------------------------------------------------------------------------
 
 #include "NmraDcc.h"
@@ -391,7 +393,7 @@ void processMultiFunctionMessage( uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t
     case 0b00000010:  // Factory Test
       break ;
 
-    case 0b00000110:  // Set Decoder Flasg
+    case 0b00000110:  // Set Decoder Flags
       break ;
 
     case 0b00001010:  // Set Advanced Addressing

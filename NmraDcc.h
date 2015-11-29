@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------
 //
-// OpenDCC - NmraDcc.cpp 
+// Model Railroading with Arduino - NmraDcc.h 
 //
-// Copyright (c) 2008 Alex Shepherd
+// Copyright (c) 2008 - 2105 Alex Shepherd
 //
 // This source file is subject of the GNU general public license 2,
 // that is available at the world-wide-web at
@@ -10,10 +10,11 @@
 // 
 //------------------------------------------------------------------------
 //
-// file:      NmraDccTest.cpp
+// file:      NmraDcc.h
 // author:    Alex Shepherd
-// webpage:   http://opendcc.org/
+// webpage:   http://mrrwa.org/
 // history:   2008-03-20 Initial Version
+//            2011-06-26 Migrated into Arduino library from OpenDCC codebase
 //            2014 Added getAddr to NmraDcc  Geoff Bunza
 //            2015-11-06 Martin Pischky (martin@pischky.de):
 //                       Experimental Version to support 14 speed steps

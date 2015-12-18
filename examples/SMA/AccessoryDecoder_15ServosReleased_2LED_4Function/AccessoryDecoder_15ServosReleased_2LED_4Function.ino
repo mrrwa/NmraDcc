@@ -622,6 +622,7 @@ void detach_servo (int servo_num)  {
            break;
          case 12: 
            if (servo12.attached()!=0) servo12.detach();
+           break;
          case 13: 
            if (servo13.attached()!=0) servo13.detach();
            break;

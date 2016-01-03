@@ -19,6 +19,7 @@
 //            2015-11-06 Martin Pischky (martin@pischky.de):
 //                       Experimental Version to support 14 speed steps
 //                       and new signature of notifyDccSpeed and notifyDccFunc
+//            2015-12-16 Version without use of Timer0 by Franz-Peter Müller
 //
 //------------------------------------------------------------------------
 //
@@ -50,20 +51,148 @@
 //                           |----------->|
 //                                        ^Timer-INT: reads one
 //           
+// new DCC Receive Routine without Timer0 ........................................................
+//
+// Howto:    uses only one interrupt at the rising or falling edge of the DCC signal
+//           The time between two edges is measured to determine the bit value
+//           Synchronising to the edge of the first part of a bit is done after recognizing the start bit
+//           During synchronizing each part of a bit is detected ( Interruptmode 'change' )
+//
+//                           |<-----116us----->|
+//           DCC 1: _________XXXXXXXXX_________XXXXXXXXX_________
+//                           |<--------138us------>|
+//                           ^-INTx            ^-INTx
+//                           less than 138us: its a one-Bit
+//                                        
+//
+//                           |<-----------------232us----------->|
+//           DCC 0: _________XXXXXXXXXXXXXXXXXX__________________XXXXXXXX__________
+//                           |<--------138us------->|
+//                           ^-INTx                              ^-INTx
+//                           greater than 138us: its a zero bit
+//                                        
+//                                        
+//                                           
+//           
 //------------------------------------------------------------------------
+#define MAX_ONEBITFULL  146
+#define MAX_PRAEAMBEL   146 //138
+#define MAX_ONEBITHALF  82
 
-// The Timer0 prescaler is hard-coded in wiring.c 
-#define TIMER_PRESCALER 64
-
-// We will use a time period of 80us and not 87us as this gives us a bit more time to do other stuff 
-#define DCC_BIT_SAMPLE_PERIOD (F_CPU * 70L / TIMER_PRESCALER / 1000000L)
-
-#if (DCC_BIT_SAMPLE_PERIOD > 254)
-#error DCC_BIT_SAMPLE_PERIOD too big, use either larger prescaler or slower processor
+// Debug-Ports
+//#define debug     // Testpulse for logic analyser
+#ifdef debug 
+    #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+        #define MODE_TP1 DDRF |= (1<<2) //pinA2
+        #define SET_TP1 PORTF |= (1<<2)
+        #define CLR_TP1 PORTF &= ~(1<<2)
+        #define MODE_TP2 DDRF |= (1<<3) //pinA3
+        #define SET_TP2 PORTF |= (1<<3)
+        #define CLR_TP2 PORTF &= ~(1<<3)
+        #define MODE_TP3 DDRF |= (1<<4) //pinA4 
+        #define SET_TP3 PORTF |= (1<<4) 
+        #define CLR_TP3 PORTF &= ~(1<<4) 
+        #define MODE_TP4 DDRF |= (1<<5) //pinA5 
+        #define SET_TP4 PORTF |= (1<<5) 
+        #define CLR_TP4 PORTF &= ~(1<<5) 
+    #elif defined(__AVR_ATmega32U4__)
+        #define MODE_TP1 DDRF |= (1<<4) //A3
+        #define SET_TP1 PORTF |= (1<<4)
+        #define CLR_TP1 PORTF &= ~(1<<4)
+        #define MODE_TP2 DDRF |= (1<<5) //A2
+        #define SET_TP2 PORTF |= (1<<5)
+        #define CLR_TP2 PORTF &= ~(1<<5)
+        #define MODE_TP3 
+        #define SET_TP3 
+        #define CLR_TP3 
+        #define MODE_TP4 
+        #define SET_TP4 
+        #define CLR_TP4 
+    #elif defined(__AVR_ATmega328P__) 
+        #define MODE_TP1 DDRC |= (1<<1) //A1
+        #define SET_TP1 PORTC |= (1<<1)
+        #define CLR_TP1 PORTC &= ~(1<<1)
+        #define MODE_TP2 DDRC |= (1<<2) // A2
+        #define SET_TP2 PORTC |= (1<<2)
+        #define CLR_TP2 PORTC &= ~(1<<2)
+        #define MODE_TP3 DDRC |= (1<<3) //A3
+        #define SET_TP3 PORTC |= (1<<3) 
+        #define CLR_TP3 PORTC &= ~(1<<3) 
+        #define MODE_TP4 DDRC |= (1<<4) //A4 
+        #define SET_TP4 PORTC |= (1<<4) 
+        #define CLR_TP4 PORTC &= ~(1<<4) 
+    #elif defined(__arm__) && (defined(__MK20DX128__) || defined(__MK20DX256__))
+        // Teensys 3.x
+        #define MODE_TP1 pinMode( A1,OUTPUT )   // A1= PortC, Bit0
+        #define SET_TP1  GPIOC_PSOR = 0x01
+        #define CLR_TP1  GPIOC_PCOR = 0x01
+        #define MODE_TP2 pinMode( A2,OUTPUT )   // A2= PortB Bit0
+        #define SET_TP2  GPIOB_PSOR = 0x01
+        #define CLR_TP2  GPIOB_PCOR = 0x01
+        #define MODE_TP3 pinMode( A3,OUTPUT )   // A3 = PortB Bit1
+        #define SET_TP3  GPIOB_PSOR = 0x02
+        #define CLR_TP3  GPIOB_PCOR = 0x02
+        #define MODE_TP4 pinMode( A4,OUTPUT )   // A4 = PortB Bit3
+        #define SET_TP4  GPIOB_PSOR = 0x08
+        #define CLR_TP4  GPIOB_PCOR = 0x08
+    #elif defined (__SAM3X8E__)
+        // Arduino Due
+        #define MODE_TP1 pinMode( A1,OUTPUT )   // A1= PA24
+        #define SET_TP1  REG_PIOA_SODR = (1<<24)
+        #define CLR_TP1  REG_PIOA_CODR = (1<<24)
+        #define MODE_TP2 pinMode( A2,OUTPUT )   // A2= PA23
+        #define SET_TP2  REG_PIOA_SODR = (1<<23)
+        #define CLR_TP2  REG_PIOA_CODR = (1<<23)
+        #define MODE_TP3 pinMode( A3,OUTPUT )   // A3 = PA22
+        #define SET_TP3  REG_PIOA_SODR = (1<<22)
+        #define CLR_TP3  REG_PIOA_CODR = (1<<22)
+        #define MODE_TP4 pinMode( A4,OUTPUT )   // A4 = PA6
+        #define SET_TP4  REG_PIOA_SODR = (1<<6)
+        #define CLR_TP4  REG_PIOA_CODR = (1<<6)
+        
+    //#elif defined(__AVR_ATmega128__) ||defined(__AVR_ATmega1281__)||defined(__AVR_ATmega2561__)
+    #else
+        #define MODE_TP1 
+        #define SET_TP1 
+        #define CLR_TP1 
+        #define MODE_TP2 
+        #define SET_TP2 
+        #define CLR_TP2 
+        #define MODE_TP3 
+        #define SET_TP3 
+        #define CLR_TP3 
+        #define MODE_TP4 
+        #define SET_TP4 
+        #define CLR_TP4 
+    
+    #endif 
+#else
+    #define MODE_TP1 
+    #define SET_TP1 
+    #define CLR_TP1 
+    #define MODE_TP2 
+    #define SET_TP2 
+    #define CLR_TP2 
+        //#define MODE_TP2 DDRC |= (1<<2) // A2
+        //#define SET_TP2 PORTC |= (1<<2)
+        //#define CLR_TP2 PORTC &= ~(1<<2)
+    #define MODE_TP3 
+    #define SET_TP3 
+    #define CLR_TP3 
+    #define MODE_TP4 
+    #define SET_TP4 
+    #define CLR_TP4 
+        //#define MODE_TP4 DDRC |= (1<<4) //A4 
+        //#define SET_TP4 PORTC |= (1<<4) 
+        //#define CLR_TP4 PORTC &= ~(1<<4) 
+    
 #endif
-#if (DCC_BIT_SAMPLE_PERIOD < 8)
-#error DCC_BIT_SAMPLE_PERIOD too small, use either smaller prescaler or faster processor
+#ifdef DCC_DBGVAR
+struct countOf_t countOf;
 #endif
+
+static byte  ISREdge;   // RISING or FALLING
+static word  bitMax;
 
 typedef enum
 {
@@ -107,71 +236,138 @@ DCC_PROCESSOR_STATE DccProcState ;
 
 void ExternalInterruptHandler(void)
 {
-  OCR0B = TCNT0 + DCC_BIT_SAMPLE_PERIOD ;
-
-#if defined(TIMSK0)
-  TIMSK0 |= (1<<OCIE0B);  // Enable Timer0 Compare Match B Interrupt
-  TIFR0  |= (1<<OCF0B);   // Clear  Timer0 Compare Match B Flag 
-#elif defined(TIMSK)
-  TIMSK |= (1<<OCIE0B);  // Enable Timer0 Compare Match B Interrupt
-  TIFR  |= (1<<OCF0B);   // Clear  Timer0 Compare Match B Flag 
-#endif
-#ifdef DCC_DEBUG
-	DccProcState.IntCount++;
-#endif
-}
-
-ISR(TIMER0_COMPB_vect)
-{
-  uint8_t DccBitVal ;
-
-  // Read the DCC input value, if it's low then its a 1 bit, otherwise it is a 0 bit
-  DccBitVal = !digitalRead(DccProcState.ExtIntPinNum) ;
-
-  // Disable Timer0 Compare Match B Interrupt
-#if defined(TIMSK0)
-  TIMSK0 &= ~(1<<OCIE0B);
-#elif defined(TIMSK)
-  TIMSK &= ~(1<<OCIE0B);
-#endif
-
+// Bit evaluation without Timer 0 ------------------------------
+    uint8_t DccBitVal;
+    static int8_t  bit1, bit2 ;
+    static word  lastMicros;
+    static byte halfBit;
+    unsigned int  actMicros, bitMicros;
+    SET_TP3;
+    actMicros = micros();
+    bitMicros = actMicros-lastMicros;
+    DccBitVal = ( bitMicros < bitMax );
+    lastMicros = actMicros;
+    //#ifdef debug
+    if(DccBitVal) SET_TP2; else CLR_TP2;
+    //#endif
+    sei();  // time critical is only the micros() command,so allow nested irq's
 #ifdef DCC_DEBUG
 	DccProcState.TickCount++;
 #endif
-
-  DccRx.BitCount++;
 
   switch( DccRx.State )
   {
   case WAIT_PREAMBLE:
     if( DccBitVal )
     {
-      if( DccRx.BitCount > 10 )
+        SET_TP1;
+      DccRx.BitCount++;
+     if( DccRx.BitCount > 10 ) {
         DccRx.State = WAIT_START_BIT ;
+        // While waiting for the start bit, detect halfbit lengths. We will detect the correct
+        // sync and detect whether we see a false (e.g. motorola) protocol
+        attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, CHANGE);
+        halfBit = 0;
+        bitMax = MAX_ONEBITHALF;
+        CLR_TP1;
+      }
+    } else {
+        SET_TP1;
+        DccRx.BitCount = 0 ;
+        CLR_TP1;
     }
-    else
-      DccRx.BitCount = 0 ;
-
     break;
 
   case WAIT_START_BIT:
-    if( !DccBitVal )
-    {
-      DccRx.State = WAIT_DATA ;
-      DccRx.PacketBuf.Size = 0;
-      DccRx.PacketBuf.PreambleBits = 0;
-      for(uint8_t i = 0; i< MAX_DCC_MESSAGE_LEN; i++ )
-        DccRx.PacketBuf.Data[i] = 0;
+    // we are looking for first half "0" bit after preamble
+    switch ( halfBit ) {
+      case 0:  //SET_TP1;
+        // check first part
+        if ( DccBitVal ) {
+            // is still 1-bit (Preamble)
+            halfBit=1;
+            bit1=bitMicros;
+        } else {
+            // was "0" half bit, maybe the startbit
+            halfBit = 4;
+        }
+        break;
+      case 1: //SET_TP1; // previous halfbit was '1'
+        if ( DccBitVal ) {
+            CLR_TP1;
+            // its a '1' halfBit -> we are still in the preamble
+            halfBit = 0;
+            bit2=bitMicros;
+            DccRx.BitCount++;
+            if( abs(bit2-bit1) > 14 ) {
+                // the length of the 2 halbits differ too much -> wrong protokoll
+                CLR_TP2;
+                CLR_TP3;
+                DccRx.State = WAIT_PREAMBLE;
+                bitMax = MAX_PRAEAMBEL;
+                DccRx.BitCount = 0;
+                attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+                SET_TP3;
+            }
+        } else {
+            // first '0' half detected in second halfBit
+            // wrong sync or not a DCC protokoll
+            halfBit = 3;
+        }
+        break;
+      case 3: //SET_TP1;  // previous halfbit was '0'  in second halfbit  
+        if ( DccBitVal ) {
+            // its a '1' halfbit -> we got only a half '0' bit -> cannot be DCC
+            DccRx.State = WAIT_PREAMBLE;
+            bitMax = MAX_PRAEAMBEL;
+            DccRx.BitCount = 0;
+        } else {
+            // we got two '0' halfbits -> it's the startbit
+            // but sync is NOT ok, change IRQ edge.
+            if ( ISREdge == RISING ) ISREdge = FALLING; else ISREdge = RISING;
+            DccRx.State = WAIT_DATA ;
+            bitMax = MAX_ONEBITFULL;
+            DccRx.PacketBuf.Size = 0;
+            DccRx.PacketBuf.PreambleBits = 0;
+            for(uint8_t i = 0; i< MAX_DCC_MESSAGE_LEN; i++ )
+            DccRx.PacketBuf.Data[i] = 0;
 
-      // We now have 1 too many PreambleBits so decrement before copying
-      DccRx.PacketBuf.PreambleBits = DccRx.BitCount - 1 ;
+            DccRx.PacketBuf.PreambleBits = DccRx.BitCount;
+            DccRx.BitCount = 0 ;
+            DccRx.TempByte = 0 ;
+        }
+        attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+        CLR_TP1;
+        break;
+      case 4: SET_TP1; // previous (first) halfbit was 0
+        // if this halfbit is 0 too, we got the startbit
+        if ( DccBitVal ) {
+            // second halfbit is 1 -> unknown protokoll
+            DccRx.State = WAIT_PREAMBLE;
+            bitMax = MAX_PRAEAMBEL;
+            DccRx.BitCount = 0;
+        } else {
+            // we got the startbit
+            DccRx.State = WAIT_DATA ;
+            bitMax = MAX_ONEBITFULL;
+            DccRx.PacketBuf.Size = 0;
+            DccRx.PacketBuf.PreambleBits = 0;
+            for(uint8_t i = 0; i< MAX_DCC_MESSAGE_LEN; i++ )
+            DccRx.PacketBuf.Data[i] = 0;
 
-      DccRx.BitCount = 0 ;
-      DccRx.TempByte = 0 ;
-    }
+            DccRx.PacketBuf.PreambleBits = DccRx.BitCount;
+            DccRx.BitCount = 0 ;
+            DccRx.TempByte = 0 ;
+        }
+        attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+        CLR_TP1;
+        break;
+            
+    }        
     break;
 
   case WAIT_DATA:
+    DccRx.BitCount++;
     DccRx.TempByte = ( DccRx.TempByte << 1 ) ;
     if( DccBitVal )
       DccRx.TempByte |= 1 ;
@@ -181,6 +377,7 @@ ISR(TIMER0_COMPB_vect)
       if( DccRx.PacketBuf.Size == MAX_DCC_MESSAGE_LEN ) // Packet is too long - abort
       {
         DccRx.State = WAIT_PREAMBLE ;
+        bitMax = MAX_PRAEAMBEL;
         DccRx.BitCount = 0 ;
       }
       else
@@ -192,11 +389,15 @@ ISR(TIMER0_COMPB_vect)
     break;
 
   case WAIT_END_BIT:
+    DccRx.BitCount++;
     if( DccBitVal ) // End of packet?
     {
+      CLR_TP3;
       DccRx.State = WAIT_PREAMBLE ;
+      bitMax = MAX_PRAEAMBEL;
       DccRx.PacketCopy = DccRx.PacketBuf ;
       DccRx.DataReady = 1 ;
+      SET_TP3;
     }
     else  // Get next Byte
     DccRx.State = WAIT_DATA ;
@@ -204,6 +405,8 @@ ISR(TIMER0_COMPB_vect)
     DccRx.BitCount = 0 ;
     DccRx.TempByte = 0 ;
   }
+  CLR_TP1;
+  CLR_TP3;
 }
 
 void ackCV(void)
@@ -231,7 +434,7 @@ uint8_t validCV( uint16_t CV, uint8_t Writable )
   return Valid ;
 }
 
-uint8_t readCV( uint16_t CV )
+uint8_t readCV( unsigned int CV )
 {
   uint8_t Value ;
 
@@ -243,7 +446,7 @@ uint8_t readCV( uint16_t CV )
   return Value ;
 }
 
-uint8_t writeCV( uint16_t CV, uint8_t Value)
+uint8_t writeCV( unsigned int CV, uint8_t Value)
 {
   if( notifyCVWrite )
     return notifyCVWrite( CV, Value ) ;
@@ -255,7 +458,6 @@ uint8_t writeCV( uint16_t CV, uint8_t Value)
     if( notifyCVChange )
       notifyCVChange( CV, Value) ;
   }
-
   return eeprom_read_byte( (uint8_t*) CV ) ;
 }
 
@@ -733,12 +935,12 @@ void NmraDcc::init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, ui
   // Clear all the static member variables
   memset( &DccRx, 0, sizeof( DccRx) );
 
-#ifdef TCCR0A
-  // Change Timer0 Waveform Generation Mode from Fast PWM back to Normal Mode
-  TCCR0A &= ~((1<<WGM01)|(1<<WGM00));
-#else  
-#error NmraDcc Library requires a processor with Timer0 Output Compare B feature 
-#endif
+  MODE_TP1; // only for debugging and timing measurement
+  MODE_TP2;
+  MODE_TP3;
+  MODE_TP4;
+  ISREdge = RISING;
+  bitMax = MAX_ONEBITFULL;
   attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, RISING);
 
   DccProcState.Flags = Flags ;
@@ -814,24 +1016,33 @@ uint8_t NmraDcc::process()
   if( DccRx.DataReady )
   {
     // We need to do this check with interrupts disabled
+    //SET_TP4;
     cli();
     Msg = DccRx.PacketCopy ;
     DccRx.DataReady = 0 ;
     sei();
+      #ifdef DCC_DBGVAR
+      countOf.Tel++;
+      #endif
     
     uint8_t xorValue = 0 ;
     
     for(uint8_t i = 0; i < DccRx.PacketCopy.Size; i++)
       xorValue ^= DccRx.PacketCopy.Data[i];
-
-    if(xorValue)
+    //CLR_TP4;
+    if(xorValue) {
+      SET_TP4;
+      #ifdef DCC_DBGVAR
+      countOf.Err++;
+      #endif
+      CLR_TP4;
       return 0 ;
-    else
-		{
-			if( notifyDccMsg )
-				notifyDccMsg( &Msg );
+    } else {
+        //SET_TP4;
+		if( notifyDccMsg ) 	notifyDccMsg( &Msg );
 		
-      execDccProcessor( &Msg );
+        execDccProcessor( &Msg );
+        //CLR_TP4;
     }
     return 1 ;
   }

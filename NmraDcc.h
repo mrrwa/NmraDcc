@@ -34,7 +34,7 @@
 #define NMRA_DCC_PROCESS_MULTIFUNCTION
 
 // Uncomment the following line to Enable 14 Speed Step Support
-//#define NMRA_DCC_ENABLE_14_SPEED_STEP_MODE
+#define NMRA_DCC_ENABLE_14_SPEED_STEP_MODE
 
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
@@ -165,6 +165,16 @@ typedef enum
 #define FN_BIT_26	0x20
 #define FN_BIT_27	0x40
 #define FN_BIT_28	0x80
+
+#define DCC_DBGVAR
+#ifdef DCC_DBGVAR
+typedef struct countOf_t {
+    unsigned long Tel;
+    unsigned long Err;
+}countOf_t ;
+
+extern struct countOf_t countOf;
+#endif
 
 class NmraDcc
 {

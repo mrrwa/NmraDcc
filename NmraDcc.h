@@ -166,7 +166,7 @@ typedef enum
 #define FN_BIT_27	0x40
 #define FN_BIT_28	0x80
 
-#define DCC_DBGVAR
+//#define DCC_DBGVAR
 #ifdef DCC_DBGVAR
 typedef struct countOf_t {
     unsigned long Tel;

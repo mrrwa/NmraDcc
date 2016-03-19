@@ -6,54 +6,57 @@
 # Datatypes (KEYWORD1)
 #######################################
 
-DCC_MSG		KEYWORD1
-NmraDcc		KEYWORD1
+DCC_MSG																	KEYWORD1
+NmraDcc																	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
-NmraDcc				KEYWORD2
-pin					KEYWORD2
-init				KEYWORD2
-process				KEYWORD2
-getCV				KEYWORD2
-setCV				KEYWORD2
-isSetCVReady		KEYWORD2
-notifyDccReset		KEYWORD2
-notifyDccIdle		KEYWORD2
-notifyDccSpeed		KEYWORD2
-notifyDccFunc		KEYWORD2
-notifyDccAccState	KEYWORD2
-notifyDccSigState	KEYWORD2
-notifyDccMsg		KEYWORD2
-notifyCVValid		KEYWORD2
-notifyCVRead		KEYWORD2
-notifyCVWrite		KEYWORD2
-notifyIsSetCVReady	KEYWORD2
-notifyCVChange		KEYWORD2
-notifyCVAck			KEYWORD2
-notifyCVResetFactoryDefault	KEYWORD2
+NmraDcc																	KEYWORD2
+pin																			KEYWORD2
+init																		KEYWORD2
+process																	KEYWORD2
+getCV																		KEYWORD2
+setCV																		KEYWORD2
+isSetCVReady														KEYWORD2
+notifyDccReset													KEYWORD2
+notifyDccIdle														KEYWORD2
+notifyDccSpeed													KEYWORD2
+notifyDccSpeedRaw
+notifyDccFunc														KEYWORD2
+notifyDccAccState												KEYWORD2
+notifyDccAccTurnoutBoard
+notifyDccAccTurnoutOutput
+notifyDccSigState												KEYWORD2
+notifyDccMsg														KEYWORD2
+notifyCVValid														KEYWORD2
+notifyCVRead														KEYWORD2
+notifyCVWrite														KEYWORD2
+notifyIsSetCVReady											KEYWORD2
+notifyCVChange													KEYWORD2
+notifyCVAck															KEYWORD2
+notifyCVResetFactoryDefault							KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
 
-MAN_ID_JMRI					LITERAL1
-MAN_ID_DIY					LITERAL1
-MAN_ID_SILICON_RAILWAY		LITERAL1
-FLAGS_MY_ADDRESS_ONLY  	    LITERAL1
-FLAGS_OUTPUT_ADDRESS_MODE   LITERAL1
-FLAGS_DCC_ACCESSORY_DECODER LITERAL1
+MAN_ID_JMRI															LITERAL1
+MAN_ID_DIY															LITERAL1
+MAN_ID_SILICON_RAILWAY									LITERAL1
+FLAGS_MY_ADDRESS_ONLY										LITERAL1
+FLAGS_OUTPUT_ADDRESS_MODE								LITERAL1
+FLAGS_DCC_ACCESSORY_DECODER							LITERAL1
 
-CV_ACCESSORY_DECODER_ADDRESS_LSB		LITERAL1
-CV_ACCESSORY_DECODER_ADDRESS_MSB    	LITERAL1
+CV_ACCESSORY_DECODER_ADDRESS_LSB				LITERAL1
+CV_ACCESSORY_DECODER_ADDRESS_MSB				LITERAL1
 
-CV_MULTIFUNCTION_PRIMARY_ADDRESS    	LITERAL1
-CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB 	LITERAL1
-CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB 	LITERAL1
+CV_MULTIFUNCTION_PRIMARY_ADDRESS				LITERAL1
+CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB		LITERAL1
+CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB		LITERAL1
 
-CV_VERSION_ID                          	LITERAL1
-CV_MANUFACTURER_ID                     	LITERAL1
-CV_29_CONFIG                          	LITERAL1
-CV_OPS_MODE_ADDRESS_LSB               	LITERAL1
+CV_VERSION_ID														LITERAL1
+CV_MANUFACTURER_ID											LITERAL1
+CV_29_CONFIG														LITERAL1
+CV_OPS_MODE_ADDRESS_LSB									LITERAL1
 
 #######################################

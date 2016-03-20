@@ -690,7 +690,7 @@ void execDccProcessor( DCC_MSG * pDccMsg )
           	uint8_t outputPower = (pDccMsg->Data[1] & 0b00001000) >> 3;
           	
             if( notifyDccAccState )
-              notifyDccAccState( Address, BoardAddress, OutputAddress, outputPower ) ;
+              notifyDccAccState( Address, BoardAddress, OutputAddress, pDccMsg->Data[1] & 0b00001000 ) ;
               
             if( notifyDccAccTurnoutBoard )
             	notifyDccAccTurnoutBoard( BoardAddress, OutputIndex, direction, outputPower );

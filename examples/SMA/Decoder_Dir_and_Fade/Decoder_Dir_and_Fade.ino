@@ -101,7 +101,8 @@ void loop()
   // You MUST call the NmraDcc.process() method frequently from the Arduino loop() function for correct library operation
   Dcc.process();
 }
-extern void notifyDccFunc( uint16_t Addr, FN_GROUP FuncGrp, uint8_t FuncState)  {
+
+void notifyDccFunc( uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint8_t FuncState)  {
 int f_index;
 switch (FuncGrp)  { 
   case FN_0_4:    //Function Group 1 F0 F4 F3 F2 F1
@@ -145,7 +146,8 @@ void exec_function (int f_index, int FuncState)  {
 			Set_LED (f_index,false);
           }
 }
-extern void notifyDccSpeed( uint16_t Addr, uint8_t Speed, uint8_t ForwardDir, uint8_t MaxSpeed )  {
+
+void notifyDccSpeed( uint16_t Addr, uint8_t Speed, uint8_t ForwardDir, uint8_t MaxSpeed )  {
   Last_Decoder_direction = Decoder_direction;
   Decoder_direction = ForwardDir;
   if ( Decoder_direction==Last_Decoder_direction) return;
@@ -197,3 +199,4 @@ void Switch_LED (int Function) {
         }
   led_last_state[Function] = end_state;
 }
+

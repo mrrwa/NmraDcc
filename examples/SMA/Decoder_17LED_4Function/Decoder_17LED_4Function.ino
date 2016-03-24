@@ -68,7 +68,6 @@ struct QUEUE
 };
 QUEUE *ftn_queue = new QUEUE[16];
 
-extern uint8_t Decoder_Address = This_Decoder_Address;
 struct CVPair
 {
   uint16_t  CV;
@@ -407,7 +406,7 @@ void loop()   //****************************************************************
   }
 }
 
-extern void notifyDccFunc( uint16_t Addr, FN_GROUP FuncGrp, uint8_t FuncState)  {
+void notifyDccFunc( uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint8_t FuncState)  {
   switch(FuncGrp)
   {
   case FN_0_4:    //Function Group 1 F0 F4 F3 F2 F1

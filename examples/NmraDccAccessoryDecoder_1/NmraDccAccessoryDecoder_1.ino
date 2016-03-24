@@ -69,6 +69,30 @@ void notifyDccAccState( uint16_t Addr, uint16_t BoardAddr, uint8_t OutputAddr, u
   Serial.println(State, HEX) ;
 }
 
+// This function is called whenever a normal DCC Turnout Packet is received
+void notifyDccAccTurnoutBoard( uint16_t BoardAddr, uint8_t OutputPair, uint8_t Direction, uint8_t OutputPower )
+{
+  Serial.print("notifyDccAccTurnoutBoard: ") ;
+  Serial.print(BoardAddr,DEC) ;
+  Serial.print(',');
+  Serial.print(OutputPair,DEC) ;
+  Serial.print(',');
+  Serial.print(Direction,DEC) ;
+  Serial.print(',');
+  Serial.println(OutputPower, HEX) ;
+}
+
+// This function is called whenever a normal DCC Turnout Packet is received
+void notifyDccAccTurnoutOutput( uint16_t Addr, uint8_t Direction, uint8_t OutputPower )
+{
+  Serial.print("notifyDccAccTurnoutOutput: ") ;
+  Serial.print(Addr,DEC) ;
+  Serial.print(',');
+  Serial.print(Direction,DEC) ;
+  Serial.print(',');
+  Serial.println(OutputPower, HEX) ;
+}
+
 // This function is called whenever a DCC Signal Aspect Packet is received
 void notifyDccSigState( uint16_t Addr, uint8_t OutputIndex, uint8_t State)
 {

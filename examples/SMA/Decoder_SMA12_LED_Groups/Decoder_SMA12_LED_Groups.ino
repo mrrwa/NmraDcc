@@ -123,7 +123,7 @@ void loop()
   Dcc.process();
 }
 
-extern void notifyDccFunc( uint16_t Addr, FN_GROUP FuncGrp, uint8_t FuncState)  {
+void notifyDccFunc( uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint8_t FuncState)  {
 int f_index;
 switch (FuncGrp)  { 
   case FN_0_4:    //Function Group 1 F0 F4 F3 F2 F1
@@ -172,4 +172,5 @@ void exec_function (int f_index, int FuncState)  {
             Last_Function_State[f_index] = false;
           }
 }
+
 

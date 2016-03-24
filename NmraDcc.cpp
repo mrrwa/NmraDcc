@@ -888,8 +888,17 @@ void execDccProcessor( DCC_MSG * pDccMsg )
 
           if(pDccMsg->Data[1] & 0b10000000)
           {
+          	uint8_t direction = OutputAddress & 0x01;
+          	uint8_t outputPower = (pDccMsg->Data[1] & 0b00001000) >> 3;
+          	
             if( notifyDccAccState )
               notifyDccAccState( Address, BoardAddress, OutputAddress, pDccMsg->Data[1] & 0b00001000 ) ;
+              
+            if( notifyDccAccTurnoutBoard )
+            	notifyDccAccTurnoutBoard( BoardAddress, OutputIndex, direction, outputPower );
+            	
+            if( notifyDccAccTurnoutOutput )
+            	notifyDccAccTurnoutOutput( Address, direction, outputPower );
           }
 
           else

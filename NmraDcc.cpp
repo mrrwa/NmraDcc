@@ -248,7 +248,7 @@ void ExternalInterruptHandler(void)
     DccBitVal = ( bitMicros < bitMax );
     lastMicros = actMicros;
     //#ifdef debug
-    if(DccBitVal) SET_TP2; else CLR_TP2;
+    if(DccBitVal) {SET_TP2} else {CLR_TP2};
     //#endif
     sei();  // time critical is only the micros() command,so allow nested irq's
 #ifdef DCC_DEBUG
@@ -939,6 +939,11 @@ void NmraDcc::pin( uint8_t ExtIntNum, uint8_t ExtIntPinNum, uint8_t EnablePullup
     digitalWrite(ExtIntPinNum, HIGH);
 }
 
+void NmraDcc::initAccessoryDecoder( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, uint8_t OpsModeAddressBaseCV )
+{
+	init(ManufacturerId, VersionId, Flags | FLAGS_DCC_ACCESSORY_DECODER, OpsModeAddressBaseCV);
+}
+
 void NmraDcc::init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, uint8_t OpsModeAddressBaseCV )
 {
   // Clear all the static member variables
@@ -955,14 +960,13 @@ void NmraDcc::init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, ui
   DccProcState.Flags = Flags ;
   DccProcState.OpsModeAddressBaseCV = OpsModeAddressBaseCV ;
 
+  // Set the Bits that control Multifunction or Accessory behaviour
+  // and if the Accessory decoder optionally handles Output Addressing 
   uint8_t cv29Mask = Flags & (CV29_ACCESSORY_DECODER | CV29_OUTPUT_ADDRESS_MODE) ; // peal off the top two bits
+  writeCV( CV_29_CONFIG, ( readCV( CV_29_CONFIG ) & ~cv29Mask ) | Flags ) ;
 
   writeCV( 7, VersionId ) ;
   writeCV( 8, ManufacturerId ) ;
-
-  // Set the Bits that control Multifunction or Accessory behaviour
-  // and if the Accessory decoder optionally handles Output Addressing 
-  writeCV( CV_29_CONFIG, ( readCV( CV_29_CONFIG ) & ~cv29Mask ) | cv29Mask ) ;
 
   clearDccProcState( 0 );
 }

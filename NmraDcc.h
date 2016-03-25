@@ -190,6 +190,7 @@ class NmraDcc
 #define FLAGS_DCC_ACCESSORY_DECODER	0x80  // CV 29/541 bit 7
 	void pin( uint8_t ExtIntNum, uint8_t ExtIntPinNum, uint8_t EnablePullup); 
   void init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, uint8_t OpsModeAddressBaseCV );
+  void initAccessoryDecoder( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, uint8_t OpsModeAddressBaseCV );
   uint8_t process();
   uint8_t getCV( uint16_t CV );
   uint8_t setCV( uint16_t CV, uint8_t Value);

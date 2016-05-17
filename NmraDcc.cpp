@@ -683,8 +683,8 @@ void processMultiFunctionMessage( uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t
       uint8_t fn0 = (Cmd & 0b00010000) ;
       notifyDccFunc( Addr, AddrType, FN_0, fn0 ) ;
     }
-    break;
 #endif
+    break;
 
   case 0b10000000:  // Function Group 0..4
     if( notifyDccFunc )

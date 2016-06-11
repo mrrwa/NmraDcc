@@ -34,7 +34,7 @@
 #define NMRA_DCC_PROCESS_MULTIFUNCTION
 
 // Uncomment the following line to Enable 14 Speed Step Support
-#define NMRA_DCC_ENABLE_14_SPEED_STEP_MODE
+//#define NMRA_DCC_ENABLE_14_SPEED_STEP_MODE
 
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"

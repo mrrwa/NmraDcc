@@ -20,6 +20,7 @@
 //                       Experimental Version to support 14 speed steps
 //                       and new signature of notifyDccSpeed and notifyDccFunc
 //            2015-12-16 Version without use of Timer0 by Franz-Peter Müller
+//            2016-07-16 handle glitches on DCC line
 //
 //------------------------------------------------------------------------
 //
@@ -60,14 +61,14 @@
 //
 //                           |<-----116us----->|
 //           DCC 1: _________XXXXXXXXX_________XXXXXXXXX_________
-//                           |<--------138us------>|
+//                           |<--------146us------>|
 //                           ^-INTx            ^-INTx
 //                           less than 138us: its a one-Bit
 //                                        
 //
 //                           |<-----------------232us----------->|
 //           DCC 0: _________XXXXXXXXXXXXXXXXXX__________________XXXXXXXX__________
-//                           |<--------138us------->|
+//                           |<--------146us------->|
 //                           ^-INTx                              ^-INTx
 //                           greater than 138us: its a zero bit
 //                                        
@@ -76,8 +77,12 @@
 //           
 //------------------------------------------------------------------------
 #define MAX_ONEBITFULL  146
-#define MAX_PRAEAMBEL   146 //138
+#define MAX_PRAEAMBEL   146 
 #define MAX_ONEBITHALF  82
+#define MIN_ONEBITFULL  82
+#define MIN_ONEBITHALF  35
+#define MAX_BITDIFF     18
+
 
 // Debug-Ports
 //#define debug     // Testpulse for logic analyser
@@ -192,7 +197,7 @@ struct countOf_t countOf;
 #endif
 
 static byte  ISREdge;   // RISING or FALLING
-static word  bitMax;
+static word  bitMax, bitMin;
 
 typedef enum
 {
@@ -228,6 +233,7 @@ typedef struct
 #ifdef DCC_DEBUG
   uint8_t	IntCount;
   uint8_t	TickCount;
+  uint8_t   NestedIrqCount;
 #endif
 } 
 DCC_PROCESSOR_STATE ;
@@ -240,19 +246,38 @@ void ExternalInterruptHandler(void)
     uint8_t DccBitVal;
     static int8_t  bit1, bit2 ;
     static word  lastMicros;
-    static byte halfBit;
+    static byte halfBit, DCC_IrqRunning;
     unsigned int  actMicros, bitMicros;
+    if ( DCC_IrqRunning ) {
+        // nested DCC IRQ - obviously there are glitches
+        // ignore this interrupt and increment glitchcounter
+        CLR_TP3;
+        #ifdef DCC_DEBUG
+            DccProcState.NestedIrqCount++;
+        #endif
+        SET_TP3;
+        return; //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> abort IRQ
+    }
     SET_TP3;
     actMicros = micros();
     bitMicros = actMicros-lastMicros;
+    if ( bitMicros < bitMin ) {
+        // too short - my be false interrupt due to glitch or false protocol -> ignore
+        CLR_TP3;
+        SET_TP4;
+        SET_TP4;
+        CLR_TP4;
+        return; //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> abort IRQ
+    }
     DccBitVal = ( bitMicros < bitMax );
     lastMicros = actMicros;
     //#ifdef debug
-    if(DccBitVal) {SET_TP2} else {CLR_TP2};
+    if(DccBitVal) {SET_TP2;} else {CLR_TP2;};
     //#endif
+    DCC_IrqRunning = true;
     sei();  // time critical is only the micros() command,so allow nested irq's
 #ifdef DCC_DEBUG
-	DccProcState.TickCount++;
+    DccProcState.TickCount++;
 #endif
 
   switch( DccRx.State )
@@ -269,6 +294,7 @@ void ExternalInterruptHandler(void)
         attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, CHANGE);
         halfBit = 0;
         bitMax = MAX_ONEBITHALF;
+        bitMin = MIN_ONEBITHALF;
         CLR_TP1;
       }
     } else {
@@ -299,12 +325,13 @@ void ExternalInterruptHandler(void)
             halfBit = 0;
             bit2=bitMicros;
             DccRx.BitCount++;
-            if( abs(bit2-bit1) > 14 ) {
-                // the length of the 2 halbits differ too much -> wrong protokoll
+            if( abs(bit2-bit1) > MAX_BITDIFF ) {
+                // the length of the 2 halfbits differ too much -> wrong protokoll
                 CLR_TP2;
                 CLR_TP3;
                 DccRx.State = WAIT_PREAMBLE;
                 bitMax = MAX_PRAEAMBEL;
+                bitMin = MIN_ONEBITFULL;
                 DccRx.BitCount = 0;
                 attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
                 SET_TP3;
@@ -320,6 +347,7 @@ void ExternalInterruptHandler(void)
             // its a '1' halfbit -> we got only a half '0' bit -> cannot be DCC
             DccRx.State = WAIT_PREAMBLE;
             bitMax = MAX_PRAEAMBEL;
+            bitMin = MIN_ONEBITFULL;
             DccRx.BitCount = 0;
         } else {
             // we got two '0' halfbits -> it's the startbit
@@ -327,6 +355,7 @@ void ExternalInterruptHandler(void)
             if ( ISREdge == RISING ) ISREdge = FALLING; else ISREdge = RISING;
             DccRx.State = WAIT_DATA ;
             bitMax = MAX_ONEBITFULL;
+            bitMin = MIN_ONEBITFULL;
             DccRx.PacketBuf.Size = 0;
             DccRx.PacketBuf.PreambleBits = 0;
             for(uint8_t i = 0; i< MAX_DCC_MESSAGE_LEN; i++ )
@@ -345,11 +374,13 @@ void ExternalInterruptHandler(void)
             // second halfbit is 1 -> unknown protokoll
             DccRx.State = WAIT_PREAMBLE;
             bitMax = MAX_PRAEAMBEL;
+            bitMin = MIN_ONEBITFULL;
             DccRx.BitCount = 0;
         } else {
             // we got the startbit
             DccRx.State = WAIT_DATA ;
             bitMax = MAX_ONEBITFULL;
+            bitMin = MIN_ONEBITFULL;
             DccRx.PacketBuf.Size = 0;
             DccRx.PacketBuf.PreambleBits = 0;
             for(uint8_t i = 0; i< MAX_DCC_MESSAGE_LEN; i++ )
@@ -378,6 +409,7 @@ void ExternalInterruptHandler(void)
       {
         DccRx.State = WAIT_PREAMBLE ;
         bitMax = MAX_PRAEAMBEL;
+        bitMin = MIN_ONEBITFULL;
         DccRx.BitCount = 0 ;
       }
       else
@@ -395,6 +427,7 @@ void ExternalInterruptHandler(void)
       CLR_TP3;
       DccRx.State = WAIT_PREAMBLE ;
       bitMax = MAX_PRAEAMBEL;
+      bitMin = MIN_ONEBITFULL;
       DccRx.PacketCopy = DccRx.PacketBuf ;
       DccRx.DataReady = 1 ;
       SET_TP3;
@@ -407,6 +440,7 @@ void ExternalInterruptHandler(void)
   }
   CLR_TP1;
   CLR_TP3;
+  DCC_IrqRunning = false;
 }
 
 void ackCV(void)
@@ -955,6 +989,7 @@ void NmraDcc::init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, ui
   MODE_TP4;
   ISREdge = RISING;
   bitMax = MAX_ONEBITFULL;
+  bitMin = MIN_ONEBITFULL;
   attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, RISING);
 
   DccProcState.Flags = Flags ;
@@ -1003,6 +1038,11 @@ uint8_t NmraDcc::getIntCount(void)
 uint8_t NmraDcc::getTickCount(void)
 {
   return DccProcState.TickCount;
+}
+
+uint8_t NmraDcc::getNestedIrqCount(void)
+{
+  return DccProcState.NestedIrqCount;
 }
 
 uint8_t NmraDcc::getState(void)

@@ -203,6 +203,7 @@ class NmraDcc
 	uint8_t getTickCount(void);
 	uint8_t getBitCount(void);
 	uint8_t getState(void);
+  uint8_t getNestedIrqCount(void);
 #endif
 
 };

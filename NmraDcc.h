@@ -89,7 +89,12 @@ typedef struct
 #define CV_VERSION_ID                          7
 #define CV_MANUFACTURER_ID                     8
 #define CV_29_CONFIG                          29
+
+#if defined(ESP8266)
+  #define MAXCV     4096
+#else
 #define MAXCV                                 E2END     // the upper limit of the CV value currently defined to max memory.
+#endif
 
 typedef enum {
     CV29_LOCO_DIR            = 0b00000001,	/** bit 0: Locomotive Direction: "0" = normal, "1" = reversed */

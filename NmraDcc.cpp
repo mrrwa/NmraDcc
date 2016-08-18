@@ -30,7 +30,12 @@
 //------------------------------------------------------------------------
 
 #include "NmraDcc.h"
+
+#if defined(ESP8266)
+  #include <EEPROM.h>
+#else
 #include <avr/eeprom.h>
+#endif
 
 //------------------------------------------------------------------------
 // DCC Receive Routine
@@ -449,6 +454,32 @@ void ackCV(void)
     notifyCVAck() ;
 }
 
+uint8_t readEEPROM( unsigned int CV ) {
+  #if defined(ESP8266)
+    return EEPROM.read(CV) ;
+  #else
+    return eeprom_read_byte( (uint8_t*) CV );
+  #endif
+}
+
+void writeEEPROM( unsigned int CV, uint8_t Value ) {
+  #if defined(ESP8266)
+    EEPROM.write(CV, Value) ;
+    EEPROM.commit();
+  #else
+    eeprom_write_byte( (uint8_t*) CV, Value ) ;
+  #endif
+}
+
+bool readyEEPROM() {
+  #if defined(ESP8266)
+    return true;
+  #else
+    return eeprom_is_ready();
+  #endif
+}
+
+
 uint8_t validCV( uint16_t CV, uint8_t Writable )
 {
   if( notifyCVResetFactoryDefault && (CV == CV_MANUFACTURER_ID )  && Writable )
@@ -459,7 +490,7 @@ uint8_t validCV( uint16_t CV, uint8_t Writable )
 
   uint8_t Valid = 1 ;
 
-  if( CV > E2END )
+  if( CV > MAXCV )
     Valid = 0 ;
 
   if( Writable && ( ( CV ==CV_VERSION_ID ) || (CV == CV_MANUFACTURER_ID ) ) )
@@ -475,8 +506,7 @@ uint8_t readCV( unsigned int CV )
   if( notifyCVRead )
     return notifyCVRead( CV ) ;
 
-  Value = eeprom_read_byte( (uint8_t*) CV ) ;
-
+  Value = readEEPROM(CV);
   return Value ;
 }
 
@@ -485,14 +515,14 @@ uint8_t writeCV( unsigned int CV, uint8_t Value)
   if( notifyCVWrite )
     return notifyCVWrite( CV, Value ) ;
 
-  if( eeprom_read_byte( (uint8_t*) CV ) != Value )
+  if( readEEPROM( CV ) != Value )
   {
-    eeprom_write_byte( (uint8_t*) CV, Value ) ;
+    writeEEPROM( CV, Value ) ;
 
     if( notifyCVChange )
       notifyCVChange( CV, Value) ;
   }
-  return eeprom_read_byte( (uint8_t*) CV ) ;
+  return readEEPROM( CV ) ;
 }
 
 uint16_t getMyAddr(void)
@@ -980,6 +1010,9 @@ void NmraDcc::initAccessoryDecoder( uint8_t ManufacturerId, uint8_t VersionId, u
 
 void NmraDcc::init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, uint8_t OpsModeAddressBaseCV )
 {
+  #if defined(ESP8266)
+    EEPROM.begin(4096);
+  #endif
   // Clear all the static member variables
   memset( &DccRx, 0, sizeof( DccRx) );
 
@@ -1025,8 +1058,7 @@ uint8_t NmraDcc::isSetCVReady(void)
 {
   if(notifyIsSetCVReady)
 	return notifyIsSetCVReady();
-	
-  return eeprom_is_ready();
+  return readyEEPROM();
 }
 
 #ifdef DCC_DEBUG

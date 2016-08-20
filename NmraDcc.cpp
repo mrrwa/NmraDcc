@@ -1011,7 +1011,7 @@ void NmraDcc::initAccessoryDecoder( uint8_t ManufacturerId, uint8_t VersionId, u
 void NmraDcc::init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, uint8_t OpsModeAddressBaseCV )
 {
   #if defined(ESP8266)
-    EEPROM.begin(4096);
+    EEPROM.begin(MAXCV);
   #endif
   // Clear all the static member variables
   memset( &DccRx, 0, sizeof( DccRx) );

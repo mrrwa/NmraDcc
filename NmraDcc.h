@@ -91,7 +91,8 @@ typedef struct
 #define CV_29_CONFIG                          29
 
 #if defined(ESP8266)
-  #define MAXCV     SPI_FLASH_SEC_SIZE
+#include <spi_flash.h>
+#define MAXCV     SPI_FLASH_SEC_SIZE
 #else
 #define MAXCV                                 E2END     // the upper limit of the CV value currently defined to max memory.
 #endif

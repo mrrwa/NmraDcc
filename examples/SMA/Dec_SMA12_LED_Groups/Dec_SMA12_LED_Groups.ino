@@ -1,5 +1,5 @@
 // Production 17 Function DCC Decoder 
-// Version 5.1  Geoff Bunza 2014,2015,2016
+// Version 5.4  Geoff Bunza 2014,2015,2016
 // NO LONGER REQUIRES modified software servo Lib
 // Software restructuring mods added from Alex Shepherd and Franz-Peter
 //   With sincere thanks
@@ -66,6 +66,7 @@ const int FunctionPin15 = 18;     //A4
 const int FunctionPin16 = 19;     //A5
 NmraDcc  Dcc ;
 DCC_MSG  Packet ;
+uint8_t CV_DECODER_MASTER_RESET = 120;
 
 #define This_Decoder_Address 24
 
@@ -80,6 +81,7 @@ CVPair FactoryDefaultCVs [] =
   {CV_ACCESSORY_DECODER_ADDRESS_MSB, 0},
   {CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB, 0},
   {CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB, 0},
+  {CV_DECODER_MASTER_RESET, 0},
 };
 
 uint8_t FactoryDefaultCVIndex = 0;

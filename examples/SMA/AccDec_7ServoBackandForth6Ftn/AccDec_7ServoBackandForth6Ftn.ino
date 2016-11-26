@@ -1,5 +1,5 @@
 // Production 17 Function DCC Decoder 
-// Version 5.1  Geoff Bunza 2014,2015,2016
+// Version 5.4  Geoff Bunza 2014,2015,2016
 // NO LONGER REQUIRES modified software servo Lib
 // Software restructuring mods added from Alex Shepherd and Franz-Peter
 //   With sincere thanks
@@ -19,7 +19,7 @@
 #include <NmraDcc.h>
 #include <SoftwareServo.h> 
 
-SoftwareServo servo[16];
+SoftwareServo servo[17];
 #define servo_start_delay 50
 #define servo_init_delay 7
 #define servo_slowdown  3   //servo loop counter limit
@@ -302,7 +302,7 @@ void loop()   //****************************************************************
   // from the Arduino loop() function for correct library operation
   Dcc.process();
   SoftwareServo::refresh();
-  delay(8);
+  delay(4);
   for (int i=0; i < numfpins; i++) {
     if (ftn_queue[i].inuse==1)  {
 

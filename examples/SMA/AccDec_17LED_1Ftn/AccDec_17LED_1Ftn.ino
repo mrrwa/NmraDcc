@@ -1,5 +1,5 @@
 // Production 17 Function DCC Decoder 
-// Version 5.1  Geoff Bunza 2014,2015,2016
+// Version 5.4  Geoff Bunza 2014,2015,2016
 
 // ******** UNLESS YOU WANT ALL CV'S RESET UPON EVERY POWER UP
 // ******** AFTER THE INITIAL DECODER LOAD REMOVE THE "//" IN THE FOOLOWING LINE!!

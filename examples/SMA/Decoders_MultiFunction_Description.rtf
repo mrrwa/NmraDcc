@@ -1,12 +1,13 @@
-{\rtf1\ansi\ansicpg1252\deff0\deflang1033{\fonttbl{\f0\fswiss\fprq2\fcharset0 Calibri;}}
-{\*\generator Msftedit 5.41.15.1515;}\viewkind4\uc1\pard\sl276\slmult1\b\f0\fs24 Decoder Configuration Details\par
+{\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang1033{\fonttbl{\f0\fswiss\fprq2\fcharset0 Calibri;}}
+{\*\generator Riched20 10.0.10586}\viewkind4\uc1 
+\pard\sl276\slmult1\b\f0\fs24 Decoder Configuration Details\par
 \par
-\b0 The multfunction decoder examples all for 4 functions to be assigned to any of the 17 available pins: on/off control, single line blinking with variable rate, servo control with start position/stop position/transit rate CV setting and end to end control via the function (on/off), and paired line blinking with variable rate.\par
+\b0 The multfunction decoder examples all for 6 functions to be assigned to any of the 17 available pins: on/off control, single line blinking with variable rate, servo control with start position/stop position/transit rate CV setting and end to end control via the function (on/off), and paired line blinking with variable rate.\par
 \par
 When first loaded the decoder is set to short DCC address 24 (or 17 in Decoder_17LED_1Function).  The decoder can be reset to the original parameters by loading CV 120 with 120 (decimal). This will reset everything including the decoder address, when the pushbutton on the Pro Mini is pushed (reset) or by powering the decoder off then on. You will know when the default CV setting are being reset as the decoder will flash Digital Pin 14 (A0) for one second.\par
 The decoder address can be changed to another \ul\b short\ulnone\b0  DCC address by changing CV 1.\par
 \par
-\b The 7 Servo 10 LED decoder configuration\par
+\b Example Only: 7 Servo 10 LED decoder configuration\par
 \par
 \b0 Arduino Pro Mini Pins are set as follows: 3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19\par
 \ul\b Pro Mini Pin\ulnone\b0\tab        \ul\b Function\par
@@ -151,7 +152,8 @@ For example \b F0\b0  is initially set for \b servo\b0  control:\par
 \par
 Before changing the CV settings take a look at the initial settings and make small changes first to observe the effects. This should give modelers a starting point, and a better understanding for customizing their decoders.\par
 \par
-Please also note there is a new 17 LED (On/Off) decoder configuration (Decoder_17LED_4Function), which while providing the 17 LED on/off control like the very first decoder (Decoder_17LED_1Function) introduced in this project, whichh ONLY has on/off control. However, this new version can be reconfigured via CV control to perform the other functions too.\par
+Please also note there is a new 17 LED (On/Off) decoder configuration (Dec_17LED_6Ftn), which while providing the 17 LED on/off control like the very first decoder (Dec_17LED_1Ftn) introduced in this project, which ONLY has on/off control. However, this new version can be reconfigured via CV control to perform the other functions too.\par
+
 \pard\par
 }
  

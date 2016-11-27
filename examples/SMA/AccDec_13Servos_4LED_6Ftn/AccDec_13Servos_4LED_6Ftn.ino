@@ -16,7 +16,7 @@
 #include <NmraDcc.h>
 #include <SoftwareServo.h> 
 
-SoftwareServo servo[16];
+SoftwareServo servo[17];
 #define servo_start_delay 50
 #define servo_init_delay 7
 #define servo_slowdown  3   //servo loop counter limit
@@ -299,7 +299,7 @@ void loop()   //****************************************************************
   // from the Arduino loop() function for correct library operation
   Dcc.process();
   SoftwareServo::refresh();
-  delay(8);
+  delay(4);
   for (int i=0; i < numfpins; i++) {
     if (ftn_queue[i].inuse==1)  {
 

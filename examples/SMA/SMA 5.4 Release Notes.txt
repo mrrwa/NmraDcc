@@ -1,0 +1,47 @@
+Release Notes for the 5.4 SMA Decoder Examples
+1. Buf fix to allow maximum of 17 servos
+
+2. Bug Fix to correct 2 reload #define definitions
+
+3. Change to major Loop Delay cut in half to allow for fewer misses of DCC packet detection
+
+4. File Decoders_MultiFunction_Description.rtf has minor edits for new file names and 6FTN version.
+
+Release Notes for the 5.1 SMA Decoder Examples
+
+1. Automatic servo attachment and detachment has been implemented for all
+   servo control functions. When a servo has stopped at the end of its traverse, 
+   it will be "detached" by the software. This has been demonstrated 
+   to reduce power consumption greatly and reduce servo "chatter."
+
+2. Several bug fixes including all reported bugs as of May 2016
+
+3. In the fully conficurable verions. all 17 pins now can be configured for any of 6 functions
+   Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=variable Pulse ,5=fade on
+
+4. Servo timing has a timing modifier added for extra slow servo traverse
+   #define servo_slowdown  3   //servo loop counter limit
+   Can be set from 0 to 255  -- the higher the number the slower the traverse
+
+5. Software has been restructured to support new NmraDcc library releases 
+   including the NmraDcc-MicroBahner library version.
+
+6. 18 Predefined decoder skectekes are included:
+Mobile Decoders:
+	Dec_2MotDrive_12LED_1Srv_6Ftn		Dual motor drive, 12 LED 6 Function
+	Dec_7Serv_10LED_6Ftn			7 Servo 10 LED 6 Function
+	Dec_10Serv_7LED_6Ftn			10 Servo 7 LED 6 Function
+	Dec_13Serv_4LED_6Ftn			13 Servo 4 LED 6 Function
+	Dec_15Serv_2LED_6Ftn			15 Servo 2 LED 6 Function
+	Dec_17LED_1Ftn				17 LED ON/OFF Control
+	Dec_17LED_6Ftn				17 LED 6 Function
+	Dec_Dir_and_Fade				17 LED with Dual Direction Control and FADE
+	Dec_SMA12_LED_Groups			LED Group Control for Euro Signaling
+Accessory Decoders:
+	AccDec_7ServoBackandForth6Ftn		7 Servo 10 LED 6 Function
+	AccDec_7Servos_10LED_6Ftn		7 Servo 10 LED 6 Function
+	AccDec_10Servos_7LED_6Ftn		10 Servo 7 LED 6 Function
+	AccDec_13Servos_4LED_6Ftn		13 Servo 4 LED 6 Function
+	AccDec_15Servos_2LED_6Ftn		15 Servo 2 LED 6 Function
+	AccDec_17LED_1Ftn				17 LED ON/OFF Control
+	AccDec_17LED_6Ftn				17 LED 6 Function

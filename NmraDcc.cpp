@@ -31,13 +31,13 @@
 //------------------------------------------------------------------------
 
 #include "NmraDcc.h"
-
+/*
 #if defined(ESP8266)
   #include <EEPROM.h>
 #else
 #include <avr/eeprom.h>
 #endif
-
+*/
 //------------------------------------------------------------------------
 // DCC Receive Routine
 //
@@ -91,7 +91,7 @@
 
 
 // Debug-Ports
-//#define debug     // Testpulse for logic analyser
+#define debug     // Testpulse for logic analyser
 #ifdef debug 
     #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
         #define MODE_TP1 DDRF |= (1<<2) //pinA2
@@ -146,6 +146,21 @@
         #define MODE_TP4 pinMode( A4,OUTPUT )   // A4 = PortB Bit3
         #define SET_TP4  GPIOB_PSOR = 0x08
         #define CLR_TP4  GPIOB_PCOR = 0x08
+    #elif defined (__STM32F1__)
+        // STM32F103...
+        #define MODE_TP1 pinMode( PB12,OUTPUT )   // TP1= PB12
+        #define SET_TP1  gpio_write_bit( GPIOB,12, HIGH );
+        #define CLR_TP1  gpio_write_bit( GPIOB,12, LOW );
+        #define MODE_TP2 pinMode( PB13,OUTPUT )   // TP2= PB13
+        #define SET_TP2  gpio_write_bit( GPIOB,13, HIGH );
+        #define CLR_TP2  gpio_write_bit( GPIOB,13, LOW );
+        #define MODE_TP3 pinMode( PB14,OUTPUT )   // TP3 = PB14
+        #define SET_TP3  gpio_write_bit( GPIOB,14, HIGH );
+        #define CLR_TP3  gpio_write_bit( GPIOB,14, LOW );
+        #define MODE_TP4 pinMode( PB15,OUTPUT )   // TP4 = PB15
+        #define SET_TP4  gpio_write_bit( GPIOB,15, HIGH );
+        #define CLR_TP4  gpio_write_bit( GPIOB,15, LOW );
+        
     #elif defined (__SAM3X8E__)
         // Arduino Due
         #define MODE_TP1 pinMode( A1,OUTPUT )   // A1= PA24
@@ -202,7 +217,11 @@
 struct countOf_t countOf;
 #endif
 
+#if defined ( __STM32F1__ )
+static ExtIntTriggerMode ISREdge;
+#else
 static byte  ISREdge;   // RISING or FALLING
+#endif
 static word  bitMax, bitMin;
 
 typedef enum
@@ -270,9 +289,7 @@ void ExternalInterruptHandler(void)
     if ( bitMicros < bitMin ) {
         // too short - my be false interrupt due to glitch or false protocol -> ignore
         CLR_TP3;
-        SET_TP4;
-        SET_TP4;
-        CLR_TP4;
+        SET_TP4; CLR_TP4;
         return; //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> abort IRQ
     }
     DccBitVal = ( bitMicros < bitMax );
@@ -281,7 +298,7 @@ void ExternalInterruptHandler(void)
     if(DccBitVal) {SET_TP2;} else {CLR_TP2;};
     //#endif
     DCC_IrqRunning = true;
-    sei();  // time critical is only the micros() command,so allow nested irq's
+    interrupts();  // time critical is only the micros() command,so allow nested irq's
 #ifdef DCC_DEBUG
     DccProcState.TickCount++;
 #endif
@@ -297,6 +314,9 @@ void ExternalInterruptHandler(void)
         DccRx.State = WAIT_START_BIT ;
         // While waiting for the start bit, detect halfbit lengths. We will detect the correct
         // sync and detect whether we see a false (e.g. motorola) protocol
+		#if defined ( __STM32F1__ )
+		detachInterrupt( DccProcState.ExtIntNum );
+		#endif
         attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, CHANGE);
         halfBit = 0;
         bitMax = MAX_ONEBITHALF;
@@ -321,12 +341,13 @@ void ExternalInterruptHandler(void)
             bit1=bitMicros;
         } else {
             // was "0" half bit, maybe the startbit
+			SET_TP1;
             halfBit = 4;
+			CLR_TP1;
         }
         break;
       case 1: //SET_TP1; // previous halfbit was '1'
         if ( DccBitVal ) {
-            CLR_TP1;
             // its a '1' halfBit -> we are still in the preamble
             halfBit = 0;
             bit2=bitMicros;
@@ -339,13 +360,20 @@ void ExternalInterruptHandler(void)
                 bitMax = MAX_PRAEAMBEL;
                 bitMin = MIN_ONEBITFULL;
                 DccRx.BitCount = 0;
+				SET_TP4;
+				#if defined ( __STM32F1__ )
+				detachInterrupt( DccProcState.ExtIntNum );
+				#endif
                 attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
-                SET_TP3;
+				SET_TP3;
+				CLR_TP4;
             }
         } else {
             // first '0' half detected in second halfBit
             // wrong sync or not a DCC protokoll
+			CLR_TP3;
             halfBit = 3;
+			SET_TP3;
         }
         break;
       case 3: //SET_TP1;  // previous halfbit was '0'  in second halfbit  
@@ -371,8 +399,13 @@ void ExternalInterruptHandler(void)
             DccRx.BitCount = 0 ;
             DccRx.TempByte = 0 ;
         }
-        attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+		SET_TP4;
+			#if defined ( __STM32F1__ )
+			detachInterrupt( DccProcState.ExtIntNum );
+			#endif
+			attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
         CLR_TP1;
+		CLR_TP4;
         break;
       case 4: SET_TP1; // previous (first) halfbit was 0
         // if this halfbit is 0 too, we got the startbit
@@ -396,8 +429,14 @@ void ExternalInterruptHandler(void)
             DccRx.BitCount = 0 ;
             DccRx.TempByte = 0 ;
         }
-        attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+		
         CLR_TP1;
+		SET_TP4;
+		#if defined ( __STM32F1__ )
+		detachInterrupt( DccProcState.ExtIntNum );
+		#endif
+		attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+		CLR_TP4;
         break;
             
     }        
@@ -456,28 +495,30 @@ void ackCV(void)
 }
 
 uint8_t readEEPROM( unsigned int CV ) {
-  #if defined(ESP8266)
+  //#if defined(ESP8266)
     return EEPROM.read(CV) ;
-  #else
-    return eeprom_read_byte( (uint8_t*) CV );
-  #endif
+  //#else
+  //  return eeprom_read_byte( (uint8_t*) CV );
+  //#endif
 }
 
 void writeEEPROM( unsigned int CV, uint8_t Value ) {
-  #if defined(ESP8266)
+  //#if defined(ESP8266)
     EEPROM.write(CV, Value) ;
+  #if defined(ESP8266)
     EEPROM.commit();
-  #else
+ /* #else
     eeprom_write_byte( (uint8_t*) CV, Value ) ;
+	*/
   #endif
 }
 
 bool readyEEPROM() {
-  #if defined(ESP8266)
+  //#if defined(ESP8266)
     return true;
-  #else
-    return eeprom_is_ready();
-  #endif
+  //#else
+  //  return eeprom_is_ready();
+  //#endif
 }
 
 
@@ -1103,10 +1144,10 @@ uint8_t NmraDcc::process()
   {
     // We need to do this check with interrupts disabled
     //SET_TP4;
-    cli();
+    noInterrupts();
     Msg = DccRx.PacketCopy ;
     DccRx.DataReady = 0 ;
-    sei();
+    interrupts();
       #ifdef DCC_DBGVAR
       countOf.Tel++;
       #endif
@@ -1115,20 +1156,15 @@ uint8_t NmraDcc::process()
     
     for(uint8_t i = 0; i < DccRx.PacketCopy.Size; i++)
       xorValue ^= DccRx.PacketCopy.Data[i];
-    //CLR_TP4;
     if(xorValue) {
-      SET_TP4;
       #ifdef DCC_DBGVAR
       countOf.Err++;
       #endif
-      CLR_TP4;
       return 0 ;
     } else {
-        //SET_TP4;
 		if( notifyDccMsg ) 	notifyDccMsg( &Msg );
 		
         execDccProcessor( &Msg );
-        //CLR_TP4;
     }
     return 1 ;
   }

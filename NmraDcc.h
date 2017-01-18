@@ -42,6 +42,8 @@
 #include "WProgram.h"
 #endif
 
+#include "EEPROM.h"
+
 #ifndef NMRADCC_IS_IN
 #define NMRADCC_IS_IN
 
@@ -93,6 +95,9 @@ typedef struct
 #if defined(ESP8266)
 #include <spi_flash.h>
 #define MAXCV     SPI_FLASH_SEC_SIZE
+#elif defined( __STM32F1__)
+#define MAXCV	(EEPROM_PAGE_SIZE/4 - 1)	// number of storage places (CV address could be larger
+											// because STM32 uses virtual adresses)
 #else
 #define MAXCV                                 E2END     // the upper limit of the CV value currently defined to max memory.
 #endif

@@ -99,7 +99,7 @@ typedef struct
 #define MAXCV	(EEPROM_PAGE_SIZE/4 - 1)	// number of storage places (CV address could be larger
 											// because STM32 uses virtual adresses)
 #else
-#define MAXCV                                 E2END     // the upper limit of the CV value currently defined to max memory.
+#define MAXCV    E2END     					// the upper limit of the CV value currently defined to max memory.
 #endif
 
 typedef enum {

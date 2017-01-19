@@ -21,7 +21,8 @@
 //                       and new signature of notifyDccSpeed and notifyDccFunc
 //            2015-12-16 Version without use of Timer0 by Franz-Peter Müller
 //            2016-07-16 handle glitches on DCC line
-//						2016-08-20 added ESP8266 support by Sven (littleyoda) 
+//			  2016-08-20 added ESP8266 support by Sven (littleyoda) 
+//			  2017-01-19 added STM32F1 support by Franz-Peter
 //
 //------------------------------------------------------------------------
 //
@@ -31,13 +32,7 @@
 //------------------------------------------------------------------------
 
 #include "NmraDcc.h"
-/*
-#if defined(ESP8266)
-  #include <EEPROM.h>
-#else
-#include <avr/eeprom.h>
-#endif
-*/
+
 //------------------------------------------------------------------------
 // DCC Receive Routine
 //
@@ -495,30 +490,17 @@ void ackCV(void)
 }
 
 uint8_t readEEPROM( unsigned int CV ) {
-  //#if defined(ESP8266)
     return EEPROM.read(CV) ;
-  //#else
-  //  return eeprom_read_byte( (uint8_t*) CV );
-  //#endif
 }
 
 void writeEEPROM( unsigned int CV, uint8_t Value ) {
-  //#if defined(ESP8266)
     EEPROM.write(CV, Value) ;
   #if defined(ESP8266)
     EEPROM.commit();
- /* #else
-    eeprom_write_byte( (uint8_t*) CV, Value ) ;
-	*/
-  #endif
 }
 
 bool readyEEPROM() {
-  //#if defined(ESP8266)
     return true;
-  //#else
-  //  return eeprom_is_ready();
-  //#endif
 }
 
 
@@ -1037,7 +1019,12 @@ NmraDcc::NmraDcc()
 
 void NmraDcc::pin( uint8_t ExtIntNum, uint8_t ExtIntPinNum, uint8_t EnablePullup)
 {
+#if defined ( __STM32F1__ )
+  // with STM32F1 the interuptnumber is equal the pin number
+  DccProcState.ExtIntNum = ExtIntPinNum;
+#else
   DccProcState.ExtIntNum = ExtIntNum;
+#endif
   DccProcState.ExtIntPinNum = ExtIntPinNum;
 	
   pinMode( ExtIntPinNum, INPUT );

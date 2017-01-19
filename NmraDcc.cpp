@@ -86,7 +86,7 @@
 
 
 // Debug-Ports
-#define debug     // Testpulse for logic analyser
+//#define debug     // Testpulse for logic analyser
 #ifdef debug 
     #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
         #define MODE_TP1 DDRF |= (1<<2) //pinA2

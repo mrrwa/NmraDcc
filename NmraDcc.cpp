@@ -155,21 +155,20 @@
         #define MODE_TP4 pinMode( PB15,OUTPUT )   // TP4 = PB15
         #define SET_TP4  gpio_write_bit( GPIOB,15, HIGH );
         #define CLR_TP4  gpio_write_bit( GPIOB,15, LOW );
+    #elif defined(ESP8266)
+        #define MODE_TP1 pinMode( D5,OUTPUT ) ; // GPIO 14
+        #define SET_TP1  GPOS = (1 << D5);
+        #define CLR_TP1  GPOC = (1 << D5);
+        #define MODE_TP2 pinMode( D6,OUTPUT ) ; // GPIO 12
+        #define SET_TP2  GPOS = (1 << D6);
+        #define CLR_TP2  GPOC = (1 << D6);
+        #define MODE_TP3 pinMode( D7,OUTPUT ) ; // GPIO 13
+        #define SET_TP3  GPOS = (1 << D7);
+        #define CLR_TP3  GPOC = (1 << D7);
+        #define MODE_TP4 pinMode( D7,OUTPUT ); // GPIO 15
+        #define SET_TP4  GPOC = (1 << D8);
+        #define CLR_TP4  GPOC = (1 << D8);
         
-    #elif defined (__SAM3X8E__)
-        // Arduino Due
-        #define MODE_TP1 pinMode( A1,OUTPUT )   // A1= PA24
-        #define SET_TP1  REG_PIOA_SODR = (1<<24)
-        #define CLR_TP1  REG_PIOA_CODR = (1<<24)
-        #define MODE_TP2 pinMode( A2,OUTPUT )   // A2= PA23
-        #define SET_TP2  REG_PIOA_SODR = (1<<23)
-        #define CLR_TP2  REG_PIOA_CODR = (1<<23)
-        #define MODE_TP3 pinMode( A3,OUTPUT )   // A3 = PA22
-        #define SET_TP3  REG_PIOA_SODR = (1<<22)
-        #define CLR_TP3  REG_PIOA_CODR = (1<<22)
-        #define MODE_TP4 pinMode( A4,OUTPUT )   // A4 = PA6
-        #define SET_TP4  REG_PIOA_SODR = (1<<6)
-        #define CLR_TP4  REG_PIOA_CODR = (1<<6)
         
     //#elif defined(__AVR_ATmega128__) ||defined(__AVR_ATmega1281__)||defined(__AVR_ATmega2561__)
     #else
@@ -497,6 +496,7 @@ void writeEEPROM( unsigned int CV, uint8_t Value ) {
     EEPROM.write(CV, Value) ;
   #if defined(ESP8266)
     EEPROM.commit();
+  #endif
 }
 
 bool readyEEPROM() {

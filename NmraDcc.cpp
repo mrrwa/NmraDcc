@@ -2,7 +2,7 @@
 //
 // Model Railroading with Arduino - NmraDcc.cpp 
 //
-// Copyright (c) 2008 - 2105 Alex Shepherd
+// Copyright (c) 2008 - 2017 Alex Shepherd
 //
 // This source file is subject of the GNU general public license 2,
 // that is available at the world-wide-web at

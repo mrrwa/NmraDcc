@@ -32,6 +32,9 @@
 //------------------------------------------------------------------------
 
 #include "NmraDcc.h"
+#ifdef __AVR_MEGA__
+#include <avr/eeprom.h>
+#endif
 
 //------------------------------------------------------------------------
 // DCC Receive Routine
@@ -288,9 +291,9 @@ void ExternalInterruptHandler(void)
     }
     DccBitVal = ( bitMicros < bitMax );
     lastMicros = actMicros;
-    //#ifdef debug
+    #ifdef debug
     if(DccBitVal) {SET_TP2;} else {CLR_TP2;};
-    //#endif
+    #endif
     DCC_IrqRunning = true;
     interrupts();  // time critical is only the micros() command,so allow nested irq's
 #ifdef DCC_DEBUG
@@ -500,7 +503,11 @@ void writeEEPROM( unsigned int CV, uint8_t Value ) {
 }
 
 bool readyEEPROM() {
-    return true;
+    #ifdef __AVR_MEGA__
+        return eeprom_is_ready();
+    #else
+        return true;
+    #endif
 }
 
 

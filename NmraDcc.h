@@ -196,24 +196,25 @@ class NmraDcc
     NmraDcc();
 
 // Flag values to be logically ORed together and passed into the init() method
-#define FLAGS_MY_ADDRESS_ONLY				0x01	// Only process DCC Packets with My Address
-#define FLAGS_OUTPUT_ADDRESS_MODE		0x40  // CV 29/541 bit 6
-#define FLAGS_DCC_ACCESSORY_DECODER	0x80  // CV 29/541 bit 7
-	void pin( uint8_t ExtIntNum, uint8_t ExtIntPinNum, uint8_t EnablePullup); 
+#define FLAGS_MY_ADDRESS_ONLY        0x01	// Only process DCC Packets with My Address
+#define FLAGS_OUTPUT_ADDRESS_MODE    0x40  // CV 29/541 bit 6
+#define FLAGS_DCC_ACCESSORY_DECODER  0x80  // CV 29/541 bit 7
+  void pin( uint8_t ExtIntNum, uint8_t ExtIntPinNum, uint8_t EnablePullup); 
   void init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, uint8_t OpsModeAddressBaseCV );
   void initAccessoryDecoder( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, uint8_t OpsModeAddressBaseCV );
   uint8_t process();
   uint8_t getCV( uint16_t CV );
   uint8_t setCV( uint16_t CV, uint8_t Value);
-	uint8_t isSetCVReady( void );
-	uint16_t getAddr(void);
+  void setAccDecDCCAddrNextReceived(uint8_t enable);
+  uint8_t isSetCVReady( void );
+  uint16_t getAddr(void);
 	
 // #define DCC_DEBUG
 #ifdef DCC_DEBUG
-	uint8_t getIntCount(void);
-	uint8_t getTickCount(void);
-	uint8_t getBitCount(void);
-	uint8_t getState(void);
+  uint8_t getIntCount(void);
+  uint8_t getTickCount(void);
+  uint8_t getBitCount(void);
+  uint8_t getState(void);
   uint8_t getNestedIrqCount(void);
 #endif
 
@@ -239,7 +240,11 @@ extern void notifyDccAccState( uint16_t Addr, uint16_t BoardAddr, uint8_t Output
 extern void notifyDccAccTurnoutBoard( uint16_t BoardAddr, uint8_t OutputPair, uint8_t Direction, uint8_t OutputPower ) __attribute__ ((weak));
 extern void notifyDccAccTurnoutOutput( uint16_t Addr, uint8_t Direction, uint8_t OutputPower ) __attribute__ ((weak));
 
+extern void notifyDccAccBoardAddrSet( uint16_t BoardAddr) __attribute__ ((weak));
+extern void notifyDccAccOutputAddrSet( uint16_t Addr) __attribute__ ((weak));
+
 extern void notifyDccSigState( uint16_t Addr, uint8_t OutputIndex, uint8_t State) __attribute__ ((weak));
+extern void notifyDccSigOutputState( uint16_t Addr, uint8_t State) __attribute__ ((weak));
 
 extern void    notifyDccMsg( DCC_MSG * Msg ) __attribute__ ((weak));
 

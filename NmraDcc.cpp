@@ -249,6 +249,8 @@ typedef struct
   DCC_MSG   LastMsg ;
   uint8_t	ExtIntNum; 
   uint8_t	ExtIntPinNum;
+  int16_t   myDccAddress;	// Cached value of DCC Address from CVs
+  uint8_t   inAccDecDCCAddrNextReceivedMode; 
 #ifdef DCC_DEBUG
   uint8_t	IntCount;
   uint8_t	TickCount;
@@ -536,6 +538,15 @@ uint8_t readCV( unsigned int CV )
 
 uint8_t writeCV( unsigned int CV, uint8_t Value)
 {
+  switch( CV )
+  {
+    case CV_ACCESSORY_DECODER_ADDRESS_LSB:	// Also same CV for CV_MULTIFUNCTION_PRIMARY_ADDRESS
+    case CV_ACCESSORY_DECODER_ADDRESS_MSB:
+    case CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB:
+    case CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB:
+	  DccProcState.myDccAddress = -1;	// Assume any CV Write Operation might change the Address
+  }
+  
   if( notifyCVWrite )
     return notifyCVWrite( CV, Value ) ;
 
@@ -551,24 +562,30 @@ uint8_t writeCV( unsigned int CV, uint8_t Value)
 
 uint16_t getMyAddr(void)
 {
-  uint16_t  Addr ;
   uint8_t   CV29Value ;
+  
+  if( DccProcState.myDccAddress != -1 )	// See if we can return the cached value 
+  	return( DccProcState.myDccAddress );
 
   CV29Value = readCV( CV_29_CONFIG ) ;
 
-  if( CV29Value & CV29_ACCESSORY_DECODER )  // Accessory Decoder? 
-    Addr = ( readCV( CV_ACCESSORY_DECODER_ADDRESS_MSB ) << 6 ) | readCV( CV_ACCESSORY_DECODER_ADDRESS_LSB ) ;
-
+  if( CV29Value & CV29_ACCESSORY_DECODER )  // Accessory Decoder?
+  {
+    if( CV29Value & CV29_OUTPUT_ADDRESS_MODE ) 
+      DccProcState.myDccAddress = ( readCV( CV_ACCESSORY_DECODER_ADDRESS_MSB ) << 8 ) | readCV( CV_ACCESSORY_DECODER_ADDRESS_LSB ) ;
+    else
+      DccProcState.myDccAddress = ( ( readCV( CV_ACCESSORY_DECODER_ADDRESS_MSB ) & 0b00000111) << 6 ) | ( readCV( CV_ACCESSORY_DECODER_ADDRESS_LSB ) & 0b00111111) ;
+  }
   else   // Multi-Function Decoder?
   {
     if( CV29Value & CV29_EXT_ADDRESSING )  // Two Byte Address?
-      Addr = ( ( readCV( CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB ) - 192 ) << 8 ) | readCV( CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB ) ;
+      DccProcState.myDccAddress = ( ( readCV( CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB ) - 192 ) << 8 ) | readCV( CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB ) ;
 
     else
-      Addr = readCV( 1 ) ;
+      DccProcState.myDccAddress = readCV( 1 ) ;
   }
-
-  return Addr ;
+  	
+  return DccProcState.myDccAddress ;
 }
 
 void processDirectOpsOperation( uint8_t Cmd, uint16_t CVAddr, uint8_t Value )
@@ -964,16 +981,44 @@ void execDccProcessor( DCC_MSG * pDccMsg )
 
           BoardAddress = ( ( (~pDccMsg->Data[1]) & 0b01110000 ) << 2 ) | ( pDccMsg->Data[0] & 0b00111111 ) ;
 
-          // If we're filtering was it my board address Our or a broadcast address
-          if( ( DccProcState.Flags & FLAGS_MY_ADDRESS_ONLY ) && ( BoardAddress != getMyAddr() ) && ( BoardAddress != 511 ) )
-            return;
-
           OutputAddress = pDccMsg->Data[1] & 0b00000111 ;
           
           OutputIndex = OutputAddress >> 1;
 
           Address = ( ( ( BoardAddress - 1 ) << 2 ) | OutputIndex ) + 1 ;
+          
+          if( DccProcState.inAccDecDCCAddrNextReceivedMode)
+          {
+          	if( DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE )
+          	{
+          	  writeCV(CV_ACCESSORY_DECODER_ADDRESS_LSB, (uint8_t)(Address % 256));
+          	  writeCV(CV_ACCESSORY_DECODER_ADDRESS_MSB, (uint8_t)(Address / 256));
+          	  
+          	  if( notifyDccAccOutputAddrSet )
+          	  	notifyDccAccOutputAddrSet(Address);
+          	} 
+          	else
+          	{
+          	  writeCV(CV_ACCESSORY_DECODER_ADDRESS_LSB, (uint8_t)(BoardAddress % 64));
+          	  writeCV(CV_ACCESSORY_DECODER_ADDRESS_MSB, (uint8_t)(BoardAddress / 64));
+          	  
+          	  if( notifyDccAccBoardAddrSet )
+          	  	notifyDccAccBoardAddrSet(BoardAddress);
+          	}
+          	
+          	DccProcState.inAccDecDCCAddrNextReceivedMode = 0; // Reset the mode now that we have set the address 
+          }
 
+          // If we're filtering was it my board address Our or a broadcast address
+          if( DccProcState.Flags & FLAGS_MY_ADDRESS_ONLY )
+          {
+            if( ( DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE ) && ( Address != getMyAddr() ) && ( Address < 2045 ) )
+              return;
+              
+            else if( ( BoardAddress != getMyAddr() ) && ( BoardAddress != 511 ) )
+              return;
+          }
+          
           if(pDccMsg->Data[1] & 0b10000000)
           {
           	uint8_t direction = OutputAddress & 0x01;
@@ -981,18 +1026,28 @@ void execDccProcessor( DCC_MSG * pDccMsg )
           	
             if( notifyDccAccState )
               notifyDccAccState( Address, BoardAddress, OutputAddress, pDccMsg->Data[1] & 0b00001000 ) ;
-              
-            if( notifyDccAccTurnoutBoard )
+            
+            if( DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE )
+            {
+              if( notifyDccAccTurnoutOutput )
+                notifyDccAccTurnoutOutput( Address, direction, outputPower );
+            }
+            else
+            {
+              if( notifyDccAccTurnoutBoard )
             	notifyDccAccTurnoutBoard( BoardAddress, OutputIndex, direction, outputPower );
-            	
-            if( notifyDccAccTurnoutOutput )
-            	notifyDccAccTurnoutOutput( Address, direction, outputPower );
+            }
           }
 
           else
           {
+          	uint8_t state = pDccMsg->Data[2] & 0b00011111;
+          	
             if( notifyDccSigState )
-              notifyDccSigState( Address, OutputIndex, pDccMsg->Data[2] ) ;
+              notifyDccSigState( Address, OutputIndex, state ) ;
+            
+            if( notifyDccSigOutputState )
+              notifyDccSigOutputState(Address, state);
           }
         }
       }
@@ -1056,12 +1111,13 @@ void NmraDcc::init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, ui
 
   DccProcState.Flags = Flags ;
   DccProcState.OpsModeAddressBaseCV = OpsModeAddressBaseCV ;
+  DccProcState.myDccAddress = -1;
+  DccProcState.inAccDecDCCAddrNextReceivedMode = 0;
 
   // Set the Bits that control Multifunction or Accessory behaviour
   // and if the Accessory decoder optionally handles Output Addressing 
-  uint8_t cv29Mask = Flags & (CV29_ACCESSORY_DECODER | CV29_OUTPUT_ADDRESS_MODE) ; // peal off the top two bits
-  writeCV( CV_29_CONFIG, ( readCV( CV_29_CONFIG ) & ~cv29Mask ) | Flags ) ;
-
+  uint8_t cv29Mask = CV29_ACCESSORY_DECODER | CV29_OUTPUT_ADDRESS_MODE ; // peal off the top two bits
+  writeCV( CV_29_CONFIG, (readCV( CV_29_CONFIG ) & ~cv29Mask) | (Flags & cv29Mask));
   writeCV( 7, VersionId ) ;
   writeCV( 8, ManufacturerId ) ;
 
@@ -1116,6 +1172,11 @@ uint8_t NmraDcc::getBitCount(void)
   return DccRx.BitCount;
 }
 #endif
+
+void NmraDcc::setAccDecDCCAddrNextReceived(uint8_t enable)
+{
+  DccProcState.inAccDecDCCAddrNextReceivedMode = enable;
+}
 
 uint8_t NmraDcc::process()
 {

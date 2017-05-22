@@ -877,6 +877,10 @@ void processServiceModeOperation( DCC_MSG * pDccMsg )
 #endif
 void resetServiceModeTimer(uint8_t inServiceMode)
 {
+  if (notifyServiceMode && inServiceMode != DccProcState.inServiceMode)
+  {
+    notifyServiceMode(inServiceMode);
+  }
   // Set the Service Mode
   DccProcState.inServiceMode = inServiceMode ;
   

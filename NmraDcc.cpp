@@ -881,6 +881,10 @@ void resetServiceModeTimer(uint8_t inServiceMode)
   DccProcState.inServiceMode = inServiceMode ;
   
   DccProcState.LastServiceModeMillis = inServiceMode ? millis() : 0 ;
+  if (notifyServiceMode && inServiceMode != DccProcState.inServiceMode)
+  {
+    notifyServiceMode(inServiceMode);
+  }
 }
 
 void clearDccProcState(uint8_t inServiceMode)

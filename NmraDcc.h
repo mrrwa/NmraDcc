@@ -251,6 +251,7 @@ extern void    notifyCVChange( uint16_t CV, uint8_t Value) __attribute__ ((weak)
 extern void    notifyCVResetFactoryDefault(void) __attribute__ ((weak));
 
 extern void    notifyCVAck(void) __attribute__ ((weak));
+extern void    notifyServiceMode(bool) __attribute__ ((weak));
 
 #if defined (__cplusplus)
 }

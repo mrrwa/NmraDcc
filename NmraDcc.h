@@ -228,23 +228,21 @@ class NmraDcc
 	extern "C" {
 #endif
 
-extern void notifyDccReset(uint8_t hardReset ) __attribute__ ((weak));
-extern void notifyDccIdle(void) __attribute__ ((weak));
+extern void    notifyDccReset(uint8_t hardReset ) __attribute__ ((weak));
+extern void    notifyDccIdle(void) __attribute__ ((weak));
 
-extern void notifyDccSpeed( uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DIRECTION Dir, DCC_SPEED_STEPS SpeedSteps ) __attribute__ ((weak));
-extern void notifyDccSpeedRaw( uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Raw) __attribute__ ((weak));
+extern void    notifyDccSpeed( uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DIRECTION Dir, DCC_SPEED_STEPS SpeedSteps ) __attribute__ ((weak));
+extern void    notifyDccSpeedRaw( uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Raw) __attribute__ ((weak));
 
-extern void notifyDccFunc( uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint8_t FuncState) __attribute__ ((weak));
+extern void    notifyDccFunc( uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint8_t FuncState) __attribute__ ((weak));
 
-extern void notifyDccAccState( uint16_t Addr, uint16_t BoardAddr, uint8_t OutputAddr, uint8_t State ) __attribute__ ((weak));
-extern void notifyDccAccTurnoutBoard( uint16_t BoardAddr, uint8_t OutputPair, uint8_t Direction, uint8_t OutputPower ) __attribute__ ((weak));
-extern void notifyDccAccTurnoutOutput( uint16_t Addr, uint8_t Direction, uint8_t OutputPower ) __attribute__ ((weak));
+extern void    notifyDccAccTurnoutBoard( uint16_t BoardAddr, uint8_t OutputPair, uint8_t Direction, uint8_t OutputPower ) __attribute__ ((weak));
+extern void    notifyDccAccTurnoutOutput( uint16_t Addr, uint8_t Direction, uint8_t OutputPower ) __attribute__ ((weak));
 
-extern void notifyDccAccBoardAddrSet( uint16_t BoardAddr) __attribute__ ((weak));
-extern void notifyDccAccOutputAddrSet( uint16_t Addr) __attribute__ ((weak));
+extern void    notifyDccAccBoardAddrSet( uint16_t BoardAddr) __attribute__ ((weak));
+extern void    notifyDccAccOutputAddrSet( uint16_t Addr) __attribute__ ((weak));
 
-extern void notifyDccSigState( uint16_t Addr, uint8_t OutputIndex, uint8_t State) __attribute__ ((weak));
-extern void notifyDccSigOutputState( uint16_t Addr, uint8_t State) __attribute__ ((weak));
+extern void    notifyDccSigOutputState( uint16_t Addr, uint8_t State) __attribute__ ((weak));
 
 extern void    notifyDccMsg( DCC_MSG * Msg ) __attribute__ ((weak));
 

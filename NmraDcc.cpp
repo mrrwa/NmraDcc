@@ -36,6 +36,8 @@
 #include <avr/eeprom.h>
 #endif
 
+#define DEBUG_PRINT		// Uncomment to print DEBUG messages
+
 //------------------------------------------------------------------------
 // DCC Receive Routine
 //
@@ -229,6 +231,15 @@ typedef enum
   WAIT_END_BIT
 } 
 DccRxWaitState ;
+
+typedef enum
+{
+  OPS_INS_RESERVED = 0,
+  OPS_INS_VERIFY_BYTE,
+  OPS_INS_BIT_MANIPULATION,
+  OPS_INS_WRITE_BYTE
+}
+OpsInstructionType;
 
 struct DccRx_t
 {
@@ -819,12 +830,12 @@ void processMultiFunctionMessage( uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t
   case 0b11000000:  // Feature Expansion Instruction
   	switch(Cmd & 0b00011111)
   	{
-  	case 0B00011110:
+  	case 0b00011110:
   	  if( notifyDccFunc )
 	    notifyDccFunc( Addr, AddrType, FN_13_20, Data1 ) ;
 	  break;
 	  
-  	case 0B00011111:
+  	case 0b00011111:
   	  if( notifyDccFunc )
 	    notifyDccFunc( Addr, AddrType, FN_21_28, Data1 ) ;
 	  break;
@@ -919,6 +930,24 @@ void clearDccProcState(uint8_t inServiceMode)
   memset( &DccProcState.LastMsg, 0, sizeof( DCC_MSG ) ) ;
 }
 
+#ifdef DEBUG_PRINT
+void SerialPrintPacketHex(const __FlashStringHelper *strLabel, DCC_MSG * pDccMsg)
+{
+  Serial.print( strLabel );
+ 
+  for( uint8_t i = 0; i < pDccMsg->Size; i++ )
+  {
+  	if( pDccMsg->Data[i] <= 9)
+	  Serial.print('0');
+  	
+	Serial.print( pDccMsg->Data[i], HEX );
+	Serial.write( ' ' );
+  }
+  Serial.println();
+}
+#endif
+
+
 void execDccProcessor( DCC_MSG * pDccMsg )
 {
   if( ( pDccMsg->Data[0] == 0 ) && ( pDccMsg->Data[1] == 0 ) )
@@ -982,30 +1011,73 @@ void execDccProcessor( DCC_MSG * pDccMsg )
         if( DccProcState.Flags & FLAGS_DCC_ACCESSORY_DECODER )
         {
           uint16_t BoardAddress ;
-          uint8_t  OutputAddress ;
-          uint8_t  OutputIndex ;
-          uint16_t Address ;
+          uint16_t OutputAddress ;
+          uint8_t  TurnoutPairIndex ;
+          
+#ifdef DEBUG_PRINT
+          SerialPrintPacketHex(F( "execDccProcessor: Accessory Decoder Command: "), pDccMsg);
+#endif          
 
           BoardAddress = ( ( (~pDccMsg->Data[1]) & 0b01110000 ) << 2 ) | ( pDccMsg->Data[0] & 0b00111111 ) ;
 
-          OutputAddress = pDccMsg->Data[1] & 0b00000111 ;
-          
-          OutputIndex = OutputAddress >> 1;
+#ifdef DEBUG_PRINT
+          Serial.print(F("execDccProcessor: Board Addr: "));
+          Serial.println(BoardAddress);
+#endif
+          	// First check for Legacy Accessory Decoder Configuration Variable Access Instruction
+          	// as it's got a different format to the others 
+          if((pDccMsg->Size == 5) && ((pDccMsg->Data[1] & 0b10001100) == 0b00001100))
+          {
+#ifdef DEBUG_PRINT
+            Serial.println(F( "execDccProcessor: Legacy Accessory Decoder CV Access Command"));
+#endif          
+              // Check if this command is for our address or the broadcast address
+            if((BoardAddress != getMyAddr()) && ( OutputAddress < 511 ))
+            {
+#ifdef DEBUG_PRINT
+              Serial.println(F("execDccProcessor: Board Address Not Matched"));
+#endif
+              return;
+            }
 
-          Address = ( ( ( BoardAddress - 1 ) << 2 ) | OutputIndex ) + 1 ;
+            uint16_t cvAddress = ((pDccMsg->Data[1] & 0b00000011) << 8) + pDccMsg->Data[2] + 1;
+		  	uint8_t  cvValue   = pDccMsg->Data[3];
+		  	
+#ifdef DEBUG_PRINT
+            Serial.print(F("execDccProcessor: CV: "));
+            Serial.print(cvAddress);
+            Serial.print(F(" Value: "));
+            Serial.println(cvValue);
+#endif          
+          	if(validCV( cvAddress, 1 ))
+              writeCV(cvAddress, cvValue);
+          	return;
+          }
+
+          TurnoutPairIndex = (pDccMsg->Data[1] & 0b00000110) >> 1;
+
+          OutputAddress = ( BoardAddress << 2 ) | TurnoutPairIndex ;
           
           if( DccProcState.inAccDecDCCAddrNextReceivedMode)
           {
           	if( DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE )
           	{
-          	  writeCV(CV_ACCESSORY_DECODER_ADDRESS_LSB, (uint8_t)(Address % 256));
-          	  writeCV(CV_ACCESSORY_DECODER_ADDRESS_MSB, (uint8_t)(Address / 256));
+#ifdef DEBUG_PRINT
+              Serial.print(F("execDccProcessor: Set Output Addr: "));
+              Serial.println(OutputAddress);
+#endif
+          	  writeCV(CV_ACCESSORY_DECODER_ADDRESS_LSB, (uint8_t)(OutputAddress % 256));
+          	  writeCV(CV_ACCESSORY_DECODER_ADDRESS_MSB, (uint8_t)(OutputAddress / 256));
           	  
           	  if( notifyDccAccOutputAddrSet )
-          	  	notifyDccAccOutputAddrSet(Address);
+          	  	notifyDccAccOutputAddrSet(OutputAddress);
           	} 
           	else
           	{
+#ifdef DEBUG_PRINT
+              Serial.print(F("execDccProcessor: Set Board Addr: "));
+              Serial.println(BoardAddress);
+#endif
           	  writeCV(CV_ACCESSORY_DECODER_ADDRESS_LSB, (uint8_t)(BoardAddress % 64));
           	  writeCV(CV_ACCESSORY_DECODER_ADDRESS_MSB, (uint8_t)(BoardAddress / 64));
           	  
@@ -1016,45 +1088,159 @@ void execDccProcessor( DCC_MSG * pDccMsg )
           	DccProcState.inAccDecDCCAddrNextReceivedMode = 0; // Reset the mode now that we have set the address 
           }
 
-          // If we're filtering was it my board address Our or a broadcast address
+          // If we're filtering addresses, does the address match our address or is it a broadcast address? If NOT then return
           if( DccProcState.Flags & FLAGS_MY_ADDRESS_ONLY )
           {
-            if( ( DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE ) && ( Address != getMyAddr() ) && ( Address < 2045 ) )
+            if( ( DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE ) && ( OutputAddress != getMyAddr() ) && ( OutputAddress < 2045 ) )
               return;
               
-            else if( ( BoardAddress != getMyAddr() ) && ( BoardAddress != 511 ) )
+            else if( ( BoardAddress != getMyAddr() ) && ( BoardAddress < 511 ) )
               return;
+
+#ifdef DEBUG_PRINT
+	        Serial.println(F("execDccProcessor: Address Matched"));
+#endif          
           }
-          
-          if(pDccMsg->Data[1] & 0b10000000)
-          {
-          	uint8_t direction = OutputAddress & 0x01;
+
+		  if((pDccMsg->Size == 4) && ((pDccMsg->Data[1] & 0b10001001) == 1))	// Extended Accessory Decoder Control Packet Format
+		  {
+          	uint8_t state = pDccMsg->Data[2] & 0b00011111;
+          	
+#ifdef DEBUG_PRINT
+            Serial.print(F("execDccProcessor: Output Addr: "));
+            Serial.print(OutputAddress);
+	        Serial.print(F(" Extended State: "));
+	        Serial.println(state);
+#endif          
+            if( notifyDccSigOutputState )
+              notifyDccSigOutputState(OutputAddress, state);
+		  }
+		  
+		  else if(pDccMsg->Size == 3)  // Basic Accessory Decoder Packet Format
+		  {
+          	uint8_t direction   =  pDccMsg->Data[1] & 0b00000001;
           	uint8_t outputPower = (pDccMsg->Data[1] & 0b00001000) >> 3;
           	
-            if( notifyDccAccState )
-              notifyDccAccState( Address, BoardAddress, OutputAddress, pDccMsg->Data[1] & 0b00001000 ) ;
-            
             if( DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE )
             {
+#ifdef DEBUG_PRINT
+              Serial.print(F("execDccProcessor: Output Addr: "));
+              Serial.print(OutputAddress);
+              Serial.print(F(" Turnout Dir: "));
+              Serial.print(direction);
+              Serial.print(F(" Output Power: "));
+              Serial.println(outputPower);
+#endif          
               if( notifyDccAccTurnoutOutput )
-                notifyDccAccTurnoutOutput( Address, direction, outputPower );
+                notifyDccAccTurnoutOutput( OutputAddress, direction, outputPower );
             }
             else
             {
+#ifdef DEBUG_PRINT
+              Serial.print(F("execDccProcessor: Turnout Pair Index: "));
+              Serial.print(TurnoutPairIndex);
+              Serial.print(F(" Dir: "));
+              Serial.print(direction);
+              Serial.print(F(" Output Power: "));
+              Serial.println(outputPower);
+#endif          
               if( notifyDccAccTurnoutBoard )
-            	notifyDccAccTurnoutBoard( BoardAddress, OutputIndex, direction, outputPower );
+            	notifyDccAccTurnoutBoard( BoardAddress, TurnoutPairIndex, direction, outputPower );
             }
           }
-
-          else
-          {
-          	uint8_t state = pDccMsg->Data[2] & 0b00011111;
-          	
-            if( notifyDccSigState )
-              notifyDccSigState( Address, OutputIndex, state ) ;
+		  else if(pDccMsg->Size == 6) // Accessory Decoder OPS Mode Programming
+		  {
+#ifdef DEBUG_PRINT
+            Serial.println(F("execDccProcessor: OPS Mode CV Programming Command"));
+#endif          
+              // Check for unsupported OPS Mode Addressing mode
+		  	if(((pDccMsg->Data[1] & 0b10001001) != 1) && ((pDccMsg->Data[1] & 0b10001111) != 0x80))
+		  	{
+#ifdef DEBUG_PRINT
+              Serial.println(F("execDccProcessor: Unsupported OPS Mode CV Addressing Mode"));
+#endif          
+              return;
+            }
             
-            if( notifyDccSigOutputState )
-              notifyDccSigOutputState(Address, state);
+              // Check if this command is for our address or the broadcast address
+            if(DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE)
+            {
+#ifdef DEBUG_PRINT
+                Serial.print(F("execDccProcessor: Check Output Address: "));
+                Serial.println(OutputAddress);
+#endif
+              if((OutputAddress != getMyAddr()) && ( OutputAddress < 2045 ))
+              {
+#ifdef DEBUG_PRINT
+                Serial.println(F("execDccProcessor: Output Address Not Matched"));
+#endif
+              	return;
+              }
+            }
+            else
+            {
+#ifdef DEBUG_PRINT
+                Serial.print(F("execDccProcessor: Check Board Address: "));
+                Serial.println(BoardAddress);
+#endif
+              if((BoardAddress != getMyAddr()) && ( BoardAddress < 511 ))
+              {
+#ifdef DEBUG_PRINT
+                Serial.println(F("execDccProcessor: Board Address Not Matched"));
+#endif
+              	return;
+              }
+            }
+              
+		  	uint16_t cvAddress = ((pDccMsg->Data[2] & 0b00000011) << 8) + pDccMsg->Data[3] + 1;
+		  	uint8_t  cvValue   = pDccMsg->Data[4];
+
+		  	OpsInstructionType insType = (OpsInstructionType)((pDccMsg->Data[2] & 0b00001100) >> 2) ;
+
+#ifdef DEBUG_PRINT
+            Serial.print(F("execDccProcessor: OPS Mode Instruction: "));
+            Serial.println(insType);
+#endif          
+			switch(insType)
+			{
+			case OPS_INS_RESERVED:
+			case OPS_INS_VERIFY_BYTE:
+#ifdef DEBUG_PRINT
+            Serial.print(F("execDccProcessor: Unsupported OPS Mode Instruction: "));
+            Serial.println(insType);
+#endif          
+				break; // We only support Write Byte or Bit Manipulation
+			
+			case OPS_INS_WRITE_BYTE:
+#ifdef DEBUG_PRINT
+                Serial.print(F("execDccProcessor: CV: "));
+                Serial.print(cvAddress);
+                Serial.print(F(" Value: "));
+                Serial.println(cvValue);
+#endif          
+				if(validCV( cvAddress, 1 ))
+                  writeCV(cvAddress, cvValue);
+				break;
+				
+               // 111CDBBB
+               // Where BBB represents the bit position within the CV,
+               // D contains the value of the bit to be verified or written,
+               // and C describes whether the operation is a verify bit or a write bit operation.
+               // C = "1" WRITE BIT
+               // C = "0" VERIFY BIT
+			case OPS_INS_BIT_MANIPULATION:
+				  // Make sure its a Write Bit Manipulation
+				if((cvValue & 0b00010000) && validCV(cvAddress, 1 ))
+				{
+				  uint8_t currentValue = readCV(cvAddress);
+				  uint8_t newValueMask = 1 << (cvValue & 0b00000111);
+				  if(cvValue & 0b00001000)
+				  	writeCV(cvAddress, cvValue | newValueMask);
+				  else
+				  	writeCV(cvAddress, cvValue & ~newValueMask);
+				}
+				break;
+			}
           }
         }
       }

@@ -36,7 +36,7 @@
 #include <avr/eeprom.h>
 #endif
 
-#define DEBUG_PRINT		// Uncomment to print DEBUG messages
+// #define DEBUG_PRINT		// Uncomment to print DEBUG messages
 
 //------------------------------------------------------------------------
 // DCC Receive Routine
@@ -590,7 +590,7 @@ uint16_t getMyAddr(void)
   if( CV29Value & CV29_ACCESSORY_DECODER )  // Accessory Decoder?
   {
     if( CV29Value & CV29_OUTPUT_ADDRESS_MODE ) 
-      DccProcState.myDccAddress = ( readCV( CV_ACCESSORY_DECODER_ADDRESS_MSB ) << 8 ) | readCV( CV_ACCESSORY_DECODER_ADDRESS_LSB ) ;
+      DccProcState.myDccAddress = ( readCV( CV_ACCESSORY_DECODER_ADDRESS_MSB ) << 8 ) | readCV( CV_ACCESSORY_DECODER_ADDRESS_LSB ) - 1;
     else
       DccProcState.myDccAddress = ( ( readCV( CV_ACCESSORY_DECODER_ADDRESS_MSB ) & 0b00000111) << 6 ) | ( readCV( CV_ACCESSORY_DECODER_ADDRESS_LSB ) & 0b00111111) ;
   }
@@ -1056,7 +1056,7 @@ void execDccProcessor( DCC_MSG * pDccMsg )
 
           TurnoutPairIndex = (pDccMsg->Data[1] & 0b00000110) >> 1;
 
-          OutputAddress = ( BoardAddress << 2 ) | TurnoutPairIndex ;
+          OutputAddress = (((BoardAddress - 1) << 2 ) | TurnoutPairIndex) + 1 ;
           
           if( DccProcState.inAccDecDCCAddrNextReceivedMode)
           {
@@ -1066,8 +1066,9 @@ void execDccProcessor( DCC_MSG * pDccMsg )
               Serial.print(F("execDccProcessor: Set Output Addr: "));
               Serial.println(OutputAddress);
 #endif
-          	  writeCV(CV_ACCESSORY_DECODER_ADDRESS_LSB, (uint8_t)(OutputAddress % 256));
-          	  writeCV(CV_ACCESSORY_DECODER_ADDRESS_MSB, (uint8_t)(OutputAddress / 256));
+			  uint16_t storedOutputAddress = OutputAddress + 1; // The value stored in CV1 & 9 for Output Addressing Mode is + 1
+          	  writeCV(CV_ACCESSORY_DECODER_ADDRESS_LSB, (uint8_t)(storedOutputAddress % 256));
+          	  writeCV(CV_ACCESSORY_DECODER_ADDRESS_MSB, (uint8_t)(storedOutputAddress / 256));
           	  
           	  if( notifyDccAccOutputAddrSet )
           	  	notifyDccAccOutputAddrSet(OutputAddress);

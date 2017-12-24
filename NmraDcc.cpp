@@ -981,26 +981,45 @@ void execDccProcessor( DCC_MSG * pDccMsg )
 
           Address = ( ( ( BoardAddress - 1 ) << 2 ) | OutputIndex ) + 1 ;
 
-          if(pDccMsg->Data[1] & 0b10000000)
+					if( pDccMsg->Size == 6 && (pDccMsg->Data[2] & 0b11100000) == 0b11100000 && (pDccMsg->Data[1] & 0b00001111) == 0 )
           {
-          	uint8_t direction = OutputAddress & 0x01;
-          	uint8_t outputPower = (pDccMsg->Data[1] & 0b00001000) >> 3;
-          	
-            if( notifyDccAccState )
-              notifyDccAccState( Address, BoardAddress, OutputAddress, pDccMsg->Data[1] & 0b00001000 ) ;
-              
-            if( notifyDccAccTurnoutBoard )
-            	notifyDccAccTurnoutBoard( BoardAddress, OutputIndex, direction, outputPower );
-            	
-            if( notifyDccAccTurnoutOutput )
-            	notifyDccAccTurnoutOutput( Address, direction, outputPower );
-          }
+            // Accessory CV programming, program entire decoder
 
+            // Process only if it is our board address or a broadcast
+            // (even if we have more than one address on this decoder,
+            // CV programming is allowed only for address defined in CV1/CV9)
+            if( BoardAddress == getMyAddr() || BoardAddress == 511 )
+            {
+              uint16_t CVAddr = ( ( ( pDccMsg->Data[2] & 0x03 ) << 8 ) | pDccMsg->Data[3] ) + 1 ;
+              uint8_t Value = pDccMsg->Data[4] ;
+
+              processDirectOpsOperation( pDccMsg->Data[2] & 0b00001100, CVAddr, Value ) ;
+            }
+
+          }
           else
           {
-            if( notifyDccSigState )
-              notifyDccSigState( Address, OutputIndex, pDccMsg->Data[2] ) ;
-          }
+						if(pDccMsg->Data[1] & 0b10000000)
+						{
+							uint8_t direction = OutputAddress & 0x01;
+							uint8_t outputPower = (pDccMsg->Data[1] & 0b00001000) >> 3;
+						
+							if( notifyDccAccState )
+								notifyDccAccState( Address, BoardAddress, OutputAddress, pDccMsg->Data[1] & 0b00001000 ) ;
+							
+							if( notifyDccAccTurnoutBoard )
+								notifyDccAccTurnoutBoard( BoardAddress, OutputIndex, direction, outputPower );
+							
+							if( notifyDccAccTurnoutOutput )
+								notifyDccAccTurnoutOutput( Address, direction, outputPower );
+						}
+
+						else
+						{
+							if( notifyDccSigState )
+								notifyDccSigState( Address, OutputIndex, pDccMsg->Data[2] ) ;
+						}
+					}
         }
       }
 

@@ -19,6 +19,8 @@
 //            2015-11-06 Martin Pischky (martin@pischky.de):
 //                       Experimental Version to support 14 speed steps
 //                       and new signature of notifyDccSpeed and notifyDccFunc
+//            2017-11-29 Ken West (kgw4449@gmail.com):
+//                       Added method and callback headers.
 //
 //------------------------------------------------------------------------
 //
@@ -196,24 +198,167 @@ class NmraDcc
     NmraDcc();
 
 // Flag values to be logically ORed together and passed into the init() method
-#define FLAGS_MY_ADDRESS_ONLY				0x01	// Only process DCC Packets with My Address
-#define FLAGS_OUTPUT_ADDRESS_MODE		0x40  // CV 29/541 bit 6
-#define FLAGS_DCC_ACCESSORY_DECODER	0x80  // CV 29/541 bit 7
-	void pin( uint8_t ExtIntNum, uint8_t ExtIntPinNum, uint8_t EnablePullup); 
+#define FLAGS_MY_ADDRESS_ONLY        0x01	// Only process DCC Packets with My Address
+#define FLAGS_OUTPUT_ADDRESS_MODE    0x40  // CV 29/541 bit 6
+#define FLAGS_DCC_ACCESSORY_DECODER  0x80  // CV 29/541 bit 7
+
+  /*+
+   *  pin() is called from setup() and sets up the pin used to receive DCC packets.
+   *
+   *  Inputs:
+   *    ExtIntNum     - Interrupt number of the pin. Use digitalPinToInterrupt(ExtIntPinNum).
+   *    ExtIntPinNum  - Input pin number.
+   *    EnablePullup  - Set true to enable the pins pullup resistor.
+   *
+   *  Returns:
+   *    None.
+   */
+  void pin( uint8_t ExtIntNum, uint8_t ExtIntPinNum, uint8_t EnablePullup); 
+
+  /*+
+   *  init() is called from setup() after the pin() command is called.
+   *  It initializes the NmDcc object and makes it ready to process packets.
+   *
+   *  Inputs:
+   *    ManufacturerId        - Manufacturer ID returned in CV 8.
+   *                            Commonly MAN_ID_DIY.
+   *    VersionId             - Version ID returned in CV 7.
+   *    Flags                 - ORed flags beginning with FLAGS_...
+   *                            FLAGS_MY_ADDRESS_ONLY       - Only process packets with My Address.
+   *                            FLAGS_DCC_ACCESSORY_DECODER - Decoder is an accessory decoder.
+   *                            FLAGS_OUTPUT_ADDRESS_MODE   - This flag applies to accessory decoders only.
+   *                                                          Accessory decoders normally have 4 paired outputs
+   *                                                          and a single address refers to all 4 outputs.
+   *                                                          Setting FLAGS_OUTPUT_ADDRESS_MODE causes each
+   *                                                          address to refer to a single output.
+   *    OpsModeAddressBaseCV  - Ops Mode base address. Set it to 0?
+   *
+   *  Returns:
+   *    None.
+   */
   void init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, uint8_t OpsModeAddressBaseCV );
+
+  /*+
+   *  initAccessoryDecoder() is called from setup() for accessory decoders.
+   *  It calls init() with FLAGS_DCC_ACCESSORY_DECODER ORed into Flags.
+   *
+   *  Inputs:
+   *    ManufacturerId        - Manufacturer ID returned in CV 8.
+   *                            Commonly MAN_ID_DIY.
+   *    VersionId             - Version ID returned in CV 7.
+   *    Flags                 - ORed flags beginning with FLAGS_...
+   *                            FLAGS_DCC_ACCESSORY_DECODER will be set for init() call.
+   *    OpsModeAddressBaseCV  - Ops Mode base address. Set it to 0?
+   *
+   *  Returns:
+   *    None.
+   */
   void initAccessoryDecoder( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, uint8_t OpsModeAddressBaseCV );
+
+  /*+
+   *  process() is called from loop() to process DCC packets.
+   *  It must be called very frequently to keep up with the packets.
+   *
+   *  Inputs:
+   *    None.
+   *
+   *  Returns:
+   *    1 - Packet succesfully parsed on this call to process().
+   *    0 - Packet not ready or received packet had an error.
+   */
   uint8_t process();
+
+  /*+
+   *  getCV() returns the selected CV value.
+   *
+   *  Inputs:
+   *    CV    - CV number. It must point to a valid CV.
+   *
+   *  Returns:
+   *    Value - CV value. Invalid CV numbers will return an undefined result
+   *            since nothing will have been set in that EEPROM position.
+   *            Calls notifyCVRead() if it is defined.
+   */
   uint8_t getCV( uint16_t CV );
+
+  /*+
+   *  setCV() sets the value of a CV.
+   *
+   *  Inputs:
+   *    CV    - CV number. It must point to a valid CV.
+   *    Value - CV value.
+   *
+   *  Returns:
+   *    Value - CV value set by this call.
+   *            since nothing will have been set in that EEPROM position.
+   *            Calls notifyCVWrite() if it is defined.
+   *            Calls notifyCVChange() if the value is changed by this call.
+   */
   uint8_t setCV( uint16_t CV, uint8_t Value);
-	uint8_t isSetCVReady( void );
-	uint16_t getAddr(void);
+
+  /*+
+   *  setAccDecDCCAddrNextReceived() enables/disables the setting of the board address from the next received turnout command
+   *
+   *  Inputs:
+   *    enable- boolean to enable or disable the mode
+   *
+   *  Returns:
+   */
+  void setAccDecDCCAddrNextReceived(uint8_t enable);
+
+  /*+
+   *  isSetCVReady() returns 1 if EEPROM is ready to write.
+   *
+   *  Inputs:
+   *    CV    - CV number. It must point to a valid CV.
+   *    Value - CV value.
+   *
+   *  Returns:
+   *    ready - 1 if ready to write, 0 otherwise. AVR processor will block
+   *            for several ms. for each write cycle so you should check this to avoid blocks.
+   *            Note: It returns the value returned by notifyIsSetCVReady() if it is defined.
+   *            Calls notifyIsSetCVReady() if it is defined.
+   */
+  uint8_t isSetCVReady( void );
+
+  /*+
+   *  getAddr() return the currently active decoder address.
+   *            based on decoder type and current address size.
+   *
+   *  Inputs:
+   *    None.
+   *
+   *  Returns:
+   *    Adr - The current decoder address based on decoder type(Multifunction, Accessory)
+   *          and short or long address selection for Multifunction decoders.
+   */
+  uint16_t getAddr(void);
 	
+  /*+
+   *  getX()  return debugging data if DCC_DEBUG is defined.
+   *          You would really need to be modifying the library to need them.
+   *
+   *  Inputs:
+   *    None.
+   *
+   *  Returns:
+   *    getIntCount       - Init to 0 and apparently never incremented?
+   *    getTickCount      - Init to 0 and incremented each time interrupt handler
+   *                        completes without an error.
+   *    getBitCount       - Bit count of valid packet, 0 otherwise. Only valid until
+   *                        start of the next packet.
+   *    getState          - Current WAIT_... state as defined by DccRxWaitState in NmraDcc.cpp.
+   *    getNestedIrqCount - Init to 0 and incremented each time the interrupt handler
+   *                        is called before the previous interrupt was complete.
+   *                        This is an error indication and may indicate the system
+   *                        is not handling packets fast enough or some other error is occurring.
+   */
 // #define DCC_DEBUG
 #ifdef DCC_DEBUG
-	uint8_t getIntCount(void);
-	uint8_t getTickCount(void);
-	uint8_t getBitCount(void);
-	uint8_t getState(void);
+  uint8_t getIntCount(void);
+  uint8_t getTickCount(void);
+  uint8_t getBitCount(void);
+  uint8_t getState(void);
   uint8_t getNestedIrqCount(void);
 #endif
 
@@ -227,29 +372,301 @@ class NmraDcc
 	extern "C" {
 #endif
 
-extern void notifyDccReset(uint8_t hardReset ) __attribute__ ((weak));
-extern void notifyDccIdle(void) __attribute__ ((weak));
+/*+
+ *  notifyDccReset(uint8_t hardReset) Callback for a DCC reset command.
+ *
+ *  Inputs:
+ *    hardReset - 0 normal reset command.
+ *                1 hard reset command.
+ *
+ *  Returns:
+ *    None
+ */
+extern void    notifyDccReset(uint8_t hardReset ) __attribute__ ((weak));
 
-extern void notifyDccSpeed( uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DIRECTION Dir, DCC_SPEED_STEPS SpeedSteps ) __attribute__ ((weak));
-extern void notifyDccSpeedRaw( uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Raw) __attribute__ ((weak));
+/*+
+ *  notifyDccIdle() Callback for a DCC idle command.
+ *
+ *  Inputs:
+ *    None
+ *
+ *  Returns:
+ *    None
+ */
+extern void    notifyDccIdle(void) __attribute__ ((weak));
 
-extern void notifyDccFunc( uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint8_t FuncState) __attribute__ ((weak));
 
-extern void notifyDccAccState( uint16_t Addr, uint16_t BoardAddr, uint8_t OutputAddr, uint8_t State ) __attribute__ ((weak));
-extern void notifyDccAccTurnoutBoard( uint16_t BoardAddr, uint8_t OutputPair, uint8_t Direction, uint8_t OutputPower ) __attribute__ ((weak));
-extern void notifyDccAccTurnoutOutput( uint16_t Addr, uint8_t Direction, uint8_t OutputPower ) __attribute__ ((weak));
+/*+
+ *  notifyDccSpeed() Callback for a multifunction decoder speed command.
+ *                   The received speed and direction are unpacked to separate values.
+ *
+ *  Inputs:
+ *    Addr        - Active decoder address.
+ *    AddrType    - DCC_ADDR_SHORT or DCC_ADDR_LONG.
+ *    Speed       - Decoder speed. 0               = Emergency stop
+ *                                 1               = Regular stop
+ *                                 2 to SpeedSteps = Speed step 1 to max.
+ *    Dir         - DCC_DIR_REV or DCC_DIR_FWD
+ *    SpeedSteps  - Highest speed, SPEED_STEP_14   =  15
+ *                                 SPEED_STEP_28   =  29
+ *                                 SPEED_STEP_128  = 127
+ *
+ *  Returns:
+ *    None
+ */
+extern void    notifyDccSpeed( uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DIRECTION Dir, DCC_SPEED_STEPS SpeedSteps ) __attribute__ ((weak));
 
-extern void notifyDccSigState( uint16_t Addr, uint8_t OutputIndex, uint8_t State) __attribute__ ((weak));
+/*+
+ *  notifyDccSpeedRaw() Callback for a multifunction decoder speed command.
+ *                      The value in Raw is the unpacked speed command.
+ *
+ *  Inputs:
+ *    Addr        - Active decoder address.
+ *    AddrType    - DCC_ADDR_SHORT or DCC_ADDR_LONG.
+ *    Raw         - Raw decoder speed command.
+ *
+ *  Returns:
+ *    None
+ */
+extern void    notifyDccSpeedRaw( uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Raw) __attribute__ ((weak));
 
-extern void    notifyDccMsg( DCC_MSG * Msg ) __attribute__ ((weak));
+/*+
+ *  notifyDccFunc() Callback for a multifunction decoder function command.
+ *
+ *  Inputs:
+ *    Addr        - Active decoder address.
+ *    AddrType    - DCC_ADDR_SHORT or DCC_ADDR_LONG.
+ *    FuncGrp     - Function group. FN_0      - 14 speed step headlight function.
+ *                                                                  Mask FN_BIT_00.
+ *                                  FN_0_4    - Functions  0 to  4. Mask FN_BIT_00 - FN_BIT_04
+ *                                  FN_5_8    - Functions  5 to  8. Mask FN_BIT_05 - FN_BIT_08
+ *                                  FN_9_12   - Functions  9 to 12. Mask FN_BIT_09 - FN_BIT_12
+ *                                  FN_13_20  - Functions 13 to 20. Mask FN_BIT_13 - FN_BIT_20 
+ *                                  FN_21_28  - Functions 21 to 28. Mask FN_BIT_21 - FN_BIT_28
+ *    FuncState   - Function state. Bitmask where active functions have a 1 at that bit.
+ *                                  You must & FuncState with the appropriate
+ *                                  FN_BIT_nn value to isolate a given bit.
+ *
+ *  Returns:
+ *    None
+ */
+extern void    notifyDccFunc( uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint8_t FuncState) __attribute__ ((weak));
 
+/*+
+ *  notifyDccAccTurnoutBoard() Board oriented callback for a turnout accessory decoder.
+ *                             Most useful when CV29_OUTPUT_ADDRESS_MODE is not set.
+ *                             Decoders of this type have 4 paired turnout outputs per board.
+ *                             OutputPower is 1 if the power is on, and 0 otherwise.
+ *
+ *  Inputs:
+ *    BoardAddr   - Per board address. Equivalent to CV 1 LSB & CV 9 MSB.
+ *    OutputPair  - Output pair number. It has a range of 0 to 3.
+ *                  Equivalent to upper 2 bits of the 3 DDD bits in the accessory packet.
+ *    Direction   - Turnout direction. It has a value of 0 or 1.
+ *                  It is equivalent to bit 0 of the 3 DDD bits in the accessory packet.
+ *    OutputPower - Output On/Off. Equivalent to packet C bit. It has these values:
+ *                  0 - Output pair is off.
+ *                  1 - Output pair is on.
+ *
+ *  Returns:
+ *    None
+ */
+extern void    notifyDccAccTurnoutBoard( uint16_t BoardAddr, uint8_t OutputPair, uint8_t Direction, uint8_t OutputPower ) __attribute__ ((weak));
+/*+
+ *  notifyDccAccTurnoutOutput() Output oriented callback for a turnout accessory decoder.
+ *                              Most useful when CV29_OUTPUT_ADDRESS_MODE is not set.
+ *                              Decoders of this type have 4 paired turnout outputs per board.
+ *                              OutputPower is 1 if the power is on, and 0 otherwise.
+ *
+ *  Inputs:
+ *    Addr        - Per output address. There will be 4 Addr addresses
+ *                  per board for a standard accessory decoder with 4 output pairs.
+ *    Direction   - Turnout direction. It has a value of 0 or 1.
+ *                  Equivalent to bit 0 of the 3 DDD bits in the accessory packet.
+ *    OutputPower - Output On/Off. Equivalent to packet C bit. It has these values:
+ *                  0 - Output is off.
+ *                  1 - Output is on.
+ *
+ *  Returns:
+ *    None
+ */
+extern void    notifyDccAccTurnoutOutput( uint16_t Addr, uint8_t Direction, uint8_t OutputPower ) __attribute__ ((weak));
+
+/*+
+ *  notifyDccAccBoardAddrSet() Board oriented callback for a turnout accessory decoder.
+ *                             This notification is when a new Board Address is set to the
+ *                             address of the next DCC Turnout Packet that is received
+ *
+ *                             This is enabled via the setAccDecDCCAddrNextReceived() method above
+ *
+ *  Inputs:
+ *    BoardAddr   - Per board address. Equivalent to CV 1 LSB & CV 9 MSB.
+ *                  per board for a standard accessory decoder with 4 output pairs.
+ *
+ *  Returns:
+ *    None
+ */
+extern void    notifyDccAccBoardAddrSet( uint16_t BoardAddr) __attribute__ ((weak));
+
+/*+
+ *  notifyDccAccOutputAddrSet() Output oriented callback for a turnout accessory decoder.
+ *                              This notification is when a new Output Address is set to the
+ *                              address of the next DCC Turnout Packet that is received
+ *
+ *                             This is enabled via the setAccDecDCCAddrNextReceived() method above
+ *
+ *  Inputs:
+ *    Addr        - Per output address. There will be 4 Addr addresses
+ *                  per board for a standard accessory decoder with 4 output pairs.
+ *
+ *  Returns:
+ *    None
+ */
+extern void    notifyDccAccOutputAddrSet( uint16_t Addr) __attribute__ ((weak));
+
+/*+
+ *  notifyDccSigOutputState() Callback for a signal aspect accessory decoder.
+ *                      Defined in S-9.2.1 as the Extended Accessory Decoder Control Packet.
+ *
+ *  Inputs:
+ *    Addr        - Decoder address.
+ *    State       - 6 bit command equivalent to S-9.2.1 00XXXXXX.
+ *
+ *  Returns:
+ *    None
+ */
+extern void    notifyDccSigOutputState( uint16_t Addr, uint8_t State) __attribute__ ((weak));
+
+/*+
+ *  notifyDccMsg() Raw DCC packet callback.
+ *                 Called with raw DCC packet bytes.
+ *
+ *  Inputs:
+ *    Msg        - Pointer to DCC_MSG structure. The values are:
+ *                 Msg->Size          - Number of Data bytes in the packet.
+ *                 Msg->PreambleBits  - Number of preamble bits in the packet.
+ *                 Msg->Data[]        - Array of data bytes in the packet.
+ *
+ *  Returns:
+ *    None
+ */
+ extern void    notifyDccMsg( DCC_MSG * Msg ) __attribute__ ((weak));
+
+/*+
+ *  notifyCVValid() Callback to determine if a given CV is valid.
+ *                  This is called when the library needs to determine
+ *                  if a CV is valid. Note: If defined, this callback
+ *                  MUST determine if a CV is valid and return the
+ *                  appropriate value. If this callback is not defined,
+ *                  the library will determine validity.
+ *
+ *  Inputs:
+ *    CV        - CV number.
+ *    Writable  - 1 for CV writes. 0 for CV reads.
+ *
+ *  Returns:
+ *    1         - CV is valid.
+ *    0         - CV is not valid.
+ */
 extern uint8_t notifyCVValid( uint16_t CV, uint8_t Writable ) __attribute__ ((weak));
+
+/*+
+ *  notifyCVRead()  Callback to read a CV.
+ *                  This is called when the library needs to read
+ *                  a CV. Note: If defined, this callback
+ *                  MUST return the value of the CV.
+ *                  If this callback is not defined,
+ *                  the library will read the CV from EEPROM.
+ *
+ *  Inputs:
+ *    CV        - CV number.
+ *
+ *  Returns:
+ *    Value     - Value of the CV.
+ */
 extern uint8_t notifyCVRead( uint16_t CV) __attribute__ ((weak));
+
+/*+
+ *  notifyCVWrite() Callback to write a value to a CV.
+ *                  This is called when the library needs to write
+ *                  a CV. Note: If defined, this callback
+ *                  MUST write the Value to the CV and return the value of the CV.
+ *                  If this callback is not defined,
+ *                  the library will read the CV from EEPROM.
+ *
+ *  Inputs:
+ *    CV        - CV number.
+ *    Value     - Value of the CV.
+ *
+ *  Returns:
+ *    Value     - Value of the CV.
+ */
 extern uint8_t notifyCVWrite( uint16_t CV, uint8_t Value) __attribute__ ((weak));
+
+/*+
+ *  notifyIsSetCVReady()  Callback to to determine if CVs can be written.
+ *                        This is called when the library needs to determine
+ *                        is ready to write without blocking or failing.
+ *                        Note: If defined, this callback
+ *                        MUST determine if a CV write would block or fail
+ *                        return the appropriate value.
+ *                        If this callback is not defined,
+ *                        the library determines if a write to the EEPROM
+ *                        would block.
+ *
+ *  Inputs:
+ *    None
+ *
+ *  Returns:
+ *    1         - CV is ready to be written.
+ *    0         - CV is not ready to be written.
+ */
 extern uint8_t notifyIsSetCVReady(void) __attribute__ ((weak));
+
+/*+
+ *  notifyCVChange()  Called when a CV value is changed.
+ *                    This is called whenever a CV's value is changed.
+ *                    Note: It is not called if notifyCVWrite() is defined
+ *                    or if the value in the EEPROM is the same as the value
+ *                    in the write command. 
+ *
+ *  Inputs:
+ *    CV        - CV number.
+ *    Value     - Value of the CV.
+ *
+ *  Returns:
+ *    None
+ */
 extern void    notifyCVChange( uint16_t CV, uint8_t Value) __attribute__ ((weak));
+
+/*+
+ *  notifyCVResetFactoryDefault() Called when CVs must be reset.
+ *                                This is called when CVs must be reset
+ *                                to their factory defaults. This callback
+ *                                should write the factory default value of
+ *                                relevent CVs using the setCV() method.
+ *                                setCV() must not block whens this is called.
+ *                                Test with isSetCVReady() prior to calling setCV()
+ *
+ *  Inputs:
+ *    None
+ *                                                                                                                                                                                                                                                                                                                                                                                     *
+ *  Returns:
+ *    None
+ */
 extern void    notifyCVResetFactoryDefault(void) __attribute__ ((weak));
 
+/*+
+ *  notifyCVAck() Called when a CV write must be acknowledged.
+ *                This callback must increase the current drawn by this
+ *                decoder by at least 60mA for 6ms +/- 1ms.
+ *
+ *  Inputs:
+ *    None
+ *                                                                                                                                                                                                                                                                                                                                                                                     *
+ *  Returns:
+ *    None
+ */
 extern void    notifyCVAck(void) __attribute__ ((weak));
 
 #if defined (__cplusplus)

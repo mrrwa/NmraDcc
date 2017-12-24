@@ -1,0 +1,1388 @@
+<Sat Nov 25 11:56:43 2017> STATUS  BEGINNING decoder test log
+<Sat Nov 25 11:56:43 2017> STATUS  Test software version X.5.6.1
+<Sat Nov 25 11:56:43 2017> STATUS  File <c:\send\send.EXE>
+<Sat Nov 25 11:56:43 2017> STATUS  CRC 1189571969, Length 164432
+Manufacturer: Iowa Arduino
+Model number: Loco
+Version number: CV7=2 Version 2.1
+Modified CVs: None
+Track Direction: Reverse
+--------------------------------
+Glitch-Injecting Booster
+C2 = 330pF
+--------------------------------
+
+Summary of command line and 'SEND.INI' switches:
+
+Usage:    send [-?] [-u] [-m] [-a addr] [-d l|a|f] [-p port]
+               [-f] [-x] [-r] [-t mask] [-c mask] [-E pre]
+               [-T] [-F fill] [-R reps] [-P] [-A] [-s] [-S]
+Ini file: <C:\RESULTS\SEND.INI>
+  -?                   Print usage message and exit.
+  -u                   Print user information to 's_user.txt' and exit.
+  -m        MANUAL     Start in manual mode.               <value true>
+  -a <addr> ADDRESS    Decoder address.                    <value 3>
+  -d l|a|f  TYPE       Decoder type(l-LOCO,a-ACC,f-FUNC).  <value L>
+  -p <port> PORT       I/O Port.                           <value 0x0340>
+  -f        FRAGMENT   Test all fragments.                 <value false>
+  -x        CRITICAL   Protect critical regions.           <value false>
+  -r        REPEAT     Repeat decoder tests.               <value false>
+  -t <mask> TESTS      Bit mask of tests to run.           <value 0xffffffff>
+  -c <mask> CLOCKS     Bit mask of clocks to try.          <value 0xfffffce7>
+  -E <pre>  EXTRA_PRE  Extra margin test preamble bits.    <value 0>
+  -T        TRIG_REV   Use reverse as trigger command.     <value false>
+  -F <fill> FILL_MSEC  Fill time in milliseconds.          <value 700>
+  -R <reps> TEST_REPS  Non packet acceptance test repeats. <value 2>
+  -P        LOG_PKTS   Send packets to log, not hardware.  <value false>
+  -A        NO_ABORT   Do not stop program on an error.    <value false>
+  -s        LATE_SCOPE Put scope trigger after trigger.    <value false>
+  -S   SAME_AMBIG_ADDR Use same address for ambig tests.   <value false>
+
+<Sat Nov 25 11:58:42 2017> STATUS  Starting decoder tests, address 3, type L
+<Sat Nov 25 11:58:42 2017> STATUS  Beginning self tests
+<Sat Nov 25 11:58:44 2017> INFO    do_self_tests -          1 Cycles passed,          0 Cycles failed
+<Sat Nov 25 11:58:44 2017> STATUS  Self tests passed
+<Sat Nov 25 11:58:44 2017> INFO    Self_tst::print_stats - Passed 1 test cycles, Failed 0 test cycles, test count 1
+<Sat Nov 25 11:58:44 2017> INFO    Self_tst::print_stats - Failed 0 vector, 0 dynamic, 0 both, last vector 199
+<Sat Nov 25 11:58:44 2017> INFO    Self_tst::print_stats - Dynamic 0 - min 104, avg 104, max 104
+<Sat Nov 25 11:58:44 2017> INFO    Self_tst::print_stats - Dynamic 1 - min 99, avg 99, max 99
+<Sat Nov 25 11:58:44 2017> STATUS  PC high  100(  90), low  100(  89)
+<Sat Nov 25 11:58:44 2017> STATUS  PC 1 usec delay 1
+<Sat Nov 25 12:02:13 2017> STATUS  Starting Decoder test cycle    1
+<Sat Nov 25 12:02:15 2017> STATUS  Margin test for 1T clock,  12 preambles
+  1T Margin:         Minimum 1T       88, Maximum 1T      141
+<Sat Nov 25 12:26:24 2017> STATUS  Duty cycle test for 1 clock,  12 preambles
+  1H Duty:           Min 1H       -7, Max 1H        4 from  58 nominal
+<Sat Nov 25 12:39:46 2017> STATUS  Starting clock <All nominal>
+- Clock 0T  200, 0H  100, 1T  116
+  Ramp:              Tests    8; Passes    8,  100%
+  pre 12 idle 1:     Tests  100; Passes  100,  100%
+  pre 12 idle 2:     Tests  100; Passes  100,  100%
+  pre 13 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 2:     Tests  100; Passes  100,  100%
+  Addr:              Tests  253; Passes  253,  100%
+  Bad bit:           Tests   39; Passes   39,  100%
+  0T   200 0H   100: Tests  100; Passes  100,  100%
+  0T 12000 0H   100: Tests  100; Passes  100,  100%
+  0T 12000 0H 11900: Tests  100; Passes  100,  100%
+  0T 12000 0H   100: Tests  100; Passes  100,  100%
+  0T 12000 0H 11900: Tests  100; Passes  100,  100%
+<Sat Nov 25 13:17:56 2017> STATUS  Starting clock <All 1/4 fast>
+- Clock 0T  196, 0H   98, 1T  113
+  Ramp:              Tests    8; Passes    8,  100%
+  pre 12 idle 1:     Tests  100; Passes  100,  100%
+  pre 12 idle 2:     Tests  100; Passes  100,  100%
+  pre 13 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 2:     Tests  100; Passes  100,  100%
+  Addr:              Tests  253; Passes  253,  100%
+  Bad bit:           Tests   39; Passes   39,  100%
+  0T   196 0H    98: Tests  100; Passes  100,  100%
+  0T 11996 0H    98: Tests  100; Passes  100,  100%
+  0T 11996 0H 11898: Tests  100; Passes  100,  100%
+  0T 12000 0H    98: Tests  100; Passes  100,  100%
+  0T 12000 0H 11902: Tests  100; Passes  100,  100%
+<Sat Nov 25 13:56:16 2017> STATUS  Starting clock <Command station min>
+- Clock 0T  190, 0H   95, 1T  110
+  Ramp:              Tests    8; Passes    8,  100%
+  pre 12 idle 1:     Tests  100; Passes  100,  100%
+  pre 12 idle 2:     Tests  100; Passes  100,  100%
+  pre 13 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 2:     Tests  100; Passes  100,  100%
+  Addr:              Tests  253; Passes  253,  100%
+  Bad bit:           Tests   39; Passes   39,  100%
+  0T   190 0H    95: Tests  100; Passes  100,  100%
+  0T 11990 0H    95: Tests  100; Passes  100,  100%
+  0T 11990 0H 11895: Tests  100; Passes  100,  100%
+  0T 12000 0H    95: Tests  100; Passes  100,  100%
+  0T 12000 0H 11905: Tests  100; Passes  100,  100%
+<Sat Nov 25 14:34:11 2017> STATUS  Starting clock <Decoder minimum>
+- Clock 0T  180, 0H   90, 1T  104
+  Ramp:              Tests    8; Passes    8,  100%
+  pre 12 idle 1:     Tests  100; Passes  100,  100%
+  pre 12 idle 2:     Tests  100; Passes  100,  100%
+  pre 13 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 2:     Tests  100; Passes  100,  100%
+  Addr:              Tests  253; Passes  253,  100%
+  Bad bit:           Tests   39; Passes   39,  100%
+  0T   180 0H    90: Tests  100; Passes  100,  100%
+  0T 11980 0H    90: Tests  100; Passes  100,  100%
+  0T 11980 0H 11890: Tests  100; Passes  100,  100%
+  0T 12000 0H    90: Tests  100; Passes  100,  100%
+  0T 12000 0H 11910: Tests  100; Passes  100,  100%
+<Sat Nov 25 15:12:06 2017> STATUS  Starting clock <All 1/4 slow>
+- Clock 0T  204, 0H  102, 1T  119
+  Ramp:              Tests    8; Passes    8,  100%
+  pre 12 idle 1:     Tests  100; Passes  100,  100%
+  pre 12 idle 2:     Tests  100; Passes  100,  100%
+  pre 13 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 2:     Tests  100; Passes  100,  100%
+  Addr:              Tests  253; Passes  253,  100%
+  Bad bit:           Tests   39; Passes   39,  100%
+  0T   204 0H   102: Tests  100; Passes  100,  100%
+  0T 12000 0H   102: Tests  100; Passes  100,  100%
+  0T 12000 0H 11898: Tests  100; Passes  100,  100%
+  0T 12000 0H   102: Tests  100; Passes  100,  100%
+  0T 12000 0H 11898: Tests  100; Passes  100,  100%
+<Sat Nov 25 15:50:24 2017> STATUS  Starting clock <Command station max>
+- Clock 0T  210, 0H  105, 1T  122
+  Ramp:              Tests    8; Passes    8,  100%
+  pre 12 idle 1:     Tests  100; Passes  100,  100%
+  pre 12 idle 2:     Tests  100; Passes  100,  100%
+  pre 13 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 2:     Tests  100; Passes  100,  100%
+  Addr:              Tests  253; Passes  253,  100%
+  Bad bit:           Tests   39; Passes   39,  100%
+  0T   210 0H   105: Tests  100; Passes  100,  100%
+  0T 12000 0H   105: Tests  100; Passes  100,  100%
+  0T 12000 0H 11895: Tests  100; Passes  100,  100%
+  0T 12000 0H   105: Tests  100; Passes  100,  100%
+  0T 12000 0H 11895: Tests  100; Passes  100,  100%
+<Sat Nov 25 16:28:59 2017> STATUS  Starting clock <Decoder maximum>
+- Clock 0T  220, 0H  110, 1T  128
+  Ramp:              Tests    8; Passes    8,  100%
+  pre 12 idle 1:     Tests  100; Passes  100,  100%
+  pre 12 idle 2:     Tests  100; Passes  100,  100%
+  pre 13 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 2:     Tests  100; Passes  100,  100%
+  Addr:              Tests  253; Passes  253,  100%
+  Bad bit:           Tests   39; Passes   39,  100%
+  0T   220 0H   110: Tests  100; Passes  100,  100%
+  0T 12000 0H   110: Tests  100; Passes  100,  100%
+  0T 12000 0H 11890: Tests  100; Passes  100,  100%
+  0T 12000 0H   110: Tests  100; Passes  100,  100%
+  0T 12000 0H 11890: Tests  100; Passes  100,  100%
+<Sat Nov 25 17:07:38 2017> STATUS  Starting clock <Negative stretched 0>
+- Clock 0T  300, 0H  100, 1T  116
+  Ramp:              Tests    8; Passes    8,  100%
+  pre 12 idle 1:     Tests  100; Passes  100,  100%
+  pre 12 idle 2:     Tests  100; Passes  100,  100%
+  pre 13 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 2:     Tests  100; Passes  100,  100%
+  Addr:              Tests  253; Passes  253,  100%
+  Bad bit:           Tests   39; Passes   39,  100%
+  0T   300 0H   100: Tests  100; Passes  100,  100%
+  0T 12000 0H   100: Tests  100; Passes  100,  100%
+  0T 12000 0H 11800: Tests  100; Passes  100,  100%
+  0T 12000 0H   100: Tests  100; Passes  100,  100%
+  0T 12000 0H 11800: Tests  100; Passes  100,  100%
+<Sat Nov 25 17:47:02 2017> STATUS  Starting clock <Positive stretched 0>
+- Clock 0T  300, 0H  200, 1T  116
+  Ramp:              Tests    8; Passes    8,  100%
+  pre 12 idle 1:     Tests  100; Passes  100,  100%
+  pre 12 idle 2:     Tests  100; Passes  100,  100%
+  pre 13 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 2:     Tests  100; Passes  100,  100%
+  Addr:              Tests  253; Passes  253,  100%
+  Bad bit:           Tests   39; Passes   39,  100%
+  0T   300 0H   200: Tests  100; Passes  100,  100%
+  0T 12000 0H   200: Tests  100; Passes  100,  100%
+  0T 12000 0H 11900: Tests  100; Passes  100,  100%
+  0T 12000 0H   200: Tests  100; Passes  100,  100%
+  0T 12000 0H 11900: Tests  100; Passes  100,  100%
+<Sat Nov 25 18:26:26 2017> STATUS  Starting clock <Very negative 0>
+- Clock 0T 2560, 0H  100, 1T  116
+  Ramp:              Tests    8; Passes    8,  100%
+  pre 12 idle 1:     Tests  100; Passes  100,  100%
+  pre 12 idle 2:     Tests  100; Passes  100,  100%
+  pre 13 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 2:     Tests  100; Passes  100,  100%
+  Addr:              Tests  253; Passes  253,  100%
+  Bad bit:           Tests   39; Passes   39,  100%
+  0T  2560 0H   100: Tests  100; Passes  100,  100%
+  0T 12000 0H   100: Tests  100; Passes  100,  100%
+  0T 12000 0H  9540: Tests  100; Passes  100,  100%
+  0T 12000 0H   100: Tests  100; Passes  100,  100%
+  0T 12000 0H  9540: Tests  100; Passes  100,  100%
+<Sat Nov 25 19:44:05 2017> STATUS  Starting clock <Very positive 0>
+- Clock 0T 2560, 0H 2460, 1T  116
+  Ramp:              Tests    8; Passes    8,  100%
+  pre 12 idle 1:     Tests  100; Passes  100,  100%
+  pre 12 idle 2:     Tests  100; Passes  100,  100%
+  pre 13 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 2:     Tests  100; Passes  100,  100%
+  Addr:              Tests  253; Passes  253,  100%
+  Bad bit:           Tests   39; Passes   39,  100%
+  0T  2560 0H  2460: Tests  100; Passes  100,  100%
+  0T 12000 0H  2460: Tests  100; Passes  100,  100%
+  0T 12000 0H 11900: Tests  100; Passes  100,  100%
+  0T 12000 0H  2460: Tests  100; Passes  100,  100%
+  0T 12000 0H 11900: Tests  100; Passes  100,  100%
+<Sat Nov 25 21:01:43 2017> STATUS  Starting clock <Max Decoder Neg 0>
+- Clock 0T 12000, 0H  100, 1T  116
+  Ramp:              Tests    8; Passes    8,  100%
+  pre 12 idle 1:     Tests  100; Passes  100,  100%
+  pre 12 idle 2:     Tests  100; Passes  100,  100%
+  pre 13 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 2:     Tests  100; Passes  100,  100%
+  Addr:              Tests  253; Passes  253,  100%
+  Bad bit:           Tests   39; Passes   39,  100%
+  0T 12000 0H   100: Tests  100; Passes  100,  100%
+  0T 12000 0H   100: Tests  100; Passes  100,  100%
+  0T 12000 0H   100: Tests  100; Passes  100,  100%
+  0T 12000 0H   100: Tests  100; Passes  100,  100%
+  0T 12000 0H   100: Tests  100; Passes  100,  100%
+<Sun Nov 26 02:20:01 2017> STATUS  Starting clock <Max Decoder Pos 0>
+- Clock 0T 12000, 0H 11900, 1T  116
+  Ramp:              Tests    8; Passes    8,  100%
+  pre 12 idle 1:     Tests  100; Passes  100,  100%
+  pre 12 idle 2:     Tests  100; Passes  100,  100%
+  pre 13 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 1:     Tests  100; Passes  100,  100%
+  pre 15 idle 2:     Tests  100; Passes  100,  100%
+  Addr:              Tests  253; Passes  253,  100%
+  Bad bit:           Tests   39; Passes   39,  100%
+  0T 12000 0H 11900: Tests  100; Passes  100,  100%
+  0T 12000 0H 11900: Tests  100; Passes  100,  100%
+  0T 12000 0H 11900: Tests  100; Passes  100,  100%
+  0T 12000 0H 11900: Tests  100; Passes  100,  100%
+  0T 12000 0H 11900: Tests  100; Passes  100,  100%
+<Sun Nov 26 07:38:19 2017> STATUS  Truncate clock
+- Clock 0T  200, 0H  100, 1T  116
+  Pre 12 Frag 39:    Tests    2; Passes    2,  100% *
+  Pre 12 Frag 30:    Tests    2; Passes    2,  100% *
+  Pre 12 Frag 21:    Tests    2; Passes    2,  100% *
+  Pre 12 Frag 12:    Tests    2; Passes    2,  100% *
+  Pre 12 Frag 11:    Tests    2; Passes    2,  100% *
+  Pre 12 Frag 10:    Tests    2; Passes    2,  100% *
+  Pre 12 Frag  9:    Tests    2; Passes    2,  100% *
+  Pre 12 Frag  8:    Tests    2; Passes    2,  100% *
+  Pre 12 Frag  7:    Tests    2; Passes    2,  100% *
+  Pre 12 Frag  6:    Tests    2; Passes    2,  100% *
+  Pre 12 Frag  5:    Tests    2; Passes    2,  100% *
+  Pre 12 Frag  4:    Tests    2; Passes    2,  100% *
+  Pre 12 Frag  3:    Tests    2; Passes    2,  100% *
+  Pre 12 Frag  2:    Tests    2; Passes    2,  100% *
+  Pre 12 Frag  1:    Tests    2; Passes    2,  100% *
+  Pre 12 Frag  0:    Tests    2; Passes    2,  100% *
+  Pre 13 Frag 40:    Tests    2; Passes    2,  100% *
+  Pre 13 Frag 31:    Tests    2; Passes    2,  100% *
+  Pre 13 Frag 22:    Tests    2; Passes    2,  100% *
+  Pre 13 Frag 13:    Tests    2; Passes    2,  100% *
+  Pre 13 Frag 12:    Tests    2; Passes    2,  100% *
+  Pre 13 Frag 11:    Tests    2; Passes    2,  100% *
+  Pre 13 Frag 10:    Tests    2; Passes    2,  100% *
+  Pre 13 Frag  9:    Tests    2; Passes    2,  100% *
+  Pre 13 Frag  8:    Tests    2; Passes    2,  100% *
+  Pre 13 Frag  7:    Tests    2; Passes    2,  100% *
+  Pre 13 Frag  6:    Tests    2; Passes    2,  100% *
+  Pre 13 Frag  5:    Tests    2; Passes    2,  100% *
+  Pre 13 Frag  4:    Tests    2; Passes    2,  100% *
+  Pre 13 Frag  3:    Tests    2; Passes    2,  100% *
+  Pre 13 Frag  2:    Tests    2; Passes    2,  100% *
+  Pre 13 Frag  1:    Tests    2; Passes    2,  100% *
+  Pre 13 Frag  0:    Tests    2; Passes    2,  100% *
+  Pre 14 Frag 41:    Tests    2; Passes    2,  100% *
+  Pre 14 Frag 32:    Tests    2; Passes    2,  100% *
+  Pre 14 Frag 23:    Tests    2; Passes    2,  100% *
+  Pre 14 Frag 14:    Tests    2; Passes    2,  100% *
+  Pre 14 Frag 13:    Tests    2; Passes    2,  100% *
+  Pre 14 Frag 12:    Tests    2; Passes    2,  100% *
+  Pre 14 Frag 11:    Tests    2; Passes    2,  100% *
+  Pre 14 Frag 10:    Tests    2; Passes    2,  100% *
+  Pre 14 Frag  9:    Tests    2; Passes    2,  100% *
+  Pre 14 Frag  8:    Tests    2; Passes    2,  100% *
+  Pre 14 Frag  7:    Tests    2; Passes    2,  100% *
+  Pre 14 Frag  6:    Tests    2; Passes    2,  100% *
+  Pre 14 Frag  5:    Tests    2; Passes    2,  100% *
+  Pre 14 Frag  4:    Tests    2; Passes    2,  100% *
+  Pre 14 Frag  3:    Tests    2; Passes    2,  100% *
+  Pre 14 Frag  2:    Tests    2; Passes    2,  100% *
+  Pre 14 Frag  1:    Tests    2; Passes    2,  100% *
+  Pre 14 Frag  0:    Tests    2; Passes    2,  100% *
+  Pre 15 Frag 42:    Tests    2; Passes    2,  100% *
+  Pre 15 Frag 33:    Tests    2; Passes    2,  100% *
+  Pre 15 Frag 24:    Tests    2; Passes    2,  100% *
+  Pre 15 Frag 15:    Tests    2; Passes    2,  100% *
+  Pre 15 Frag 14:    Tests    2; Passes    2,  100% *
+  Pre 15 Frag 13:    Tests    2; Passes    2,  100% *
+  Pre 15 Frag 12:    Tests    2; Passes    2,  100% *
+  Pre 15 Frag 11:    Tests    2; Passes    2,  100% *
+  Pre 15 Frag 10:    Tests    2; Passes    2,  100% *
+  Pre 15 Frag  9:    Tests    2; Passes    2,  100% *
+  Pre 15 Frag  8:    Tests    2; Passes    2,  100% *
+  Pre 15 Frag  7:    Tests    2; Passes    2,  100% *
+  Pre 15 Frag  6:    Tests    2; Passes    2,  100% *
+  Pre 15 Frag  5:    Tests    2; Passes    2,  100% *
+  Pre 15 Frag  4:    Tests    2; Passes    2,  100% *
+  Pre 15 Frag  3:    Tests    2; Passes    2,  100% *
+  Pre 15 Frag  2:    Tests    2; Passes    2,  100% *
+  Pre 15 Frag  1:    Tests    2; Passes    2,  100% *
+  Pre 15 Frag  0:    Tests    2; Passes    2,  100% *
+  Pre 16 Frag 43:    Tests    2; Passes    2,  100% *
+  Pre 16 Frag 34:    Tests    2; Passes    2,  100% *
+  Pre 16 Frag 25:    Tests    2; Passes    2,  100% *
+  Pre 16 Frag 16:    Tests    2; Passes    2,  100% *
+  Pre 16 Frag 15:    Tests    2; Passes    2,  100% *
+  Pre 16 Frag 14:    Tests    2; Passes    2,  100% *
+  Pre 16 Frag 13:    Tests    2; Passes    2,  100% *
+  Pre 16 Frag 12:    Tests    2; Passes    2,  100% *
+  Pre 16 Frag 11:    Tests    2; Passes    2,  100% *
+  Pre 16 Frag 10:    Tests    2; Passes    2,  100% *
+  Pre 16 Frag  9:    Tests    2; Passes    2,  100% *
+  Pre 16 Frag  8:    Tests    2; Passes    2,  100% *
+  Pre 16 Frag  7:    Tests    2; Passes    2,  100% *
+  Pre 16 Frag  6:    Tests    2; Passes    2,  100% *
+  Pre 16 Frag  5:    Tests    2; Passes    2,  100% *
+  Pre 16 Frag  4:    Tests    2; Passes    2,  100% *
+  Pre 16 Frag  3:    Tests    2; Passes    2,  100% *
+  Pre 16 Frag  2:    Tests    2; Passes    2,  100% *
+  Pre 16 Frag  1:    Tests    2; Passes    2,  100% *
+  Pre 16 Frag  0:    Tests    2; Passes    2,  100% *
+<Sun Nov 26 07:42:54 2017> STATUS  Prior test clock
+- Clock 0T  200, 0H  100, 1T  116
+  <42 42 00>   <pre 12> Tests    2; Passes    2,  100%
+  <42 42 00>   <pre 13> Tests    2; Passes    2,  100%
+  <42 42 00>   <pre 14> Tests    2; Passes    2,  100%
+  <42 42 00>   <pre 15> Tests    2; Passes    2,  100%
+  <42 42 00>   <pre 16> Tests    2; Passes    2,  100%
+  <42 42 00>   <pre 17> Tests    2; Passes    2,  100%
+  <42 42 00>   <pre 18> Tests    2; Passes    2,  100%
+  <42 42 00>   <pre 19> Tests    2; Passes    2,  100%
+  <42 42 00>   <pre 20> Tests    2; Passes    2,  100%
+  <42 42 00>   <pre 21> Tests    2; Passes    2,  100%
+  <42 42 00>   <pre 22> Tests    2; Passes    2,  100%
+  <42 42 00>  0<pre 20> Tests    2; Passes    2,  100%
+  <42 42 00>  0<pre 21> Tests    2; Passes    2,  100%
+  <42 42 00>  0<pre 22> Tests    2; Passes    2,  100%
+  <42 42 00>1  <pre 12> Tests    2; Passes    2,  100%
+  <42 42 00>1  <pre 13> Tests    2; Passes    2,  100%
+  <42 42 00>1  <pre 14> Tests    2; Passes    2,  100%
+  <42 42 00>1  <pre 15> Tests    2; Passes    2,  100%
+  <42 42 00>1  <pre 16> Tests    2; Passes    2,  100%
+  <42 42 00>1  <pre 17> Tests    2; Passes    2,  100%
+  <42 42 00>1  <pre 18> Tests    2; Passes    2,  100%
+  <42 42 00>1  <pre 19> Tests    2; Passes    2,  100%
+  <42 42 00>1  <pre 20> Tests    2; Passes    2,  100%
+  <42 42 00>1  <pre 21> Tests    2; Passes    2,  100%
+  <42 42 00>1  <pre 22> Tests    2; Passes    2,  100%
+  <42 42 00>1 0<pre 12> Tests    2; Passes    2,  100%
+  <42 42 00>1 0<pre 13> Tests    2; Passes    2,  100%
+  <42 42 00>1 0<pre 14> Tests    2; Passes    2,  100%
+  <42 42 00>1 0<pre 15> Tests    2; Passes    2,  100%
+  <42 42 00>1 0<pre 16> Tests    2; Passes    2,  100%
+  <42 42 00>1 0<pre 17> Tests    2; Passes    2,  100%
+  <42 42 00>1 0<pre 18> Tests    2; Passes    2,  100%
+  <42 42 00>1 0<pre 19> Tests    2; Passes    2,  100%
+  <42 42 00>1 0<pre 20> Tests    2; Passes    2,  100%
+  <42 42 00>1 0<pre 21> Tests    2; Passes    2,  100%
+  <42 42 00>1 0<pre 22> Tests    2; Passes    2,  100%
+  <42 43 01>   <pre 12> Tests    2; Passes    2,  100%
+  <42 43 01>   <pre 13> Tests    2; Passes    2,  100%
+  <42 43 01>   <pre 14> Tests    2; Passes    2,  100%
+  <42 43 01>   <pre 15> Tests    2; Passes    2,  100%
+  <42 43 01>   <pre 16> Tests    2; Passes    2,  100%
+  <42 43 01>   <pre 17> Tests    2; Passes    2,  100%
+  <42 43 01>   <pre 18> Tests    2; Passes    2,  100%
+  <42 43 01>   <pre 19> Tests    2; Passes    2,  100%
+  <42 43 01>   <pre 20> Tests    2; Passes    2,  100%
+  <42 43 01>   <pre 21> Tests    2; Passes    2,  100%
+  <42 43 01>   <pre 22> Tests    2; Passes    2,  100%
+  <42 43 01>  0<pre 20> Tests    2; Passes    2,  100%
+  <42 43 01>  0<pre 21> Tests    2; Passes    2,  100%
+  <42 43 01>  0<pre 22> Tests    2; Passes    2,  100%
+  <42 43 01>1  <pre 12> Tests    2; Passes    2,  100%
+  <42 43 01>1  <pre 13> Tests    2; Passes    2,  100%
+  <42 43 01>1  <pre 14> Tests    2; Passes    2,  100%
+  <42 43 01>1  <pre 15> Tests    2; Passes    2,  100%
+  <42 43 01>1  <pre 16> Tests    2; Passes    2,  100%
+  <42 43 01>1  <pre 17> Tests    2; Passes    2,  100%
+  <42 43 01>1  <pre 18> Tests    2; Passes    2,  100%
+  <42 43 01>1  <pre 19> Tests    2; Passes    2,  100%
+  <42 43 01>1  <pre 20> Tests    2; Passes    2,  100%
+  <42 43 01>1  <pre 21> Tests    2; Passes    2,  100%
+  <42 43 01>1  <pre 22> Tests    2; Passes    2,  100%
+  <42 43 01>1 0<pre 12> Tests    2; Passes    2,  100%
+  <42 43 01>1 0<pre 13> Tests    2; Passes    2,  100%
+  <42 43 01>1 0<pre 14> Tests    2; Passes    2,  100%
+  <42 43 01>1 0<pre 15> Tests    2; Passes    2,  100%
+  <42 43 01>1 0<pre 16> Tests    2; Passes    2,  100%
+  <42 43 01>1 0<pre 17> Tests    2; Passes    2,  100%
+  <42 43 01>1 0<pre 18> Tests    2; Passes    2,  100%
+  <42 43 01>1 0<pre 19> Tests    2; Passes    2,  100%
+  <42 43 01>1 0<pre 20> Tests    2; Passes    2,  100%
+  <42 43 01>1 0<pre 21> Tests    2; Passes    2,  100%
+  <42 43 01>1 0<pre 22> Tests    2; Passes    2,  100%
+  <42 41 03>   <pre 12> Tests    2; Passes    2,  100%
+  <42 41 03>   <pre 13> Tests    2; Passes    2,  100%
+  <42 41 03>   <pre 14> Tests    2; Passes    2,  100%
+  <42 41 03>   <pre 15> Tests    2; Passes    2,  100%
+  <42 41 03>   <pre 16> Tests    2; Passes    2,  100%
+  <42 41 03>   <pre 17> Tests    2; Passes    2,  100%
+  <42 41 03>   <pre 18> Tests    2; Passes    2,  100%
+  <42 41 03>   <pre 19> Tests    2; Passes    2,  100%
+  <42 41 03>   <pre 20> Tests    2; Passes    2,  100%
+  <42 41 03>   <pre 21> Tests    2; Passes    2,  100%
+  <42 41 03>   <pre 22> Tests    2; Passes    2,  100%
+  <42 41 03>  0<pre 20> Tests    2; Passes    2,  100%
+  <42 41 03>  0<pre 21> Tests    2; Passes    2,  100%
+  <42 41 03>  0<pre 22> Tests    2; Passes    2,  100%
+  <42 41 03>1  <pre 12> Tests    2; Passes    2,  100%
+  <42 41 03>1  <pre 13> Tests    2; Passes    2,  100%
+  <42 41 03>1  <pre 14> Tests    2; Passes    2,  100%
+  <42 41 03>1  <pre 15> Tests    2; Passes    2,  100%
+  <42 41 03>1  <pre 16> Tests    2; Passes    2,  100%
+  <42 41 03>1  <pre 17> Tests    2; Passes    2,  100%
+  <42 41 03>1  <pre 18> Tests    2; Passes    2,  100%
+  <42 41 03>1  <pre 19> Tests    2; Passes    2,  100%
+  <42 41 03>1  <pre 20> Tests    2; Passes    2,  100%
+  <42 41 03>1  <pre 21> Tests    2; Passes    2,  100%
+  <42 41 03>1  <pre 22> Tests    2; Passes    2,  100%
+  <42 41 03>1 0<pre 12> Tests    2; Passes    2,  100%
+  <42 41 03>1 0<pre 13> Tests    2; Passes    2,  100%
+  <42 41 03>1 0<pre 14> Tests    2; Passes    2,  100%
+  <42 41 03>1 0<pre 15> Tests    2; Passes    2,  100%
+  <42 41 03>1 0<pre 16> Tests    2; Passes    2,  100%
+  <42 41 03>1 0<pre 17> Tests    2; Passes    2,  100%
+  <42 41 03>1 0<pre 18> Tests    2; Passes    2,  100%
+  <42 41 03>1 0<pre 19> Tests    2; Passes    2,  100%
+  <42 41 03>1 0<pre 20> Tests    2; Passes    2,  100%
+  <42 41 03>1 0<pre 21> Tests    2; Passes    2,  100%
+  <42 41 03>1 0<pre 22> Tests    2; Passes    2,  100%
+  <42 45 07>   <pre 12> Tests    2; Passes    2,  100%
+  <42 45 07>   <pre 13> Tests    2; Passes    2,  100%
+  <42 45 07>   <pre 14> Tests    2; Passes    2,  100%
+  <42 45 07>   <pre 15> Tests    2; Passes    2,  100%
+  <42 45 07>   <pre 16> Tests    2; Passes    2,  100%
+  <42 45 07>   <pre 17> Tests    2; Passes    2,  100%
+  <42 45 07>   <pre 18> Tests    2; Passes    2,  100%
+  <42 45 07>   <pre 19> Tests    2; Passes    2,  100%
+  <42 45 07>   <pre 20> Tests    2; Passes    2,  100%
+  <42 45 07>   <pre 21> Tests    2; Passes    2,  100%
+  <42 45 07>   <pre 22> Tests    2; Passes    2,  100%
+  <42 45 07>  0<pre 20> Tests    2; Passes    2,  100%
+  <42 45 07>  0<pre 21> Tests    2; Passes    2,  100%
+  <42 45 07>  0<pre 22> Tests    2; Passes    2,  100%
+  <42 45 07>1  <pre 12> Tests    2; Passes    2,  100%
+  <42 45 07>1  <pre 13> Tests    2; Passes    2,  100%
+  <42 45 07>1  <pre 14> Tests    2; Passes    2,  100%
+  <42 45 07>1  <pre 15> Tests    2; Passes    2,  100%
+  <42 45 07>1  <pre 16> Tests    2; Passes    2,  100%
+  <42 45 07>1  <pre 17> Tests    2; Passes    2,  100%
+  <42 45 07>1  <pre 18> Tests    2; Passes    2,  100%
+  <42 45 07>1  <pre 19> Tests    2; Passes    2,  100%
+  <42 45 07>1  <pre 20> Tests    2; Passes    2,  100%
+  <42 45 07>1  <pre 21> Tests    2; Passes    2,  100%
+  <42 45 07>1  <pre 22> Tests    2; Passes    2,  100%
+  <42 45 07>1 0<pre 12> Tests    2; Passes    2,  100%
+  <42 45 07>1 0<pre 13> Tests    2; Passes    2,  100%
+  <42 45 07>1 0<pre 14> Tests    2; Passes    2,  100%
+  <42 45 07>1 0<pre 15> Tests    2; Passes    2,  100%
+  <42 45 07>1 0<pre 16> Tests    2; Passes    2,  100%
+  <42 45 07>1 0<pre 17> Tests    2; Passes    2,  100%
+  <42 45 07>1 0<pre 18> Tests    2; Passes    2,  100%
+  <42 45 07>1 0<pre 19> Tests    2; Passes    2,  100%
+  <42 45 07>1 0<pre 20> Tests    2; Passes    2,  100%
+  <42 45 07>1 0<pre 21> Tests    2; Passes    2,  100%
+  <42 45 07>1 0<pre 22> Tests    2; Passes    2,  100%
+  <42 4d 0f>   <pre 12> Tests    2; Passes    2,  100%
+  <42 4d 0f>   <pre 13> Tests    2; Passes    2,  100%
+  <42 4d 0f>   <pre 14> Tests    2; Passes    2,  100%
+  <42 4d 0f>   <pre 15> Tests    2; Passes    2,  100%
+  <42 4d 0f>   <pre 16> Tests    2; Passes    2,  100%
+  <42 4d 0f>   <pre 17> Tests    2; Passes    2,  100%
+  <42 4d 0f>   <pre 18> Tests    2; Passes    2,  100%
+  <42 4d 0f>   <pre 19> Tests    2; Passes    2,  100%
+  <42 4d 0f>   <pre 20> Tests    2; Passes    2,  100%
+  <42 4d 0f>   <pre 21> Tests    2; Passes    2,  100%
+  <42 4d 0f>   <pre 22> Tests    2; Passes    2,  100%
+  <42 4d 0f>  0<pre 20> Tests    2; Passes    2,  100%
+  <42 4d 0f>  0<pre 21> Tests    2; Passes    2,  100%
+  <42 4d 0f>  0<pre 22> Tests    2; Passes    2,  100%
+  <42 4d 0f>1  <pre 12> Tests    2; Passes    2,  100%
+  <42 4d 0f>1  <pre 13> Tests    2; Passes    2,  100%
+  <42 4d 0f>1  <pre 14> Tests    2; Passes    2,  100%
+  <42 4d 0f>1  <pre 15> Tests    2; Passes    2,  100%
+  <42 4d 0f>1  <pre 16> Tests    2; Passes    2,  100%
+  <42 4d 0f>1  <pre 17> Tests    2; Passes    2,  100%
+  <42 4d 0f>1  <pre 18> Tests    2; Passes    2,  100%
+  <42 4d 0f>1  <pre 19> Tests    2; Passes    2,  100%
+  <42 4d 0f>1  <pre 20> Tests    2; Passes    2,  100%
+  <42 4d 0f>1  <pre 21> Tests    2; Passes    2,  100%
+  <42 4d 0f>1  <pre 22> Tests    2; Passes    2,  100%
+  <42 4d 0f>1 0<pre 12> Tests    2; Passes    2,  100%
+  <42 4d 0f>1 0<pre 13> Tests    2; Passes    2,  100%
+  <42 4d 0f>1 0<pre 14> Tests    2; Passes    2,  100%
+  <42 4d 0f>1 0<pre 15> Tests    2; Passes    2,  100%
+  <42 4d 0f>1 0<pre 16> Tests    2; Passes    2,  100%
+  <42 4d 0f>1 0<pre 17> Tests    2; Passes    2,  100%
+  <42 4d 0f>1 0<pre 18> Tests    2; Passes    2,  100%
+  <42 4d 0f>1 0<pre 19> Tests    2; Passes    2,  100%
+  <42 4d 0f>1 0<pre 20> Tests    2; Passes    2,  100%
+  <42 4d 0f>1 0<pre 21> Tests    2; Passes    2,  100%
+  <42 4d 0f>1 0<pre 22> Tests    2; Passes    2,  100%
+  <42 5d 1f>   <pre 12> Tests    2; Passes    2,  100%
+  <42 5d 1f>   <pre 13> Tests    2; Passes    2,  100%
+  <42 5d 1f>   <pre 14> Tests    2; Passes    2,  100%
+  <42 5d 1f>   <pre 15> Tests    2; Passes    2,  100%
+  <42 5d 1f>   <pre 16> Tests    2; Passes    2,  100%
+  <42 5d 1f>   <pre 17> Tests    2; Passes    2,  100%
+  <42 5d 1f>   <pre 18> Tests    2; Passes    2,  100%
+  <42 5d 1f>   <pre 19> Tests    2; Passes    2,  100%
+  <42 5d 1f>   <pre 20> Tests    2; Passes    2,  100%
+  <42 5d 1f>   <pre 21> Tests    2; Passes    2,  100%
+  <42 5d 1f>   <pre 22> Tests    2; Passes    2,  100%
+  <42 5d 1f>  0<pre 20> Tests    2; Passes    2,  100%
+  <42 5d 1f>  0<pre 21> Tests    2; Passes    2,  100%
+  <42 5d 1f>  0<pre 22> Tests    2; Passes    2,  100%
+  <42 5d 1f>1  <pre 12> Tests    2; Passes    2,  100%
+  <42 5d 1f>1  <pre 13> Tests    2; Passes    2,  100%
+  <42 5d 1f>1  <pre 14> Tests    2; Passes    2,  100%
+  <42 5d 1f>1  <pre 15> Tests    2; Passes    2,  100%
+  <42 5d 1f>1  <pre 16> Tests    2; Passes    2,  100%
+  <42 5d 1f>1  <pre 17> Tests    2; Passes    2,  100%
+  <42 5d 1f>1  <pre 18> Tests    2; Passes    2,  100%
+  <42 5d 1f>1  <pre 19> Tests    2; Passes    2,  100%
+  <42 5d 1f>1  <pre 20> Tests    2; Passes    2,  100%
+  <42 5d 1f>1  <pre 21> Tests    2; Passes    2,  100%
+  <42 5d 1f>1  <pre 22> Tests    2; Passes    2,  100%
+  <42 5d 1f>1 0<pre 12> Tests    2; Passes    2,  100%
+  <42 5d 1f>1 0<pre 13> Tests    2; Passes    2,  100%
+  <42 5d 1f>1 0<pre 14> Tests    2; Passes    2,  100%
+  <42 5d 1f>1 0<pre 15> Tests    2; Passes    2,  100%
+  <42 5d 1f>1 0<pre 16> Tests    2; Passes    2,  100%
+  <42 5d 1f>1 0<pre 17> Tests    2; Passes    2,  100%
+  <42 5d 1f>1 0<pre 18> Tests    2; Passes    2,  100%
+  <42 5d 1f>1 0<pre 19> Tests    2; Passes    2,  100%
+  <42 5d 1f>1 0<pre 20> Tests    2; Passes    2,  100%
+  <42 5d 1f>1 0<pre 21> Tests    2; Passes    2,  100%
+  <42 5d 1f>1 0<pre 22> Tests    2; Passes    2,  100%
+  <42 7d 3f>   <pre 12> Tests    2; Passes    2,  100%
+  <42 7d 3f>   <pre 13> Tests    2; Passes    2,  100%
+  <42 7d 3f>   <pre 14> Tests    2; Passes    2,  100%
+  <42 7d 3f>   <pre 15> Tests    2; Passes    2,  100%
+  <42 7d 3f>   <pre 16> Tests    2; Passes    2,  100%
+  <42 7d 3f>   <pre 17> Tests    2; Passes    2,  100%
+  <42 7d 3f>   <pre 18> Tests    2; Passes    2,  100%
+  <42 7d 3f>   <pre 19> Tests    2; Passes    2,  100%
+  <42 7d 3f>   <pre 20> Tests    2; Passes    2,  100%
+  <42 7d 3f>   <pre 21> Tests    2; Passes    2,  100%
+  <42 7d 3f>   <pre 22> Tests    2; Passes    2,  100%
+  <42 7d 3f>  0<pre 20> Tests    2; Passes    2,  100%
+  <42 7d 3f>  0<pre 21> Tests    2; Passes    2,  100%
+  <42 7d 3f>  0<pre 22> Tests    2; Passes    2,  100%
+  <42 7d 3f>1  <pre 12> Tests    2; Passes    2,  100%
+  <42 7d 3f>1  <pre 13> Tests    2; Passes    2,  100%
+  <42 7d 3f>1  <pre 14> Tests    2; Passes    2,  100%
+  <42 7d 3f>1  <pre 15> Tests    2; Passes    2,  100%
+  <42 7d 3f>1  <pre 16> Tests    2; Passes    2,  100%
+  <42 7d 3f>1  <pre 17> Tests    2; Passes    2,  100%
+  <42 7d 3f>1  <pre 18> Tests    2; Passes    2,  100%
+  <42 7d 3f>1  <pre 19> Tests    2; Passes    2,  100%
+  <42 7d 3f>1  <pre 20> Tests    2; Passes    2,  100%
+  <42 7d 3f>1  <pre 21> Tests    2; Passes    2,  100%
+  <42 7d 3f>1  <pre 22> Tests    2; Passes    2,  100%
+  <42 7d 3f>1 0<pre 12> Tests    2; Passes    2,  100%
+  <42 7d 3f>1 0<pre 13> Tests    2; Passes    2,  100%
+  <42 7d 3f>1 0<pre 14> Tests    2; Passes    2,  100%
+  <42 7d 3f>1 0<pre 15> Tests    2; Passes    2,  100%
+  <42 7d 3f>1 0<pre 16> Tests    2; Passes    2,  100%
+  <42 7d 3f>1 0<pre 17> Tests    2; Passes    2,  100%
+  <42 7d 3f>1 0<pre 18> Tests    2; Passes    2,  100%
+  <42 7d 3f>1 0<pre 19> Tests    2; Passes    2,  100%
+  <42 7d 3f>1 0<pre 20> Tests    2; Passes    2,  100%
+  <42 7d 3f>1 0<pre 21> Tests    2; Passes    2,  100%
+  <42 7d 3f>1 0<pre 22> Tests    2; Passes    2,  100%
+  <02 7d 7f>   <pre 12> Tests    2; Passes    2,  100%
+  <02 7d 7f>   <pre 13> Tests    2; Passes    2,  100%
+  <02 7d 7f>   <pre 14> Tests    2; Passes    2,  100%
+  <02 7d 7f>   <pre 15> Tests    2; Passes    2,  100%
+  <02 7d 7f>   <pre 16> Tests    2; Passes    2,  100%
+  <02 7d 7f>   <pre 17> Tests    2; Passes    2,  100%
+  <02 7d 7f>   <pre 18> Tests    2; Passes    2,  100%
+  <02 7d 7f>   <pre 19> Tests    2; Passes    2,  100%
+  <02 7d 7f>   <pre 20> Tests    2; Passes    2,  100%
+  <02 7d 7f>   <pre 21> Tests    2; Passes    2,  100%
+  <02 7d 7f>   <pre 22> Tests    2; Passes    2,  100%
+  <02 7d 7f>  0<pre 20> Tests    2; Passes    2,  100%
+  <02 7d 7f>  0<pre 21> Tests    2; Passes    2,  100%
+  <02 7d 7f>  0<pre 22> Tests    2; Passes    2,  100%
+  <02 7d 7f>1  <pre 12> Tests    2; Passes    2,  100%
+  <02 7d 7f>1  <pre 13> Tests    2; Passes    2,  100%
+  <02 7d 7f>1  <pre 14> Tests    2; Passes    2,  100%
+  <02 7d 7f>1  <pre 15> Tests    2; Passes    2,  100%
+  <02 7d 7f>1  <pre 16> Tests    2; Passes    2,  100%
+  <02 7d 7f>1  <pre 17> Tests    2; Passes    2,  100%
+  <02 7d 7f>1  <pre 18> Tests    2; Passes    2,  100%
+  <02 7d 7f>1  <pre 19> Tests    2; Passes    2,  100%
+  <02 7d 7f>1  <pre 20> Tests    2; Passes    2,  100%
+  <02 7d 7f>1  <pre 21> Tests    2; Passes    2,  100%
+  <02 7d 7f>1  <pre 22> Tests    2; Passes    2,  100%
+  <02 7d 7f>1 0<pre 12> Tests    2; Passes    2,  100%
+  <02 7d 7f>1 0<pre 13> Tests    2; Passes    2,  100%
+  <02 7d 7f>1 0<pre 14> Tests    2; Passes    2,  100%
+  <02 7d 7f>1 0<pre 15> Tests    2; Passes    2,  100%
+  <02 7d 7f>1 0<pre 16> Tests    2; Passes    2,  100%
+  <02 7d 7f>1 0<pre 17> Tests    2; Passes    2,  100%
+  <02 7d 7f>1 0<pre 18> Tests    2; Passes    2,  100%
+  <02 7d 7f>1 0<pre 19> Tests    2; Passes    2,  100%
+  <02 7d 7f>1 0<pre 20> Tests    2; Passes    2,  100%
+  <02 7d 7f>1 0<pre 21> Tests    2; Passes    2,  100%
+  <02 7d 7f>1 0<pre 22> Tests    2; Passes    2,  100%
+  <ff 00 ff>   <pre 12> Tests    2; Passes    2,  100%
+  <ff 00 ff>   <pre 13> Tests    2; Passes    2,  100%
+  <ff 00 ff>   <pre 14> Tests    2; Passes    2,  100%
+  <ff 00 ff>   <pre 15> Tests    2; Passes    2,  100%
+  <ff 00 ff>   <pre 16> Tests    2; Passes    2,  100%
+  <ff 00 ff>   <pre 17> Tests    2; Passes    2,  100%
+  <ff 00 ff>   <pre 18> Tests    2; Passes    2,  100%
+  <ff 00 ff>   <pre 19> Tests    2; Passes    2,  100%
+  <ff 00 ff>   <pre 20> Tests    2; Passes    2,  100%
+  <ff 00 ff>   <pre 21> Tests    2; Passes    2,  100%
+  <ff 00 ff>   <pre 22> Tests    2; Passes    2,  100%
+  <ff 00 ff>  0<pre 20> Tests    2; Passes    2,  100%
+  <ff 00 ff>  0<pre 21> Tests    2; Passes    2,  100%
+  <ff 00 ff>  0<pre 22> Tests    2; Passes    2,  100%
+  <ff 00 ff>1  <pre 12> Tests    2; Passes    2,  100%
+  <ff 00 ff>1  <pre 13> Tests    2; Passes    2,  100%
+  <ff 00 ff>1  <pre 14> Tests    2; Passes    2,  100%
+  <ff 00 ff>1  <pre 15> Tests    2; Passes    2,  100%
+  <ff 00 ff>1  <pre 16> Tests    2; Passes    2,  100%
+  <ff 00 ff>1  <pre 17> Tests    2; Passes    2,  100%
+  <ff 00 ff>1  <pre 18> Tests    2; Passes    2,  100%
+  <ff 00 ff>1  <pre 19> Tests    2; Passes    2,  100%
+  <ff 00 ff>1  <pre 20> Tests    2; Passes    2,  100%
+  <ff 00 ff>1  <pre 21> Tests    2; Passes    2,  100%
+  <ff 00 ff>1  <pre 22> Tests    2; Passes    2,  100%
+  <ff 00 ff>1 0<pre 12> Tests    2; Passes    2,  100%
+  <ff 00 ff>1 0<pre 13> Tests    2; Passes    2,  100%
+  <ff 00 ff>1 0<pre 14> Tests    2; Passes    2,  100%
+  <ff 00 ff>1 0<pre 15> Tests    2; Passes    2,  100%
+  <ff 00 ff>1 0<pre 16> Tests    2; Passes    2,  100%
+  <ff 00 ff>1 0<pre 17> Tests    2; Passes    2,  100%
+  <ff 00 ff>1 0<pre 18> Tests    2; Passes    2,  100%
+  <ff 00 ff>1 0<pre 19> Tests    2; Passes    2,  100%
+  <ff 00 ff>1 0<pre 20> Tests    2; Passes    2,  100%
+  <ff 00 ff>1 0<pre 21> Tests    2; Passes    2,  100%
+  <ff 00 ff>1 0<pre 22> Tests    2; Passes    2,  100%
+<Sun Nov 26 07:59:25 2017> STATUS  6 byte prior test clock
+- Clock 0T  200, 0H  100, 1T  116
+  <42 61 61 61 61 42>   <pre 12> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>   <pre 13> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>   <pre 14> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>   <pre 15> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>   <pre 16> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>   <pre 17> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>   <pre 18> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>   <pre 19> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>   <pre 20> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>   <pre 21> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>  0<pre 12> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>  0<pre 13> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>  0<pre 14> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>  0<pre 15> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>  0<pre 16> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>  0<pre 17> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>  0<pre 18> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>  0<pre 19> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>  0<pre 20> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>  0<pre 21> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>1  <pre 12> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>1  <pre 13> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>1  <pre 14> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>1  <pre 15> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>1  <pre 16> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>1  <pre 17> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>1  <pre 18> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>1  <pre 19> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>1  <pre 20> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>1  <pre 21> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>1 0<pre 12> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>1 0<pre 13> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>1 0<pre 14> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>1 0<pre 15> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>1 0<pre 16> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>1 0<pre 17> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>1 0<pre 18> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>1 0<pre 19> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>1 0<pre 20> Tests    2; Passes    2,  100%
+  <42 61 61 61 61 42>1 0<pre 21> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>   <pre 12> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>   <pre 13> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>   <pre 14> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>   <pre 15> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>   <pre 16> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>   <pre 17> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>   <pre 18> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>   <pre 19> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>   <pre 20> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>   <pre 21> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>  0<pre 12> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>  0<pre 13> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>  0<pre 14> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>  0<pre 15> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>  0<pre 16> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>  0<pre 17> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>  0<pre 18> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>  0<pre 19> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>  0<pre 20> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>  0<pre 21> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>1  <pre 12> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>1  <pre 13> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>1  <pre 14> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>1  <pre 15> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>1  <pre 16> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>1  <pre 17> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>1  <pre 18> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>1  <pre 19> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>1  <pre 20> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>1  <pre 21> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>1 0<pre 12> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>1 0<pre 13> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>1 0<pre 14> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>1 0<pre 15> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>1 0<pre 16> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>1 0<pre 17> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>1 0<pre 18> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>1 0<pre 19> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>1 0<pre 20> Tests    2; Passes    2,  100%
+  <42 bd ff ff ff 00>1 0<pre 21> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>   <pre 12> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>   <pre 13> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>   <pre 14> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>   <pre 15> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>   <pre 16> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>   <pre 17> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>   <pre 18> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>   <pre 19> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>   <pre 20> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>   <pre 21> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>  0<pre 12> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>  0<pre 13> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>  0<pre 14> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>  0<pre 15> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>  0<pre 16> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>  0<pre 17> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>  0<pre 18> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>  0<pre 19> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>  0<pre 20> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>  0<pre 21> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>1  <pre 12> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>1  <pre 13> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>1  <pre 14> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>1  <pre 15> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>1  <pre 16> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>1  <pre 17> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>1  <pre 18> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>1  <pre 19> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>1  <pre 20> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>1  <pre 21> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>1 0<pre 12> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>1 0<pre 13> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>1 0<pre 14> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>1 0<pre 15> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>1 0<pre 16> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>1 0<pre 17> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>1 0<pre 18> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>1 0<pre 19> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>1 0<pre 20> Tests    2; Passes    2,  100%
+  <42 bd 55 55 55 aa>1 0<pre 21> Tests    2; Passes    2,  100%
+<Sun Nov 26 08:05:34 2017> STATUS  Ambig 1 test clock
+- Clock 0T  200, 0H  100, 1T  116
+         0 Times < 0T   0H>
+  Ambig 1 bit 13 < 77,  27> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 22 < 77,  27> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 31 < 77,  27> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 32 < 77,  27> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 33 < 77,  27> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 34 < 77,  27> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 35 < 77,  27> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 36 < 77,  27> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 37 < 77,  27> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 38 < 77,  27> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 39 < 77,  27> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 40 < 77,  27> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 41 < 77,  27> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 13 <150, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 22 <150, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 31 <150, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 32 <150, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 33 <150, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 34 <150, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 35 <150, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 36 <150, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 37 <150, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 38 <150, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 39 <150, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 40 <150, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 41 <150, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 13 <448,   8> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 22 <448,   8> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 31 <448,   8> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 32 <448,   8> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 33 <448,   8> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 34 <448,   8> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 35 <448,   8> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 36 <448,   8> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 37 <448,   8> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 38 <448,   8> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 39 <448,   8> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 40 <448,   8> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 41 <448,   8> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 13 <450,  10> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 22 <450,  10> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 31 <450,  10> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 32 <450,  10> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 33 <450,  10> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 34 <450,  10> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 35 <450,  10> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 36 <450,  10> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 37 <450,  10> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 38 <450,  10> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 39 <450,  10> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 40 <450,  10> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 41 <450,  10> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 13 <455,  15> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 22 <455,  15> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 31 <455,  15> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 32 <455,  15> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 33 <455,  15> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 34 <455,  15> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 35 <455,  15> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 36 <455,  15> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 37 <455,  15> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 38 <455,  15> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 39 <455,  15> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 40 <455,  15> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 41 <455,  15> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 13 <462,  22> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 22 <462,  22> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 31 <462,  22> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 32 <462,  22> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 33 <462,  22> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 34 <462,  22> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 35 <462,  22> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 36 <462,  22> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 37 <462,  22> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 38 <462,  22> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 39 <462,  22> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 40 <462,  22> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 41 <462,  22> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 13 <200, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 22 <200, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 31 <200, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 32 <200, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 33 <200, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 34 <200, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 35 <200, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 36 <200, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 37 <200, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 38 <200, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 39 <200, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 40 <200, 100> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 1 bit 41 <200, 100> PAddr     2: Tests    2; Passes    2,  100%
+<Sun Nov 26 08:10:12 2017> STATUS  Ambig2 clock <All nominal>
+- Clock 0T  200, 0H  100, 1T  116
+  0 Times <0T1  0H1  0T2  0H2>
+  Ambig 2 <448, 444, 112,  56> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <448, 443, 112,  56> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <448, 442, 112,  56> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <448, 441, 112,  56> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <448, 440, 112,  56> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <448, 439, 112,  56> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <448, 438, 112,  56> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <448, 437, 112,  56> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 452, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 451, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 450, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 449, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 448, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 447, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 446, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 445, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 444, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 443, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 442, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 441, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 440, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 439, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 438, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 437, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 459, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 458, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 457, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 456, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 455, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 454, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 453, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 452, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 451, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 450, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 449, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 448, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 447, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 446, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 445, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 444, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 443, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 442, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 441, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 440, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 439, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 438, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 437, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 467, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 466, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 465, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 464, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 463, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 462, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 461, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 460, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 459, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 458, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 457, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 456, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 455, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 454, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 453, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 452, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 451, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 450, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 449, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 448, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 447, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 446, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 445, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 444, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 443, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 442, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 441, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 440, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 439, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 438, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 437, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 475, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 474, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 473, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 472, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 471, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 470, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 469, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 468, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 467, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 466, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 465, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 464, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 463, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 462, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 461, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 460, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 459, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 458, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 457, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 456, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 455, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 454, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 453, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 452, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 451, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 450, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 449, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 448, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 447, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 446, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 445, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 444, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 443, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 442, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 441, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 440, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 439, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 438, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 437, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 483, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 482, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 481, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 480, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 479, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 478, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 477, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 476, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 475, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 474, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 473, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 472, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 471, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 470, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 469, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 468, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 467, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 466, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 465, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 464, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 463, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 462, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 461, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 460, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 459, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 458, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 457, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 456, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 455, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 454, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 453, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 452, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 451, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 450, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 449, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 448, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 447, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 446, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 445, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 444, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 443, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 442, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 441, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 440, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 439, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 438, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 437, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+<Sun Nov 26 08:18:34 2017> STATUS  Ambig2 clock <Decoder minimum>
+- Clock 0T  180, 0H   90, 1T  104
+  0 Times <0T1  0H1  0T2  0H2>
+  Ambig 2 <448, 444, 112,  56> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <448, 443, 112,  56> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <448, 442, 112,  56> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <448, 441, 112,  56> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <448, 440, 112,  56> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <448, 439, 112,  56> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <448, 438, 112,  56> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <448, 437, 112,  56> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 452, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 451, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 450, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 449, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 448, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 447, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 446, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 445, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 444, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 443, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 442, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 441, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 440, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 439, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 438, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 437, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 459, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 458, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 457, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 456, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 455, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 454, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 453, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 452, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 451, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 450, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 449, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 448, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 447, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 446, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 445, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 444, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 443, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 442, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 441, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 440, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 439, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 438, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 437, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 467, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 466, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 465, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 464, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 463, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 462, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 461, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 460, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 459, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 458, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 457, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 456, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 455, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 454, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 453, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 452, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 451, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 450, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 449, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 448, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 447, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 446, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 445, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 444, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 443, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 442, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 441, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 440, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 439, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 438, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 437, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 475, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 474, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 473, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 472, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 471, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 470, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 469, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 468, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 467, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 466, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 465, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 464, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 463, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 462, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 461, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 460, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 459, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 458, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 457, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 456, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 455, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 454, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 453, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 452, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 451, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 450, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 449, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 448, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 447, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 446, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 445, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 444, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 443, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 442, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 441, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 440, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 439, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 438, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 437, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 483, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 482, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 481, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 480, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 479, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 478, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 477, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 476, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 475, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 474, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 473, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 472, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 471, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 470, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 469, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 468, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 467, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 466, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 465, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 464, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 463, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 462, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 461, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 460, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 459, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 458, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 457, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 456, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 455, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 454, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 453, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 452, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 451, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 450, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 449, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 448, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 447, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 446, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 445, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 444, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 443, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 442, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 441, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 440, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 439, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 438, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 437, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+<Sun Nov 26 08:26:50 2017> STATUS  Ambig2 clock <Decoder maximum>
+- Clock 0T  220, 0H  110, 1T  128
+  0 Times <0T1  0H1  0T2  0H2>
+  Ambig 2 <448, 444, 112,  56> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <448, 443, 112,  56> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <448, 442, 112,  56> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <448, 441, 112,  56> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <448, 440, 112,  56> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <448, 439, 112,  56> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <448, 438, 112,  56> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <448, 437, 112,  56> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 452, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 451, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 450, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 449, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 448, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 447, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 446, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 445, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 444, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 443, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 442, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 441, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 440, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 439, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 438, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <456, 437, 114,  57> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 459, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 458, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 457, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 456, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 455, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 454, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 453, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 452, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 451, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 450, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 449, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 448, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 447, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 446, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 445, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 444, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 443, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 442, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 441, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 440, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 439, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 438, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <464, 437, 116,  58> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 467, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 466, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 465, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 464, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 463, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 462, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 461, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 460, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 459, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 458, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 457, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 456, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 455, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 454, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 453, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 452, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 451, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 450, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 449, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 448, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 447, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 446, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 445, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 444, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 443, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 442, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 441, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 440, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 439, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 438, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <472, 437, 118,  59> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 475, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 474, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 473, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 472, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 471, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 470, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 469, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 468, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 467, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 466, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 465, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 464, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 463, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 462, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 461, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 460, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 459, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 458, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 457, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 456, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 455, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 454, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 453, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 452, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 451, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 450, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 449, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 448, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 447, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 446, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 445, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 444, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 443, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 442, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 441, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 440, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 439, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 438, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <480, 437, 120,  60> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 483, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 482, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 481, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 480, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 479, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 478, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 477, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 476, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 475, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 474, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 473, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 472, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 471, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 470, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 469, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 468, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 467, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 466, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 465, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 464, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 463, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 462, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 461, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 460, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 459, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 458, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 457, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 456, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 455, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 454, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 453, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 452, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 451, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 450, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 449, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 448, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 447, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 446, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 445, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 444, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 443, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 442, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 441, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 440, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 439, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 438, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+  Ambig 2 <488, 437, 122,  61> PAddr     2: Tests    2; Passes    2,  100%
+<Sun Nov 26 08:35:19 2017> STATUS  Packets sent 3065483, Bytes sent 23910120
+<Sun Nov 26 08:35:19 2017> STATUS  Tests COMPLETED, All tests passed
+<Sun Nov 26 08:35:19 2017> STATUS  <SEND_END 0>

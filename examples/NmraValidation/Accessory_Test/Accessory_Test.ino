@@ -135,24 +135,6 @@ void notifyCVResetFactoryDefault()
 };
 
 // This function is called whenever a normal DCC Turnout Packet is received
-#define NOTITY_DCC_ACC_STATE
-#ifdef  NOTITY_DCC_ACC_STATE
-void notifyDccAccState( uint16_t Addr, uint16_t BoardAddr, uint8_t OutputAddr, uint8_t State)
-{
-  if (ShowData & S_DCC) {
-    Serial.print("notifyDccAccState: ") ;
-    Serial.print(Addr,DEC) ;
-    Serial.print(',');
-    Serial.print(BoardAddr,DEC) ;
-    Serial.print(',');
-    Serial.print(OutputAddr,DEC) ;
-    Serial.print(',');
-    Serial.println(State, HEX) ;
-  }
-}
-#endif // NOTITY_DCC_ACC_STATE
-
-// This function is called whenever a normal DCC Turnout Packet is received
 #define NOTITY_DCC_ACC_TURNOUT_BOARD
 #ifdef  NOTITY_DCC_ACC_TURNOUT_BOARD
 void notifyDccAccTurnoutBoard( uint16_t BoardAddr, uint8_t OutputPair, uint8_t Direction, uint8_t OutputPower )
@@ -202,7 +184,7 @@ void notifyDccAccTurnoutOutput( uint16_t Addr, uint8_t Direction, uint8_t Output
 // if NOTIFY_DCC_SIG_STATE and SIGNAL_DCC are defined.
 #define NOTITY_DCC_SIG_STATE
 #if  defined(NOTITY_DCC_SIG_STATE) && defined(SIGNAL_DCC)
-void notifyDccSigState( uint16_t Addr, uint8_t OutputIndex, uint8_t State)
+void notifyDccSigOutputState( uint16_t Addr, uint8_t State)
 {
 #ifdef DO_SCOPE
   digitalWrite(SCOPE_PIN, HIGH);
@@ -210,10 +192,8 @@ void notifyDccSigState( uint16_t Addr, uint8_t OutputIndex, uint8_t State)
 #endif // DO_SCOPE
   
   if (ShowData & S_DCC) {
-    Serial.print("notifyDccSigState: ") ;
+    Serial.print("notifyDccSigOutputState: ") ;
     Serial.print(Addr,DEC) ;
-    Serial.print(',');
-    Serial.print(OutputIndex,DEC) ;
     Serial.print(',');
     Serial.println(State, DEC) ;
   }

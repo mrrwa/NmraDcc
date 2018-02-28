@@ -370,22 +370,17 @@ void loop()   //****************************************************************
   }
 }
 
-extern void notifyDccAccState( uint16_t Addr, uint16_t BoardAddr, uint8_t OutputAddr, uint8_t State) {
-  uint16_t Current_Decoder_Addr;
-  uint8_t Bit_State;
-  Current_Decoder_Addr = Dcc.getAddr();
-  Bit_State = OutputAddr & 0x01;
+extern void notifyDccAccTurnoutOutput( uint16_t Addr, uint8_t Direction, uint8_t OutputPower ) {
+  uint16_t Current_Decoder_Addr = Dcc.getAddr();
   
   if ( Addr >= Current_Decoder_Addr && Addr < Current_Decoder_Addr+17) { //Controls Accessory_Address+16
 #ifdef DEBUG
 	 Serial.print("Addr = ");
 	 Serial.println(Addr);
-     Serial.print("BoardAddr = ");
-	 Serial.println(BoardAddr);
-	 Serial.print("Bit_State = ");
-	 Serial.println(Bit_State);
+	 Serial.print("Direction = ");
+	 Serial.println(Direction);
 #endif
-	exec_function(Addr-Current_Decoder_Addr, Bit_State );
+	exec_function(Addr-Current_Decoder_Addr, Direction );
   } 
 }
 void exec_function (int function, int FuncState)  {

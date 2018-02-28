@@ -93,9 +93,8 @@ void loop()
   // You MUST call the NmraDcc.process() method frequently from the Arduino loop() function for correct library operation
   Dcc.process();
 }
-extern void notifyDccAccState( uint16_t Addr, uint16_t BoardAddr, uint8_t OutputAddr, uint8_t State) {
-  uint8_t Bit_State =  OutputAddr & 0x01;
+extern void notifyDccAccTurnoutOutput( uint16_t Addr, uint8_t Direction, uint8_t OutputPower ) {
   if ( Addr >= This_Decoder_Address && Addr < This_Decoder_Address+17)  //Controls This_Decoder_Address+16
-	  digitalWrite( ledpins[Addr-This_Decoder_Address], Bit_State );
+	  digitalWrite( ledpins[Addr-This_Decoder_Address], Direction );
 }
 

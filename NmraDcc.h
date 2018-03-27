@@ -49,6 +49,8 @@
 #ifndef NMRADCC_IS_IN
 #define NMRADCC_IS_IN
 
+#define NMRADCC_VERSION     200     // Version 2.0.0
+
 #define MAX_DCC_MESSAGE_LEN 6    // including XOR-Byte
 
 typedef struct

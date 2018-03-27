@@ -605,7 +605,7 @@ uint16_t getMyAddr(void)
   if( CV29Value & CV29_ACCESSORY_DECODER )  // Accessory Decoder?
   {
     if( CV29Value & CV29_OUTPUT_ADDRESS_MODE ) 
-      DccProcState.myDccAddress = ( readCV( CV_ACCESSORY_DECODER_ADDRESS_MSB ) << 8 ) | readCV( CV_ACCESSORY_DECODER_ADDRESS_LSB ) - 1;
+      DccProcState.myDccAddress = ( readCV( CV_ACCESSORY_DECODER_ADDRESS_MSB ) << 8 ) | readCV( CV_ACCESSORY_DECODER_ADDRESS_LSB );
     else
       DccProcState.myDccAddress = ( ( readCV( CV_ACCESSORY_DECODER_ADDRESS_MSB ) & 0b00000111) << 6 ) | ( readCV( CV_ACCESSORY_DECODER_ADDRESS_LSB ) & 0b00111111) ;
   }
@@ -1071,7 +1071,8 @@ void execDccProcessor( DCC_MSG * pDccMsg )
 
           TurnoutPairIndex = (pDccMsg->Data[1] & 0b00000110) >> 1;
 
-          OutputAddress = (((BoardAddress - 1) << 2 ) | TurnoutPairIndex) + 1 ;
+          OutputAddress = (((BoardAddress - 1) << 2 ) | TurnoutPairIndex) + 1 ; //decoder output addresses start with 1, packet address range starts with 0
+                                                                                // ( according to NMRA 9.2.2 )
           
           if( DccProcState.inAccDecDCCAddrNextReceivedMode)
           {
@@ -1081,9 +1082,9 @@ void execDccProcessor( DCC_MSG * pDccMsg )
               Serial.print(F("execDccProcessor: Set Output Addr: "));
               Serial.println(OutputAddress);
 #endif
-			  uint16_t storedOutputAddress = OutputAddress + 1; // The value stored in CV1 & 9 for Output Addressing Mode is + 1
-          	  writeCV(CV_ACCESSORY_DECODER_ADDRESS_LSB, (uint8_t)(storedOutputAddress % 256));
-          	  writeCV(CV_ACCESSORY_DECODER_ADDRESS_MSB, (uint8_t)(storedOutputAddress / 256));
+			  //uint16_t storedOutputAddress = OutputAddress + 1; // The value stored in CV1 & 9 for Output Addressing Mode is + 1
+          	  writeCV(CV_ACCESSORY_DECODER_ADDRESS_LSB, (uint8_t)(OutputAddress % 256));
+          	  writeCV(CV_ACCESSORY_DECODER_ADDRESS_MSB, (uint8_t)(OutputAddress / 256));
           	  
           	  if( notifyDccAccOutputAddrSet )
           	  	notifyDccAccOutputAddrSet(OutputAddress);
@@ -1136,6 +1137,10 @@ void execDccProcessor( DCC_MSG * pDccMsg )
 		  {
           	uint8_t direction   =  pDccMsg->Data[1] & 0b00000001;
           	uint8_t outputPower = (pDccMsg->Data[1] & 0b00001000) >> 3;
+            
+            // for compatibility with 1.4.2
+            if ( notifyDccAccState )
+              notifyDccAccState( OutputAddress, BoardAddress, pDccMsg->Data[1] & 0b00000111, outputPower );
           	
             if( DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE )
             {

@@ -2,7 +2,7 @@
 //
 // Model Railroading with Arduino - NmraDcc.h 
 //
-// Copyright (c) 2008 - 2105 Alex Shepherd
+// Copyright (c) 2008 - 2018 Alex Shepherd
 //
 // This source file is subject of the GNU general public license 2,
 // that is available at the world-wide-web at
@@ -669,6 +669,9 @@ extern void    notifyCVResetFactoryDefault(void) __attribute__ ((weak));
  *    None
  */
 extern void    notifyCVAck(void) __attribute__ ((weak));
+
+// Deprecated, only for backward compatibility with version 1.4.2. Don't use in new designs
+extern void notifyDccAccState( uint16_t Addr, uint16_t BoardAddr, uint8_t OutputAddr, uint8_t State ) __attribute__ ((weak));
 
 #if defined (__cplusplus)
 }

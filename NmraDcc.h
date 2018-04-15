@@ -669,6 +669,7 @@ extern void    notifyCVResetFactoryDefault(void) __attribute__ ((weak));
  *    None
  */
 extern void    notifyCVAck(void) __attribute__ ((weak));
+extern void    notifyServiceMode(bool) __attribute__ ((weak));
 
 #if defined (__cplusplus)
 }

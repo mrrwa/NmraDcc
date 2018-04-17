@@ -940,10 +940,18 @@ void processServiceModeOperation( DCC_MSG * pDccMsg )
 /////////////////////////////////////////////////////////////////////////
 void resetServiceModeTimer(uint8_t inServiceMode)
 {
+  if (notifyServiceMode && inServiceMode != DccProcState.inServiceMode)
+  {
+    notifyServiceMode(inServiceMode);
+  }
   // Set the Service Mode
   DccProcState.inServiceMode = inServiceMode ;
   
   DccProcState.LastServiceModeMillis = inServiceMode ? millis() : 0 ;
+  if (notifyServiceMode && inServiceMode != DccProcState.inServiceMode)
+  {
+    notifyServiceMode(inServiceMode);
+  }
 }
 
 /////////////////////////////////////////////////////////////////////////

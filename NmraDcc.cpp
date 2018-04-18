@@ -1290,12 +1290,19 @@ void NmraDcc::init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, ui
   // Set the Bits that control Multifunction or Accessory behaviour
   // and if the Accessory decoder optionally handles Output Addressing 
   uint8_t cv29Mask = CV29_ACCESSORY_DECODER | CV29_OUTPUT_ADDRESS_MODE ; // peal off the top two bits
-  writeCV( CV_29_CONFIG, ( readCV( CV_29_CONFIG ) & ~cv29Mask ) | (Flags & ~FLAGS_MY_ADDRESS_ONLY) ) ; // KGW: Don't write bit 0 to CV.
+  writeCV( CV_29_CONFIG, ( readCV( CV_29_CONFIG ) & ~cv29Mask ) | (Flags & cv29Mask) ) ; 
 
-  writeCV( 7, VersionId ) ;
-  writeCV( 8, ManufacturerId ) ;
+  uint8_t doAutoFactoryDefault = 0;
+  if((Flags & FLAGS_AUTO_FACTORY_DEFAULT) && (readCV(CV_VERSION_ID) == 255) && (readCV(CV_MANUFACTURER_ID) == 255))
+  	  doAutoFactoryDefault = 1;
+
+  writeCV( CV_VERSION_ID, VersionId ) ;
+  writeCV( CV_MANUFACTURER_ID, ManufacturerId ) ;
 
   clearDccProcState( 0 );
+  
+  if(notifyCVResetFactoryDefault && doAutoFactoryDefault)
+  	notifyCVResetFactoryDefault();
 }
 
 ////////////////////////////////////////////////////////////////////////

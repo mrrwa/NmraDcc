@@ -201,6 +201,7 @@ class NmraDcc
 
 // Flag values to be logically ORed together and passed into the init() method
 #define FLAGS_MY_ADDRESS_ONLY        0x01	// Only process DCC Packets with My Address
+#define FLAGS_AUTO_FACTORY_DEFAULT   0x02	// Call notifyCVResetFactoryDefault() if CV 7 & 8 == 255
 #define FLAGS_OUTPUT_ADDRESS_MODE    0x40  // CV 29/541 bit 6
 #define FLAGS_DCC_ACCESSORY_DECODER  0x80  // CV 29/541 bit 7
 

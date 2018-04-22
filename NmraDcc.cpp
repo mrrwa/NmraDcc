@@ -39,7 +39,7 @@
 #endif
 
 // Uncomment to print DEBUG messages
-// #define DEBUG_PRINT		
+#define DEBUG_PRINT		
 
 //------------------------------------------------------------------------
 // DCC Receive Routine
@@ -1048,8 +1048,8 @@ void execDccProcessor( DCC_MSG * pDccMsg )
       {
         if( DccProcState.Flags & FLAGS_DCC_ACCESSORY_DECODER )
         {
-          uint16_t BoardAddress ;
-          uint16_t OutputAddress ;
+          int16_t BoardAddress ;
+          int16_t OutputAddress ;
           uint8_t  TurnoutPairIndex ;
           
 #ifdef DEBUG_PRINT
@@ -1057,7 +1057,9 @@ void execDccProcessor( DCC_MSG * pDccMsg )
 #endif          
 
           BoardAddress = ( ( (~pDccMsg->Data[1]) & 0b01110000 ) << 2 ) | ( pDccMsg->Data[0] & 0b00111111 ) ;
-          DB_PRINT("execDccProcessor: Board Addr: %d", BoardAddress);
+          TurnoutPairIndex = (pDccMsg->Data[1] & 0b00000110) >> 1;
+          DB_PRINT("execDccProcessor: Board Addr: %d, Index: %d", BoardAddress, TurnoutPairIndex);
+          
           // First check for Legacy Accessory Decoder Configuration Variable Access Instruction
           // as it's got a different format to the others 
           if((pDccMsg->Size == 5) && ((pDccMsg->Data[1] & 0b10001100) == 0b00001100))
@@ -1078,10 +1080,10 @@ void execDccProcessor( DCC_MSG * pDccMsg )
           	return;
           }
 
-          TurnoutPairIndex = (pDccMsg->Data[1] & 0b00000110) >> 1;
 
           OutputAddress = (((BoardAddress - 1) << 2 ) | TurnoutPairIndex) + 1 ; //decoder output addresses start with 1, packet address range starts with 0
                                                                                 // ( according to NMRA 9.2.2 )
+          DB_PRINT("execDccProcessor: Output Addr: %d", OutputAddress);
           
           if( DccProcState.inAccDecDCCAddrNextReceivedMode)
           {
@@ -1111,14 +1113,21 @@ void execDccProcessor( DCC_MSG * pDccMsg )
           // If we're filtering addresses, does the address match our address or is it a broadcast address? If NOT then return
           if( DccProcState.Flags & FLAGS_MY_ADDRESS_ONLY )
           {
-            if( ( DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE ) && ( OutputAddress != getMyAddr() ) && ( OutputAddress < 2045 ) )
-              return;
-              
-            else if( ( BoardAddress != getMyAddr() ) && ( BoardAddress < 511 ) )
-              return;
-
+            if( DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE ) {
+              DB_PRINT(" AddrCheck: OutputAddr: %d, BoardAddr: %d, myAddr: %d OutChk=%d", OutputAddress, BoardAddress, getMyAddr(), OutputAddress != getMyAddr() );
+              if ( OutputAddress != getMyAddr()  &&  OutputAddress < 2045 ) {
+                DB_PRINT(" eDP: OutputAddress: %d, myAddress: %d - no match", OutputAddress, getMyAddr() );
+                return;
+              }  
+            } else {
+              if( ( BoardAddress != getMyAddr() ) && ( BoardAddress < 511 ) ) {
+                DB_PRINT(" eDP: BoardAddress: %d, myAddress: %d - no match", BoardAddress, getMyAddr() );
+                return;
+              }
+            }
 	        DB_PRINT("execDccProcessor: Address Matched");
           }
+          
 
 		  if((pDccMsg->Size == 4) && ((pDccMsg->Data[1] & 0b10001001) == 1))	// Extended Accessory Decoder Control Packet Format
 		  {

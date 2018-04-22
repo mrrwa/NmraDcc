@@ -676,9 +676,6 @@ extern void    notifyServiceMode(bool) __attribute__ ((weak));
 // Deprecated, only for backward compatibility with version 1.4.2. Don't use in new designs
 extern void notifyDccAccState( uint16_t Addr, uint16_t BoardAddr, uint8_t OutputAddr, uint8_t State ) __attribute__ ((weak));
 
-// Deprecated, only for backward compatibility with version 1.4.2. Don't use in new designs
-extern void notifyDccAccState( uint16_t Addr, uint16_t BoardAddr, uint8_t OutputAddr, uint8_t State ) __attribute__ ((weak));
-
 #if defined (__cplusplus)
 }
 #endif

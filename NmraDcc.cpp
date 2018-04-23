@@ -581,11 +581,14 @@ uint8_t writeCV( unsigned int CV, uint8_t Value)
 {
   switch( CV )
   {
+    case CV_29_CONFIG:
+      // copy addressmode Bit to Flags
+      DccProcState.Flags = ( DccProcState.Flags & ~FLAGS_OUTPUT_ADDRESS_MODE) | (Value & FLAGS_OUTPUT_ADDRESS_MODE);
+      // no break, because myDccAdress must also be reset
     case CV_ACCESSORY_DECODER_ADDRESS_LSB:	// Also same CV for CV_MULTIFUNCTION_PRIMARY_ADDRESS
     case CV_ACCESSORY_DECODER_ADDRESS_MSB:
     case CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB:
     case CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB:
-    case CV_29_CONFIG:
 	  DccProcState.myDccAddress = -1;	// Assume any CV Write Operation might change the Address
   }
   
@@ -598,6 +601,10 @@ uint8_t writeCV( unsigned int CV, uint8_t Value)
 
     if( notifyCVChange )
       notifyCVChange( CV, Value) ;
+    if( notifyDccCVChange && !(DccProcState.Flags & FLAGS_SETCV_CALLED) )
+      notifyDccCVChange( CV, Value );
+      
+    DccProcState.Flags &= ~FLAGS_SETCV_CALLED;
   }
   return readEEPROM( CV ) ;
 }
@@ -1323,6 +1330,7 @@ uint8_t NmraDcc::getCV( uint16_t CV )
 ////////////////////////////////////////////////////////////////////////
 uint8_t NmraDcc::setCV( uint16_t CV, uint8_t Value)
 {
+  DccProcState.Flags |= FLAGS_SETCV_CALLED;
   return writeCV(CV,Value);
 }
 

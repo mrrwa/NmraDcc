@@ -202,6 +202,7 @@ class NmraDcc
 // Flag values to be logically ORed together and passed into the init() method
 #define FLAGS_MY_ADDRESS_ONLY        0x01	// Only process DCC Packets with My Address
 #define FLAGS_AUTO_FACTORY_DEFAULT   0x02	// Call notifyCVResetFactoryDefault() if CV 7 & 8 == 255
+#define FLAGS_SETCV_CALLED           0x10   // only used internally !!
 #define FLAGS_OUTPUT_ADDRESS_MODE    0x40  // CV 29/541 bit 6
 #define FLAGS_DCC_ACCESSORY_DECODER  0x80  // CV 29/541 bit 7
 
@@ -630,6 +631,8 @@ extern uint8_t notifyIsSetCVReady(void) __attribute__ ((weak));
 /*+
  *  notifyCVChange()  Called when a CV value is changed.
  *                    This is called whenever a CV's value is changed.
+ *  notifyDccCVChange()  Called only when a CV value is changed by a Dcc packet or a internal lib function.
+ *                    it is NOT called if the CV is chaged by means of the setCV() method.
  *                    Note: It is not called if notifyCVWrite() is defined
  *                    or if the value in the EEPROM is the same as the value
  *                    in the write command. 
@@ -642,6 +645,7 @@ extern uint8_t notifyIsSetCVReady(void) __attribute__ ((weak));
  *    None
  */
 extern void    notifyCVChange( uint16_t CV, uint8_t Value) __attribute__ ((weak));
+extern void    notifyDccCVChange( uint16_t CV, uint8_t Value) __attribute__ ((weak));
 
 /*+
  *  notifyCVResetFactoryDefault() Called when CVs must be reset.
@@ -654,7 +658,7 @@ extern void    notifyCVChange( uint16_t CV, uint8_t Value) __attribute__ ((weak)
  *
  *  Inputs:
  *    None
- *                                                                                                                                                                                                                                                                                                                                                                                     *
+ *                                                                                                        *
  *  Returns:
  *    None
  */
@@ -667,11 +671,20 @@ extern void    notifyCVResetFactoryDefault(void) __attribute__ ((weak));
  *
  *  Inputs:
  *    None
- *                                                                                                                                                                                                                                                                                                                                                                                     *
+ *                                                                                                        *
  *  Returns:
  *    None
  */
 extern void    notifyCVAck(void) __attribute__ ((weak));
+/*+
+ *  notifyServiceMode(bool) Called when state of 'inServiceMode' changes
+ *
+ *  Inputs:
+ *    bool  state of inServiceMode
+ *                                                                                                      *
+ *  Returns:
+ *    None
+ */
 extern void    notifyServiceMode(bool) __attribute__ ((weak));
 
 // Deprecated, only for backward compatibility with version 1.4.2. Don't use in new designs

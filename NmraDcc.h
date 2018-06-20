@@ -687,8 +687,10 @@ extern void    notifyCVAck(void) __attribute__ ((weak));
  */
 extern void    notifyServiceMode(bool) __attribute__ ((weak));
 
-// Deprecated, only for backward compatibility with version 1.4.2. Don't use in new designs
+// Deprecated, only for backward compatibility with version 1.4.2. 
+// Don't use in new designs. These functions may be dropped in future versions
 extern void notifyDccAccState( uint16_t Addr, uint16_t BoardAddr, uint8_t OutputAddr, uint8_t State ) __attribute__ ((weak));
+extern void notifyDccSigState( uint16_t Addr, uint8_t OutputIndex, uint8_t State) __attribute__ ((weak));
 
 #if defined (__cplusplus)
 }

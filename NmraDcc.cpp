@@ -1141,6 +1141,10 @@ void execDccProcessor( DCC_MSG * pDccMsg )
             DB_PRINT("eDP: OAddr:%d  Extended State:%0X", OutputAddress, state);
             if( notifyDccSigOutputState )
               notifyDccSigOutputState(OutputAddress, state);
+              
+            // old callback ( for compatibility with 1.4.2, not to be used in new designs )
+            if( notifyDccSigState )
+              notifyDccSigState( OutputAddress, TurnoutPairIndex, pDccMsg->Data[2] ) ;
 		  }
 		  
 		  else if(pDccMsg->Size == 3)  // Basic Accessory Decoder Packet Format
@@ -1148,7 +1152,7 @@ void execDccProcessor( DCC_MSG * pDccMsg )
           	uint8_t direction   =  pDccMsg->Data[1] & 0b00000001;
           	uint8_t outputPower = (pDccMsg->Data[1] & 0b00001000) >> 3;
             
-            // for compatibility with 1.4.2
+            // old callback ( for compatibility with 1.4.2, not to be used in new designs )
             if ( notifyDccAccState )
               notifyDccAccState( OutputAddress, BoardAddress, pDccMsg->Data[1] & 0b00000111, outputPower );
           	

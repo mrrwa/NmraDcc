@@ -1,9 +1,23 @@
-// Production 17 Function DCC Decoder    Dec_15Serv_2LED_6Ftn.ino
-// Version 5.4  Geoff Bunza 2014,2015,2016
+// Production 2 Motor 13 Function DCC Decoder    Dec_2MotDrive_12LED_1Srv_6Ftn.ino
+// Version 6.0  Geoff Bunza 2014,2015,2016,2017,2018
+// Now works with both short and long DCC Addesses
+
 // NO LONGER REQUIRES modified software servo Lib
 // Software restructuring mods added from Alex Shepherd and Franz-Peter
 //   With sincere thanks
-
+/*
+ * Motor selection is via motor select Function 13 (Motor1) and Function 14 (Motor2)  
+ * Motor speed for each can only be changed if the corresponding Function is on 
+ * (F13 and/or F14). Motor speed is maintained if the corresponding Motor select function 
+ * is off. Thus, each motor can be controlled independently and run at different speeds.
+ *  F0-F12 control LEDs on Pro Mini Digital Pins 5,6,7,8,11,12,13,14,15,16,17,18,19
+ *  Simple speed control is made via throttle speed setting for two motors. Motor selection 
+ *  is via motor select Function 13 (Motor1) and Function 14 (Motor2).  Motor speed for each 
+ *  can only be changed if the corresponding Function is on (F13 and/or F14). Motor speed is
+ *  maintained if the corresponding motor select function is off. Thus, each motor can be 
+ *  controlled independently and run at different speeds. The other functions are configurable 
+ *  but are preset for LED on/off control.
+*/
 // ******** UNLESS YOU WANT ALL CV'S RESET UPON EVERY POWER UP
 // ******** AFTER THE INITIAL DECODER LOAD REMOVE THE "//" IN THE FOOLOWING LINE!!
 //#define DECODER_LOADED
@@ -15,35 +29,57 @@
 #include <NmraDcc.h>
 #include <SoftwareServo.h> 
 
-SoftwareServo servo[17];
+SoftwareServo servo[13];
 #define servo_start_delay 50
 #define servo_init_delay 7
 #define servo_slowdown  12   //servo loop counter limit
 int servo_slow_counter = 0; //servo loop counter to slowdown servo transit
 
-int tim_delay = 500;
+uint8_t Motor1Speed       = 0;
+uint8_t Motor1ForwardDir  = 1;
+uint8_t Motor1MaxSpeed    = 127;
+uint8_t Motor2Speed       = 0;
+uint8_t Motor2ForwardDir  = 1;
+uint8_t Motor2MaxSpeed    = 127;
+int kickstarton = 1400;  //kick start cycle on time
+int kickstarttime = 5;   //kick start duration on time
+int fwdon = 0;
+int fwdtime = 1;
+int bwdon  = 0;
+int bwdtime = 1;
+int bwdshift = 0;
+int cyclewidth = 2047;
+int m2h = 3;    //R H Bridge     //Motor1
+int m2l = 4;    //B H Bridge     //Motor1
+int m0h = 9;    //R H Bridge     //Motor2
+int m0l = 10;   //B H Bridge     //Motor2
+
+int speedup = 112;   //Right track time differntial
+int deltime = 1500;
+int tim_delay = 80;
 int numfpins = 17;
+int num_active_fpins = 13;
 byte fpins [] = {3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19};
-const int FunctionPin0 = 3;
-const int FunctionPin1 = 4;
-const int FunctionPin2 = 5;
-const int FunctionPin3 = 6;
-const int FunctionPin4 = 7;
+const int FunctionPin0 = 5;
+const int FunctionPin1 = 6;
+const int FunctionPin2 = 7;
+const int FunctionPin3 = 8;
+const int FunctionPin4 = 11;
 
-const int FunctionPin5 = 8;
-const int FunctionPin6 = 9;
-const int FunctionPin7 = 10;
-const int FunctionPin8 = 11;
+const int FunctionPin5 = 12;
+const int FunctionPin6 = 13;
+const int FunctionPin7 = 14;     //A0
+const int FunctionPin8 = 15;     //A1
 
-const int FunctionPin9 = 12;
-const int FunctionPin10 = 13;
-const int FunctionPin11 = 14;     //A0
-const int FunctionPin12 = 15;     //A1
 
-const int FunctionPin13 = 16;     //A2
-const int FunctionPin14 = 17;     //A3 & LOAD ACK
-const int FunctionPin15 = 18;     //A4
-const int FunctionPin16 = 19;     //A5
+const int FunctionPin9 = 16;     //A2
+const int FunctionPin10 = 17;    //A3
+const int FunctionPin11 = 18;    //A4
+const int FunctionPin12 = 19;    //A5
+
+int Function13_value = 0;
+int Function14_value = 0;
+
 NmraDcc  Dcc ;
 DCC_MSG  Packet ;
 uint8_t CV_DECODER_MASTER_RESET = 120;
@@ -56,7 +92,7 @@ struct QUEUE
   int stop_value;
   int start_value;
 };
-QUEUE *ftn_queue = new QUEUE[16];
+QUEUE *ftn_queue = new QUEUE[17];
 
 struct CVPair
 {
@@ -68,98 +104,105 @@ struct CVPair
 
 CVPair FactoryDefaultCVs [] =
 {
-  {CV_MULTIFUNCTION_PRIMARY_ADDRESS, This_Decoder_Address},
-  {CV_ACCESSORY_DECODER_ADDRESS_MSB, 0},
-  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB, 0},
-  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB, 0},
+  {CV_MULTIFUNCTION_PRIMARY_ADDRESS, This_Decoder_Address&0x7F },
+  
+  // These two CVs define the Long DCC Address
+  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB, ((This_Decoder_Address>>8)&0x7F)+192 },
+  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB, This_Decoder_Address&0xFF },
+  
+  // ONLY uncomment 1 CV_29_CONFIG line below as approprate DEFAULT IS SHORT ADDRESS
+//  {CV_29_CONFIG,          0},                                           // Short Address 14 Speed Steps
+  {CV_29_CONFIG, CV29_F0_LOCATION}, // Short Address 28/128 Speed Steps
+//  {CV_29_CONFIG, CV29_EXT_ADDRESSING | CV29_F0_LOCATION},   // Long  Address 28/128 Speed Steps  
+
   {CV_DECODER_MASTER_RESET, 0},
-  {30, 2}, //F0 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {30, 0}, //F0 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {31, 1},    //F0 Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {32, 28},   //F0  Start Position F0=0
-  {33, 140},  //F0  End Position   F0=1
-  {34, 28},   //F0  Current Position
-  {35, 2},  //F1 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {32, 0},   //F0  Start Position F0=0
+  {33, 8},  //F0  End Position   F0=1
+  {34, 1},   //F0  Current Position
+  {35, 0},  //F1 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {36, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {37, 28},   //  Start Position Fx=0
-  {38, 140},  //  End Position   Fx=1
-  {39, 28},  //  Current Position
-  {40, 2},  //F2 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
-  {41, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
+  {37, 0},   //  Start Position Fx=0
+  {38, 8},  //  End Position   Fx=1
+  {39, 1},  //  Current Position
+  {40, 0},  //F2 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {41, 10},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {42, 28},   //  Start Position Fx=0
   {43, 140},  //  End Position   Fx=1
-  {44, 28},    //  Current Position
-  {45, 2}, //F3 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
-  {46, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
+  {44, 0},    //  Current Position
+  {45, 0}, //F3 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {46, 10},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {47, 28},   //  Start Position Fx=0
   {48, 140},  //  End Position   Fx=1
-  {49, 28},    //  Current Position
-  {50, 2}, //F4 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
-  {51, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
+  {49, 0},    //  Current Position
+  {50, 0}, //F4 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {51, 10},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {52, 28},    //  Start Position Fx=0
   {53, 140},    //  End Position   Fx=1
-  {54, 28},    //  Current Position
-  {55, 2}, //F5 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {54, 0},    //  Current Position
+  {55, 0}, //F5 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {56, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {57, 28},    //  Start Position Fx=0
   {58, 140},    //  End Position   Fx=1
   {59, 28},    //  Current Position
-  {60, 2}, //F6 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {60, 0}, //F6 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {61, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {62, 28},    //  Start Position Fx=0
   {63, 140},    //  End Position   Fx=1
   {64, 28},    //  Current Position
-  {65, 2}, //F7 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {65, 0}, //F7 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {66, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {67, 28},   //  Start Position Fx=0
-  {68, 140},  //  End Position   Fx=1
+  {68,140},  //  End Position   Fx=1
   {69, 28},    //  Current Position
-  {70, 2}, //F8 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {70, 0}, //F8 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {71, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {72, 28},   //  Start Position Fx=0
   {73, 140},  //  End Position   Fx=1
   {74, 28},    //  Current Position
-  {75, 2}, //F9 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {75, 0}, //F9 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {76, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {77, 28},   //  Start Position Fx=0
   {78, 140},  //  End Position   Fx=1
   {79, 28},    //  Current Position
-  {80, 2}, //F10 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {80, 0}, //F10 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {81, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {82, 28},   //  Start Position Fx=0
-  {83, 140},  //  End Position   Fx=1
-  {84, 28},    //  Current Position
-  {85, 2}, //F11 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {82, 1},   //  Start Position Fx=0
+  {83, 5},  //  End Position   Fx=1
+  {84, 1},    //  Current Position
+  {85, 1}, //F11 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {86, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {87, 28},   //  Start Position Fx=0
-  {88, 140},  //  End Position   Fx=1
-  {89, 28},    //  Current Position
-  {90, 2}, //F12 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {87, 1},   //  Start Position Fx=0
+  {88, 5},  //  End Position   Fx=1
+  {89, 1},    //  Current Position
+  {90, 2}, //F12 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {91, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {92, 28},   //  Start Position Fx=0
-  {93, 140},  //  End Position   Fx=1
-  {94, 28},    //  Current Position
-  {95, 2}, //F13 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {92, 1},   //  Start Position Fx=0
+  {93, 10},  //  End Position   Fx=1
+  {94, 1},    //  Current Position
+  {95, 0}, //F13 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {96, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {97, 28},   //  Start Position Fx=0
-  {98, 140},  //  End Position   Fx=1
-  {99, 28},    //  Current Position
-  {100, 2}, //F14 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {97, 1},   //  Start Position Fx=0
+  {98, 6},  //  End Position   Fx=1
+  {99, 1},    //  Current Position
+  {100, 0}, //F14 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {101, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {102, 28},   //  Start Position Fx=0
-  {103, 140},  //  End Position   Fx=1
-  {104, 28},    //  Current Position
-  {105, 3}, //F15 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {102, 1},   //  Start Position Fx=0
+  {103, 6},  //  End Position   Fx=1
+  {104, 1},    //  Current Position
+  {105, 3}, //F15 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {106, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {107, 1},   //  Start Position Fx=0
-  {108, 60},  //  End Position   Fx=1
+  {108, 10},  //  End Position   Fx=1
   {109, 1},    //  Current Position
-  {110, 0}, //F16 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {110, 0}, //F16 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {111, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {112, 1},   //  Start Position Fx=0
-  {113, 4},  //  End Position   Fx=1
+  {113, 10},  //  End Position   Fx=1
   {114, 1},    //  Current Position
 //FUTURE USE
-  {115, 0}, //F17 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {115, 0}, //F17 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {116, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {117, 28},   //  Start Position Fx=0
   {118, 50},  //  End Position   Fx=1
@@ -174,6 +217,9 @@ void notifyCVResetFactoryDefault()
   FactoryDefaultCVIndex = sizeof(FactoryDefaultCVs)/sizeof(CVPair);
 };
 
+// NOTE: NO PROGRAMMING ACK IS SET UP TO MAXIMAIZE 
+// OUTPUT PINS FOR FUNCTIONS
+
 void setup()   //******************************************************
 {
 #ifdef DEBUG
@@ -186,26 +232,24 @@ void setup()   //******************************************************
       pinMode(fpins[i], OUTPUT);
       digitalWrite(fpins[i], 0);
      }
-  for (int i=0; i < numfpins; i++) {
+  for (int i=8; i < numfpins; i++) {
      digitalWrite(fpins[i], 1);
-     delay (tim_delay/10);
+     delay (tim_delay);
   }
   delay( tim_delay);
-  for (int i=0; i < numfpins; i++) {
+  for (int i=8; i < numfpins; i++) {
      digitalWrite(fpins[i], 0);
-     delay (tim_delay/10);
+     delay (tim_delay);
   }
-  delay( tim_delay);
-  
   // Setup which External Interrupt, the Pin it's associated with that we're using 
   Dcc.pin(0, 2, 0);
   // Call the main DCC Init function to enable the DCC Receiver
-  Dcc.init( MAN_ID_DIY, 100, FLAGS_MY_ADDRESS_ONLY, 0 );
+  Dcc.init( MAN_ID_DIY, 600, FLAGS_MY_ADDRESS_ONLY, 0 );
   delay(800);
-   
+
 #if defined(DECODER_LOADED)
   if ( Dcc.getCV(CV_DECODER_MASTER_RESET)== CV_DECODER_MASTER_RESET ) 
-#endif  
+#endif 
   
      {
        for (int j=0; j < FactoryDefaultCVIndex; j++ )
@@ -213,9 +257,9 @@ void setup()   //******************************************************
          digitalWrite(fpins[14], 1);
          delay (1000);
          digitalWrite(fpins[14], 0);
-     }    
-  for ( i=0; i < numfpins; i++) {
-    cv_value = Dcc.getCV( 30+(i*5)) ;
+     }
+  for ( i=0; i < num_active_fpins; i++) {
+    cv_value = Dcc.getCV( 30+(i*5)) ;   
 #ifdef DEBUG
     Serial.print(" cv_value: ");
     Serial.println(cv_value, DEC) ;
@@ -288,7 +332,6 @@ void setup()   //******************************************************
          break;
     }
   }
-
 }
 void loop()   //**********************************************************************
 {
@@ -296,10 +339,19 @@ void loop()   //****************************************************************
   // from the Arduino loop() function for correct library operation
   Dcc.process();
   SoftwareServo::refresh();
-  delay(3);
-  for (int i=0; i < numfpins; i++) {
+  delay(2);
+  if (Motor1Speed != 0) {
+    if (Motor1ForwardDir == 0)  gofwd1 (fwdtime, int((Motor1Speed&0x7f)*21));
+    else gobwd1 (bwdtime, int((Motor1Speed&0x7f)*21));
+  }
+  if (Motor2Speed != 0) {
+    if (Motor2ForwardDir == 0)  gofwd2 (fwdtime, int((Motor2Speed&0x7f)*21));
+    else gobwd2 (bwdtime, int((Motor2Speed&0x7f)*21));
+  }
+  //
+  for (int i=0; i < num_active_fpins; i++) {
     if (ftn_queue[i].inuse==1)  {
-
+    
     switch (Dcc.getCV( 30+(i*5))) {
       case 0:
         break;
@@ -366,7 +418,66 @@ void loop()   //****************************************************************
     }
   }
 }
-
+void gofwd1(int fcnt,int fcycle) {
+   int icnt;
+   int totcycle;
+   icnt = 0;
+   while (icnt < fcnt)
+  {
+    digitalWrite(m2h, HIGH);     //Motor1
+    delayMicroseconds(fcycle);
+    digitalWrite(m2h, LOW);     //Motor1
+    delayMicroseconds(cyclewidth - fcycle);
+    icnt++;
+  }
+}
+void gobwd1(int bcnt,int bcycle) {
+   int icnt;
+   icnt=0;
+   while (icnt < bcnt)
+  {
+    digitalWrite(m2l, HIGH);     //Motor1
+    delayMicroseconds(bcycle); 
+    digitalWrite(m2l, LOW);      //Motor1
+    delayMicroseconds(cyclewidth - bcycle);
+    icnt++;
+  }
+}
+void gofwd2(int fcnt,int fcycle) {
+   int icnt;
+   int totcycle;
+   icnt = 0;
+   while (icnt < fcnt)
+  {
+    digitalWrite(m0h, HIGH);     //Motor2
+    delayMicroseconds(fcycle);
+    digitalWrite(m0h, LOW);     //Motor2
+    delayMicroseconds(cyclewidth - fcycle);
+    icnt++;
+  }
+}
+void gobwd2(int bcnt,int bcycle) {
+   int icnt;
+   icnt=0;
+   while (icnt < bcnt)
+  {
+    digitalWrite(m0l, HIGH);     //Motor2
+    delayMicroseconds(bcycle); 
+    digitalWrite(m0l, LOW);      //Motor2
+    delayMicroseconds(cyclewidth - bcycle);
+    icnt++;
+  }
+}
+void notifyDccSpeed( uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DIRECTION ForwardDir, DCC_SPEED_STEPS SpeedSteps )  {
+   if (Function13_value==1)  {
+     Motor1Speed = Speed;
+     Motor1ForwardDir  = ForwardDir;
+   }
+   if (Function14_value==1)  {
+     Motor2Speed       = Speed;
+     Motor2ForwardDir  = ForwardDir;
+   }
+}
 void notifyDccFunc( uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint8_t FuncState)  {
   switch(FuncGrp)
   {
@@ -393,10 +504,10 @@ void notifyDccFunc( uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uin
 	  break;
 
   case FN_13_20:   //Function Group 2 FuncState == F20-F13 Function Control
-      exec_function( 13, FunctionPin13, (FuncState & FN_BIT_13));
-	  exec_function( 14, FunctionPin14, (FuncState & FN_BIT_14)>>1 );
-	  exec_function( 15, FunctionPin15, (FuncState & FN_BIT_15)>>2 );
-	  exec_function( 16, FunctionPin16, (FuncState & FN_BIT_16)>>3 );
+      Function13_value = (FuncState & FN_BIT_13);
+	  Function14_value = (FuncState & FN_BIT_14)>>1;
+//	  exec_function( 15, FunctionPin15, (FuncState & FN_BIT_15)>>2 );
+//	  exec_function( 16, FunctionPin16, (FuncState & FN_BIT_16)>>3 );
       break;
 	
   case FN_21_28:

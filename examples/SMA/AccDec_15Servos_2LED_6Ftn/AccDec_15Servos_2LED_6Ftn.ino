@@ -1,5 +1,10 @@
-// Production 17 Function DCC Decoder 
-// Version 5.4  Geoff Bunza 2014,2015,2016
+// Production 17 Switch Acessory DCC Decoder    AccDec_15Servos_2LED_6Ftn.ino
+// Version 6.0  Geoff Bunza 2014,2015,2016,2017,2018
+// Now works with both short and long DCC Addesses for CV Control Default 24 (LSB CV 121 ; MSB CV 122)
+// ACCESSORY DECODER  DEFAULT ADDRESS IS 40 (MAX 40-56 SWITCHES)
+// ACCESSRY DECODER ADDRESS CAN NOW BE SET ABOVE 255
+// BE CAREFUL!  DIFFERENT DCC BASE STATIONS  ALLOW DIFFERING MAX ADDRESSES
+
 // NO LONGER REQUIRES modified software servo Lib
 // Software restructuring mods added from Alex Shepherd and Franz-Peter
 //   With sincere thanks
@@ -12,14 +17,13 @@
 // ******** INFO TO THE SERIAL MONITOR
 //#define DEBUG
 
-
 #include <NmraDcc.h>
 #include <SoftwareServo.h> 
 
 SoftwareServo servo[17];
 #define servo_start_delay 50
 #define servo_init_delay 7
-#define servo_slowdown  3   //servo loop counter limit
+#define servo_slowdown  12   //servo loop counter limit
 int servo_slow_counter = 0; //servo loop counter to slowdown servo transit
 
 int tim_delay = 500;
@@ -49,6 +53,7 @@ int t;                                    // temp
 #define SET_CV_Address       24           // THIS ADDRESS IS FOR SETTING CV'S Like a Loco
 #define Accessory_Address    40           // THIS ADDRESS IS THE START OF THE SWITCHES RANGE
                                           // WHICH WILL EXTEND FOR 16 MORE SWITCH ADDRESSES
+										  // THIS CAN START ABOVE ADDRESS 256
 uint8_t CV_DECODER_MASTER_RESET =   120;  // THIS IS THE CV ADDRESS OF THE FULL RESET
 #define CV_To_Store_SET_CV_Address	121
 #define CV_Accessory_Address CV_ACCESSORY_DECODER_ADDRESS_LSB
@@ -61,7 +66,7 @@ struct QUEUE
   int stop_value;
   int start_value;
 };
-QUEUE *ftn_queue = new QUEUE[16];
+QUEUE *ftn_queue = new QUEUE[17];
 
 struct CVPair
 {
@@ -70,13 +75,21 @@ struct CVPair
 };
 CVPair FactoryDefaultCVs [] =
 {
-  {CV_ACCESSORY_DECODER_ADDRESS_LSB, Accessory_Address},
-  {CV_ACCESSORY_DECODER_ADDRESS_MSB, 0},
+  // These two CVs define the Long Accessory Address
+  {CV_ACCESSORY_DECODER_ADDRESS_LSB, Accessory_Address&0xFF},
+  {CV_ACCESSORY_DECODER_ADDRESS_MSB, (Accessory_Address>>8)&0x07},
+  
   {CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB, 0},
   {CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB, 0},
+  // Speed Steps don't matter for this decoder
+  // ONLY uncomment 1 CV_29_CONFIG line below as approprate DEFAULT IS SHORT ADDRESS
+//  {CV_29_CONFIG,          0},                                           // Short Address 14 Speed Steps
+  {CV_29_CONFIG, CV29_F0_LOCATION}, // Short Address 28/128 Speed Steps
+//  {CV_29_CONFIG,          CV29_EXT_ADDRESSING | CV29_F0_LOCATION},   // Long  Address 28/128 Speed Steps  
+  
   {CV_DECODER_MASTER_RESET, 0},
-  {CV_To_Store_SET_CV_Address, SET_CV_Address},
-  {CV_To_Store_SET_CV_Address+1, 0},
+  {CV_To_Store_SET_CV_Address, SET_CV_Address&0xFF },   // LSB Set CV Address
+  {CV_To_Store_SET_CV_Address+1,(SET_CV_Address>>8)&0x3F },  //MSB Set CV Address
   {30, 2}, //F0 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {31, 1},    //F0 Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {32, 28},   //F0  Start Position F0=0
@@ -203,7 +216,7 @@ void setup()   //******************************************************
   // Setup which External Interrupt, the Pin it's associated with that we're using 
   Dcc.pin(0, 2, 0);
   // Call the main DCC Init function to enable the DCC Receiver
-  Dcc.init( MAN_ID_DIY, 100, FLAGS_OUTPUT_ADDRESS_MODE | FLAGS_DCC_ACCESSORY_DECODER, CV_To_Store_SET_CV_Address);
+  Dcc.init( MAN_ID_DIY, 600, FLAGS_OUTPUT_ADDRESS_MODE | FLAGS_DCC_ACCESSORY_DECODER, CV_To_Store_SET_CV_Address);
   delay(800);
    
   #if defined(DECODER_LOADED)
@@ -277,7 +290,13 @@ void setup()   //******************************************************
 		 }
          break;
 	   case 5:   // Fade On
-
+         {
+           ftn_queue[i].inuse = 0;
+           ftn_queue[i].start_value = 0;
+           ftn_queue[i].increment = int (char (Dcc.getCV( 31+(i*5))));
+           digitalWrite(fpins[i], 0);
+           ftn_queue[i].stop_value = int(Dcc.getCV( 33+(i*5))) *10.;
+         }
          break;         
        case 6:   // NEXT FEATURE to pin
          break;         
@@ -293,7 +312,7 @@ void loop()   //****************************************************************
   // from the Arduino loop() function for correct library operation
   Dcc.process();
   SoftwareServo::refresh();
-  delay(4);
+  delay(3);
   for (int i=0; i < numfpins; i++) {
     if (ftn_queue[i].inuse==1)  {
 
@@ -353,13 +372,7 @@ void loop()   //****************************************************************
 		 }
          break;
 	   case 5:   // Fade On
-         {
-           ftn_queue[i].inuse = 0;
-           ftn_queue[i].start_value = 0;
-           ftn_queue[i].increment = int (char (Dcc.getCV( 31+(i*5))));
-           digitalWrite(fpins[i], 0);
-           ftn_queue[i].stop_value = int(Dcc.getCV( 33+(i*5))) *10.;
-         }
+
          break;         
        case 6:   // NEXT FEATURE to pin
          break;         

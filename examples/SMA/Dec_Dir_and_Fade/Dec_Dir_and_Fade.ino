@@ -1,6 +1,8 @@
-// Production 17 Function DCC Decoder 
-// Version 5.4  Geoff Bunza 2014,2015,2016
-// LED control is dependent on direction of travel
+// Production 17 Function DCC Decoder   Dec_Dir_and_Fade.ino
+// Version 6.0  Geoff Bunza 2014,2015,2016,2017,2018
+// Now works with both short and long DCC Addesses
+// LED control is dependent on direction of travel and Fade can be added
+
 // ******** UNLESS YOU WANT ALL CV'S RESET UPON EVERY POWER UP
 // ******** AFTER THE INITIAL DECODER LOAD REMOVE THE "//" IN THE FOOLOWING LINE!!
 //#define DECODER_LOADED
@@ -11,11 +13,12 @@ int tim_delay = 500;
 #define numleds  17
 byte ledpins [] = {3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19};    //Defines all possible LED pins
 
+//  IMPORTANT:
 // The following list defines how each of the 17 function pins operate:
 // a 0 allows for normal On/Off control with fade on and fade off
 // a 1 allows for normal control when the decoder sees a forward speed setting, reverse turns the LED off
 // a 2 allows for normal control when the decoder sees a reverse speed setting, forward turns the LED off
-byte led_direction [] = {0,1,2,0,1,1,1,1,2,2,2,2,0,0,0,0,0};        //0=On/Off, 1=On Forward, 2=On Reverse
+byte led_direction [] = {0,1,2,0,1,1,1,1,2,2,2,1,1,1,2,0,0};        //0=On/Off, 1=On Forward, 2=On Reverse
 
 boolean led_last_state [] = {false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false};  //last state of led
 boolean Last_Function_State[] = {false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false};  //These hold the last Fx assignments
@@ -46,18 +49,27 @@ NmraDcc  Dcc ;
 DCC_MSG  Packet ;
 uint8_t CV_DECODER_MASTER_RESET = 120;
 
-#define This_Decoder_Address 24
 struct CVPair
 {
   uint16_t  CV;
   uint8_t   Value;
 };
+
+#define This_Decoder_Address 24
+
 CVPair FactoryDefaultCVs [] =
 {
-  {CV_MULTIFUNCTION_PRIMARY_ADDRESS, This_Decoder_Address},
-  {CV_ACCESSORY_DECODER_ADDRESS_MSB, 0},
-  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB, 0},
-  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB, 0},
+  {CV_MULTIFUNCTION_PRIMARY_ADDRESS, This_Decoder_Address&0x7F },
+  
+  // These two CVs define the Long DCC Address
+  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB, ((This_Decoder_Address>>8)&0x7F)+192 },
+  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB, This_Decoder_Address&0xFF },
+  
+  // ONLY uncomment 1 CV_29_CONFIG line below as approprate DEFAULT IS SHORT ADDRESS
+//  {CV_29_CONFIG,          0},                                           // Short Address 14 Speed Steps
+  {CV_29_CONFIG, CV29_F0_LOCATION}, // Short Address 28/128 Speed Steps
+//  {CV_29_CONFIG, CV29_EXT_ADDRESSING | CV29_F0_LOCATION},   // Long  Address 28/128 Speed Steps  
+
   {CV_DECODER_MASTER_RESET, 0},
 };
 uint8_t FactoryDefaultCVIndex = 0;
@@ -98,7 +110,7 @@ void setup()
   // Setup which External Interrupt, the Pin it's associated with that we're using and enable the Pull-Up 
   Dcc.pin(0, 2, 0);
   // Call the main DCC Init function to enable the DCC Receiver
-  Dcc.init( MAN_ID_DIY, 100, FLAGS_MY_ADDRESS_ONLY, 0 );
+  Dcc.init( MAN_ID_DIY, 600, FLAGS_MY_ADDRESS_ONLY, 0 );
 }
 void loop()
 {

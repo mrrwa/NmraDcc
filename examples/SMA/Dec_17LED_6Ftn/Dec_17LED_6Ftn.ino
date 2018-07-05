@@ -1,5 +1,6 @@
-// Production 17 Function DCC Decoder 
-// Version 5.4  Geoff Bunza 2014,2015,2016
+// Production 17 Function DCC Decoder     Dec_17LED_6Ftn.ino
+// Version 6.0  Geoff Bunza 2014,2015,2016,2017,2018
+// Now works with both short and long DCC Addesses
 // NO LONGER REQUIRES modified software servo Lib
 // Software restructuring mods added from Alex Shepherd and Franz-Peter
 //   With sincere thanks
@@ -10,15 +11,14 @@
 
 // ******** EMOVE THE "//" IN THE FOOLOWING LINE TO SEND DEBUGGING
 // ******** INFO TO THE SERIAL MONITOR
-//#define DEBUG
-
+#define DEBUG
 #include <NmraDcc.h>
 #include <SoftwareServo.h> 
 
 SoftwareServo servo[17];
 #define servo_start_delay 50
 #define servo_init_delay 7
-#define servo_slowdown  3   //servo loop counter limit
+#define servo_slowdown  12   //servo loop counter limit
 int servo_slow_counter = 0; //servo loop counter to slowdown servo transit
 
 int tim_delay = 500;
@@ -48,7 +48,7 @@ NmraDcc  Dcc ;
 DCC_MSG  Packet ;
 uint8_t CV_DECODER_MASTER_RESET = 120;
 int t;  // temp
-#define This_Decoder_Address 24
+
 struct QUEUE
 {
   int inuse;
@@ -64,18 +64,27 @@ struct CVPair
   uint16_t  CV;
   uint8_t   Value;
 };
+
+#define This_Decoder_Address 24
+
 CVPair FactoryDefaultCVs [] =
 {
   {CV_MULTIFUNCTION_PRIMARY_ADDRESS, This_Decoder_Address},
-  {CV_ACCESSORY_DECODER_ADDRESS_MSB, 0},
-  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB, 0},
-  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB, 0},
+  
+  // These two CVs define the Long DCC Address
+  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB, ((This_Decoder_Address>>8)&0x7F)+192 },
+  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB, This_Decoder_Address&0xFF },
+  
+  // ONLY uncomment 1 CV_29_CONFIG line below as approprate DEFAULT IS SHORT ADDRESS
+//  {CV_29_CONFIG,          0},                                           // Short Address 14 Speed Steps
+  {CV_29_CONFIG, CV29_F0_LOCATION}, // Short Address 28/128 Speed Steps
+//  {CV_29_CONFIG,          CV29_EXT_ADDRESSING | CV29_F0_LOCATION},   // Long  Address 28/128 Speed Steps  
   {CV_DECODER_MASTER_RESET, 0},
   {30, 5}, //F0 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
-  {31, 1},    //F0 Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {32, 0},   //F0  Start Position F0=0
+  {31, 1},  //F0 Rate  Blink=Eate,PWM=Rate,Servo=Rate
+  {32, 0},  //F0  Start Position F0=0
   {33, 8},  //F0  End Position   F0=1
-  {34, 1},   //F0  Current Position
+  {34, 1},  //F0  Current Position
   {35, 5},  //F1 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {36, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {37, 0},   //  Start Position Fx=0
@@ -121,40 +130,40 @@ CVPair FactoryDefaultCVs [] =
   {77, 28},   //  Start Position Fx=0
   {78, 140},  //  End Position   Fx=1
   {79, 28},    //  Current Position
-  {80, 0}, //F10 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {80, 0}, //F10 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {81, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {82, 1},   //  Start Position Fx=0
   {83, 5},  //  End Position   Fx=1
   {84, 1},    //  Current Position
-  {85, 1}, //F11 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {85, 1}, //F11 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {86, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {87, 1},   //  Start Position Fx=0
-  {88, 5},  //  End Position   Fx=1
+  {88, 50},  //  End Position   Fx=1
   {89, 1},    //  Current Position
-  {90, 1}, //F12 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {90, 1}, //F12 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {91, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {92, 1},   //  Start Position Fx=0
-  {93, 10},  //  End Position   Fx=1
+  {93, 100},  //  End Position   Fx=1
   {94, 1},    //  Current Position
-  {95, 3}, //F13 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {95, 3}, //F13 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {96, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {97, 1},   //  Start Position Fx=0
-  {98, 6},  //  End Position   Fx=1
-  {99, 1},    //  Current Position
-  {100, 0}, //F14 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {98, 200},  //  End Position   Fx=1
+  {99, 2},    //  Current Position
+  {100, 0}, //F14 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {101, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {102, 1},   //  Start Position Fx=0
-  {103, 6},  //  End Position   Fx=1
+  {103, 200},  //  End Position   Fx=1
   {104, 1},    //  Current Position
-  {105, 3}, //F15 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {105, 3}, //F15 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {106, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {107, 1},   //  Start Position Fx=0
-  {108, 10},  //  End Position   Fx=1
+  {108, 60},  //  End Position   Fx=1
   {109, 1},    //  Current Position
-  {110, 0}, //F16 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {110, 0}, //F16 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {111, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {112, 1},   //  Start Position Fx=0
-  {113, 10},  //  End Position   Fx=1
+  {113, 4},  //  End Position   Fx=1
   {114, 1},    //  Current Position
 //FUTURE USE
   {115, 0}, //F17 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
@@ -164,7 +173,7 @@ CVPair FactoryDefaultCVs [] =
   {119, 28},    //  Current Position
 };
 
-uint8_t FactoryDefaultCVIndex = 95;
+uint8_t FactoryDefaultCVIndex = sizeof(FactoryDefaultCVs)/sizeof(CVPair);
 void notifyCVResetFactoryDefault()
 {
   // Make FactoryDefaultCVIndex non-zero and equal to num CV's to be reset 
@@ -172,14 +181,17 @@ void notifyCVResetFactoryDefault()
   FactoryDefaultCVIndex = sizeof(FactoryDefaultCVs)/sizeof(CVPair);
 };
 
+// NOTE: NO PROGRAMMING ACK IS SET UP TO MAXIMAIZE 
+// OUTPUT PINS FOR FUNCTIONS
+
 void setup()   //******************************************************
+
 {
 #ifdef DEBUG
   Serial.begin(115200);
 #endif
   int i;
   uint8_t cv_value;
-  Serial.begin(115200);
   // initialize the digital pins as outputs
     for (int i=0; i < numfpins; i++) {
       pinMode(fpins[i], OUTPUT);
@@ -199,12 +211,12 @@ void setup()   //******************************************************
   // Setup which External Interrupt, the Pin it's associated with that we're using 
   Dcc.pin(0, 2, 0);
   // Call the main DCC Init function to enable the DCC Receiver
-  Dcc.init( MAN_ID_DIY, 100, FLAGS_MY_ADDRESS_ONLY, 0 );
+  Dcc.init( MAN_ID_DIY, 600, FLAGS_MY_ADDRESS_ONLY, 0 );
   delay(800);
    
 #if defined(DECODER_LOADED)
   if ( Dcc.getCV(CV_DECODER_MASTER_RESET)== CV_DECODER_MASTER_RESET ) 
-#endif 
+#endif  
   
      {
        for (int j=0; j < FactoryDefaultCVIndex; j++ )
@@ -213,8 +225,9 @@ void setup()   //******************************************************
          delay (1000);
          digitalWrite(fpins[14], 0);
      }
+	 
   for ( i=0; i < numfpins; i++) {
-    cv_value = Dcc.getCV( 30+(i*5)) ;   
+    cv_value = Dcc.getCV( 30+(i*5)) ;
 #ifdef DEBUG
     Serial.print(" cv_value: ");
     Serial.println(cv_value, DEC) ;
@@ -295,7 +308,7 @@ void loop()   //****************************************************************
   // from the Arduino loop() function for correct library operation
   Dcc.process();
   SoftwareServo::refresh();
-  delay(4);
+  delay(3);
   for (int i=0; i < numfpins; i++) {
     if (ftn_queue[i].inuse==1)  {
 
@@ -367,6 +380,12 @@ void loop()   //****************************************************************
 }
 
 void notifyDccFunc( uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint8_t FuncState)  {
+#ifdef DEBUG
+   Serial.print("Addr= ");
+   Serial.println(Addr, DEC) ;
+   Serial.print("FuncState= ");
+   Serial.println(FuncState, DEC) ;
+#endif
   switch(FuncGrp)
   {
   case FN_0_4:    //Function Group 1 F0 F4 F3 F2 F1
@@ -403,7 +422,7 @@ void notifyDccFunc( uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uin
   }
 }  
 void exec_function (int function, int pin, int FuncState)  {
-  switch ( Dcc.getCV( 30+(function*5)) )  {  // Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  switch ( Dcc.getCV( 30+(function*5)) )  {  // Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
     case 0:    // On - Off LED
       digitalWrite (pin, FuncState);
       ftn_queue[function].inuse = 0;

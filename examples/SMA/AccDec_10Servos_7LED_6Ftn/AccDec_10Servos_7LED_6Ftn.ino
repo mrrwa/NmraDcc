@@ -1,5 +1,10 @@
-// Production 17 Function DCC Decoder 
-// Version 5.4  Geoff Bunza 2014,2015,2016
+// Production 17 Switch Acessory DCC Decoder    AccDec_10Servos_7LED_6Ftn.ino
+// Version 6.0  Geoff Bunza 2014,2015,2016,2017,2018
+// Now works with both short and long DCC Addesses for CV Control Default 24 (LSB CV 121 ; MSB CV 122)
+// ACCESSORY DECODER  DEFAULT ADDRESS IS 40 (MAX 40-56 SWITCHES)
+// ACCESSRY DECODER ADDRESS CAN NOW BE SET ABOVE 255
+// BE CAREFUL!  DIFFERENT DCC BASE STATIONS  ALLOW DIFFERING MAX ADDRESSES
+
 // NO LONGER REQUIRES modified software servo Lib
 // Software restructuring mods added from Alex Shepherd and Franz-Peter
 //   With sincere thanks
@@ -19,7 +24,7 @@
 SoftwareServo servo[17];
 #define servo_start_delay 50
 #define servo_init_delay 7
-#define servo_slowdown  3   //servo loop counter limit
+#define servo_slowdown  12   //servo loop counter limit
 int servo_slow_counter = 0; //servo loop counter to slowdown servo transit
 
 int tim_delay = 500;
@@ -49,6 +54,7 @@ int t;                                    // temp
 #define SET_CV_Address       24           // THIS ADDRESS IS FOR SETTING CV'S Like a Loco
 #define Accessory_Address    40           // THIS ADDRESS IS THE START OF THE SWITCHES RANGE
                                           // WHICH WILL EXTEND FOR 16 MORE SWITCH ADDRESSES
+										  // THIS CAN START ABOVE ADDRESS 256
 uint8_t CV_DECODER_MASTER_RESET =   120;  // THIS IS THE CV ADDRESS OF THE FULL RESET
 #define CV_To_Store_SET_CV_Address	121
 #define CV_Accessory_Address CV_ACCESSORY_DECODER_ADDRESS_LSB
@@ -61,7 +67,7 @@ struct QUEUE
   int stop_value;
   int start_value;
 };
-QUEUE *ftn_queue = new QUEUE[16];
+QUEUE *ftn_queue = new QUEUE[17];
 
 struct CVPair
 {
@@ -70,15 +76,22 @@ struct CVPair
 };
 CVPair FactoryDefaultCVs [] =
 {
-  {CV_ACCESSORY_DECODER_ADDRESS_LSB, Accessory_Address},
-  {CV_ACCESSORY_DECODER_ADDRESS_MSB, 0},
+  // These two CVs define the Long Accessory Address
+  {CV_ACCESSORY_DECODER_ADDRESS_LSB, Accessory_Address&0xFF},
+  {CV_ACCESSORY_DECODER_ADDRESS_MSB, (Accessory_Address>>8)&0x07},
+  
   {CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB, 0},
   {CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB, 0},
+  // Speed Steps don't matter for this decoder
+  // ONLY uncomment 1 CV_29_CONFIG line below as approprate DEFAULT IS SHORT ADDRESS
+//  {CV_29_CONFIG,          0},                                           // Short Address 14 Speed Steps
+  {CV_29_CONFIG, CV29_F0_LOCATION}, // Short Address 28/128 Speed Steps
+//  {CV_29_CONFIG,          CV29_EXT_ADDRESSING | CV29_F0_LOCATION},   // Long  Address 28/128 Speed Steps  
+  
   {CV_DECODER_MASTER_RESET, 0},
-  {CV_To_Store_SET_CV_Address, SET_CV_Address},
-  {CV_To_Store_SET_CV_Address+1, 0},
+  {CV_To_Store_SET_CV_Address, SET_CV_Address&0xFF },   // LSB Set CV Address
+  {CV_To_Store_SET_CV_Address+1,(SET_CV_Address>>8)&0x3F },  //MSB Set CV Address
   {30, 2}, //F0 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
-  {31, 1},    //F0 Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {32, 28},   //F0  Start Position F0=0
   {33, 140},  //F0  End Position   F0=1
   {34, 28},   //F0  Current Position
@@ -112,21 +125,21 @@ CVPair FactoryDefaultCVs [] =
   {62, 28},    //  Start Position Fx=0
   {63, 140},    //  End Position   Fx=1
   {64, 28},    //  Current Position
-  {65, 2}, //F7 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {65, 1}, //F7 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {66, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {67, 28},   //  Start Position Fx=0
-  {68,140},  //  End Position   Fx=1
-  {69, 28},    //  Current Position
-  {70, 2}, //F8 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {67, 1},   //  Start Position Fx=0
+  {68,35},  //  End Position   Fx=1
+  {69, 1},    //  Current Position
+  {70, 1}, //F8 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {71, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {72, 28},   //  Start Position Fx=0
-  {73, 140},  //  End Position   Fx=1
-  {74, 28},    //  Current Position
-  {75, 2}, //F9 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {72, 1},   //  Start Position Fx=0
+  {73, 100},  //  End Position   Fx=1
+  {74, 1},    //  Current Position
+  {75, 0}, //F9 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {76, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {77, 28},   //  Start Position Fx=0
-  {78, 140},  //  End Position   Fx=1
-  {79, 28},    //  Current Position
+  {77, 1},   //  Start Position Fx=0
+  {78, 10},  //  End Position   Fx=1
+  {79, 1},    //  Current Position
   {80, 0}, //F10 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {81, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {82, 1},   //  Start Position Fx=0
@@ -135,22 +148,22 @@ CVPair FactoryDefaultCVs [] =
   {85, 1}, //F11 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {86, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {87, 1},   //  Start Position Fx=0
-  {88, 5},  //  End Position   Fx=1
+  {88, 50},  //  End Position   Fx=1
   {89, 1},    //  Current Position
   {90, 1}, //F12 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {91, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {92, 1},   //  Start Position Fx=0
-  {93, 20},  //  End Position   Fx=1
+  {93, 100},  //  End Position   Fx=1
   {94, 1},    //  Current Position
   {95, 3}, //F13 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {96, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {97, 1},   //  Start Position Fx=0
-  {98, 35},  //  End Position   Fx=1
+  {98, 200},  //  End Position   Fx=1
   {99, 2},    //  Current Position
   {100, 0}, //F14 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {101, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {102, 1},   //  Start Position Fx=0
-  {103, 4},  //  End Position   Fx=1
+  {103, 200},  //  End Position   Fx=1
   {104, 1},    //  Current Position
   {105, 3}, //F15 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {106, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
@@ -299,7 +312,7 @@ void loop()   //****************************************************************
   // from the Arduino loop() function for correct library operation
   Dcc.process();
   SoftwareServo::refresh();
-  delay(4);
+  delay(3);
   for (int i=0; i < numfpins; i++) {
     if (ftn_queue[i].inuse==1)  {
 

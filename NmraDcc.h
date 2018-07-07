@@ -44,8 +44,6 @@
 #include "WProgram.h"
 #endif
 
-#include "pins_arduino.h"
-
 #include "EEPROM.h"
 
 #ifndef NMRADCC_IS_IN

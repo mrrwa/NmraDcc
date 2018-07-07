@@ -1234,9 +1234,9 @@ void execDccProcessor( DCC_MSG * pDccMsg )
 				  uint8_t currentValue = readCV(cvAddress);
 				  uint8_t newValueMask = 1 << (cvValue & 0b00000111);
 				  if(cvValue & 0b00001000)
-				  	writeCV(cvAddress, cvValue | newValueMask);
+				  	writeCV(cvAddress, currentValue | newValueMask);
 				  else
-				  	writeCV(cvAddress, cvValue & ~newValueMask);
+				  	writeCV(cvAddress, currentValue & ~newValueMask);
 				}
 				break;
 			}

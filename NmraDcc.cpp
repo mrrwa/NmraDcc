@@ -583,7 +583,7 @@ uint8_t writeCV( unsigned int CV, uint8_t Value)
   {
     case CV_29_CONFIG:
       // copy addressmode Bit to Flags
-      DccProcState.Flags = ( DccProcState.Flags & ~FLAGS_OUTPUT_ADDRESS_MODE) | (Value & FLAGS_OUTPUT_ADDRESS_MODE);
+      DccProcState.Flags = ( DccProcState.Flags & ~FLAGS_CV29_BITS) | (Value & FLAGS_CV29_BITS);
       // no break, because myDccAdress must also be reset
     case CV_ACCESSORY_DECODER_ADDRESS_LSB:	// Also same CV for CV_MULTIFUNCTION_PRIMARY_ADDRESS
     case CV_ACCESSORY_DECODER_ADDRESS_MSB:
@@ -601,11 +601,11 @@ uint8_t writeCV( unsigned int CV, uint8_t Value)
 
     if( notifyCVChange )
       notifyCVChange( CV, Value) ;
+
     if( notifyDccCVChange && !(DccProcState.Flags & FLAGS_SETCV_CALLED) )
       notifyDccCVChange( CV, Value );
-      
-    DccProcState.Flags &= ~FLAGS_SETCV_CALLED;
   }
+
   return readEEPROM( CV ) ;
 }
 
@@ -934,7 +934,8 @@ void processServiceModeOperation( DCC_MSG * pDccMsg )
   }
 
   else if( pDccMsg->Size == 4) // 4 Byte Packets are for Direct Byte & Bit Mode
-  { DB_PRINT("BB-Mode");
+  {
+    DB_PRINT("BB-Mode");
     CVAddr = ( ( ( pDccMsg->Data[0] & 0x03 ) << 8 ) | pDccMsg->Data[1] ) + 1 ;
     Value = pDccMsg->Data[2] ;
 
@@ -1056,7 +1057,7 @@ void execDccProcessor( DCC_MSG * pDccMsg )
         {
           int16_t BoardAddress ;
           int16_t OutputAddress ;
-          uint8_t  TurnoutPairIndex ;
+          uint8_t TurnoutPairIndex ;
           
 #ifdef DEBUG_PRINT
           SerialPrintPacketHex(F( "eDP: AccCmd: "), pDccMsg);
@@ -1137,7 +1138,9 @@ void execDccProcessor( DCC_MSG * pDccMsg )
 
 		  if((pDccMsg->Size == 4) && ((pDccMsg->Data[1] & 0b10001001) == 1))	// Extended Accessory Decoder Control Packet Format
 		  {
-          	uint8_t state = pDccMsg->Data[2] ;// & 0b00011111;
+		  	// According to the NMRA Dcc Spec the Signal State should only use the lower 5 Bits,  
+		  	// however some manufacturers seem to allow/use all 8 bits, so we'll relax that constraint for now
+          	uint8_t state = pDccMsg->Data[2] ;
             DB_PRINT("eDP: OAddr:%d  Extended State:%0X", OutputAddress, state);
             if( notifyDccSigOutputState )
               notifyDccSigOutputState(OutputAddress, state);
@@ -1262,6 +1265,13 @@ NmraDcc::NmraDcc()
 {
 }
 
+#ifdef digitalPinToInterrupt
+void NmraDcc::pin( uint8_t ExtIntPinNum, uint8_t EnablePullup)
+{
+  pin(digitalPinToInterrupt(ExtIntPinNum), ExtIntPinNum, EnablePullup);
+}
+#endif
+
 void NmraDcc::pin( uint8_t ExtIntNum, uint8_t ExtIntPinNum, uint8_t EnablePullup)
 {
 #if defined ( __STM32F1__ )
@@ -1308,8 +1318,8 @@ void NmraDcc::init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, ui
 
   // Set the Bits that control Multifunction or Accessory behaviour
   // and if the Accessory decoder optionally handles Output Addressing 
-  uint8_t cv29Mask = CV29_ACCESSORY_DECODER | CV29_OUTPUT_ADDRESS_MODE ; // peal off the top two bits
-  writeCV( CV_29_CONFIG, ( readCV( CV_29_CONFIG ) & ~cv29Mask ) | (Flags & cv29Mask) ) ; 
+  // we need to peal off the top two bits
+  writeCV( CV_29_CONFIG, ( readCV( CV_29_CONFIG ) & ~FLAGS_CV29_BITS ) | (Flags & FLAGS_CV29_BITS) ) ; 
 
   uint8_t doAutoFactoryDefault = 0;
   if((Flags & FLAGS_AUTO_FACTORY_DEFAULT) && (readCV(CV_VERSION_ID) == 255) && (readCV(CV_MANUFACTURER_ID) == 255))
@@ -1334,7 +1344,12 @@ uint8_t NmraDcc::getCV( uint16_t CV )
 uint8_t NmraDcc::setCV( uint16_t CV, uint8_t Value)
 {
   DccProcState.Flags |= FLAGS_SETCV_CALLED;
-  return writeCV(CV,Value);
+  
+  uint8_t returnValue = writeCV(CV,Value);
+  
+  DccProcState.Flags &= ~FLAGS_SETCV_CALLED;
+  
+  return returnValue;
 }
 
 ////////////////////////////////////////////////////////////////////////

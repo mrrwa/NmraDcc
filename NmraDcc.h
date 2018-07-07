@@ -44,6 +44,8 @@
 #include "WProgram.h"
 #endif
 
+#include "pins_arduino.h"
+
 #include "EEPROM.h"
 
 #ifndef NMRADCC_IS_IN
@@ -109,7 +111,7 @@ typedef struct
 typedef enum {
     CV29_LOCO_DIR            = 0b00000001,	/** bit 0: Locomotive Direction: "0" = normal, "1" = reversed */
     CV29_F0_LOCATION         = 0b00000010,	/** bit 1: F0 location: "0" = bit 4 in Speed and Direction instructions, "1" = bit 4 in function group one instruction */
-    CV29_APS								 = 0b00000100,	/** bit 2: Alternate Power Source (APS) "0" = NMRA Digital only, "1" = Alternate power source set by CV12 */
+    CV29_APS                 = 0b00000100,	/** bit 2: Alternate Power Source (APS) "0" = NMRA Digital only, "1" = Alternate power source set by CV12 */
     CV29_ADV_ACK             = 0b00001000, 	/** bit 3: ACK, Advanced Acknowledge mode enabled if 1, disabled if 0 */
     CV29_SPEED_TABLE_ENABLE  = 0b00010000, 	/** bit 4: STE, Speed Table Enable, "0" = values in CVs 2, 4 and 6, "1" = Custom table selected by CV 25 */
     CV29_EXT_ADDRESSING      = 0b00100000,	/** bit 5: "0" = one byte addressing, "1" = two byte addressing */
@@ -206,6 +208,10 @@ class NmraDcc
 #define FLAGS_OUTPUT_ADDRESS_MODE    0x40  // CV 29/541 bit 6
 #define FLAGS_DCC_ACCESSORY_DECODER  0x80  // CV 29/541 bit 7
 
+// Flag Bits that are cloned from CV29 relating the DCC Accessory Decoder 
+#define FLAGS_CV29_BITS		(FLAGS_OUTPUT_ADDRESS_MODE | FLAGS_DCC_ACCESSORY_DECODER)
+
+
   /*+
    *  pin() is called from setup() and sets up the pin used to receive DCC packets.
    *
@@ -218,6 +224,21 @@ class NmraDcc
    *    None.
    */
   void pin( uint8_t ExtIntNum, uint8_t ExtIntPinNum, uint8_t EnablePullup); 
+
+  /*+
+   *  pin() is called from setup() and sets up the pin used to receive DCC packets.
+   *  	This relies on the internal function: digitalPinToInterrupt() to map the input pin number to the right interrupt
+   *
+   *  Inputs:
+   *    ExtIntPinNum  - Input pin number.
+   *    EnablePullup  - Set true to enable the pins pullup resistor.
+   *
+   *  Returns:
+   *    None.
+   */
+#ifdef digitalPinToInterrupt
+void pin( uint8_t ExtIntPinNum, uint8_t EnablePullup);
+#endif
 
   /*+
    *  init() is called from setup() after the pin() command is called.

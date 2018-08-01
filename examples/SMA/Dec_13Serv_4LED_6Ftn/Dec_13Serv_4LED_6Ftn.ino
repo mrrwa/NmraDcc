@@ -1,4 +1,4 @@
-// Production 17 Function DCC Decoder 
+// Production 17 Function DCC Decoder    Dec_13Serv_4LED_6Ftn.ino
 // Version 5.4  Geoff Bunza 2014,2015,2016
 // NO LONGER REQUIRES modified software servo Lib
 // Software restructuring mods added from Alex Shepherd and Franz-Peter
@@ -19,7 +19,7 @@
 SoftwareServo servo[17];
 #define servo_start_delay 50
 #define servo_init_delay 7
-#define servo_slowdown  3   //servo loop counter limit
+#define servo_slowdown  12   //servo loop counter limit
 int servo_slow_counter = 0; //servo loop counter to slowdown servo transit
 
 int tim_delay = 500;
@@ -49,7 +49,6 @@ NmraDcc  Dcc ;
 DCC_MSG  Packet ;
 uint8_t CV_DECODER_MASTER_RESET = 120;
 int t;  // temp
-#define This_Decoder_Address 24
 struct QUEUE
 {
   int inuse;
@@ -65,12 +64,22 @@ struct CVPair
   uint16_t  CV;
   uint8_t   Value;
 };
+
+#define This_Decoder_Address 24
+
 CVPair FactoryDefaultCVs [] =
 {
-  {CV_MULTIFUNCTION_PRIMARY_ADDRESS, This_Decoder_Address},
-  {CV_ACCESSORY_DECODER_ADDRESS_MSB, 0},
-  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB, 0},
-  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB, 0},
+  {CV_MULTIFUNCTION_PRIMARY_ADDRESS, This_Decoder_Address&0x7F },
+  
+  // These two CVs define the Long DCC Address
+  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB, ((This_Decoder_Address>>8)&0x7F)+192 },
+  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB, This_Decoder_Address&0xFF },
+  
+  // ONLY uncomment 1 CV_29_CONFIG line below as approprate DEFAULT IS SHORT ADDRESS
+//  {CV_29_CONFIG,          0},                                           // Short Address 14 Speed Steps
+  {CV_29_CONFIG, CV29_F0_LOCATION}, // Short Address 28/128 Speed Steps
+//  {CV_29_CONFIG, CV29_EXT_ADDRESSING | CV29_F0_LOCATION},   // Long  Address 28/128 Speed Steps  
+
   {CV_DECODER_MASTER_RESET, 0},
   {30, 2}, //F0 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {31, 1},    //F0 Rate  Blink=Eate,PWM=Rate,Servo=Rate
@@ -137,21 +146,21 @@ CVPair FactoryDefaultCVs [] =
   {92, 28},   //  Start Position Fx=0
   {93, 140},  //  End Position   Fx=1
   {94, 28},    //  Current Position
-  {95, 1}, //F13 CConfig 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
+  {95, 3}, //F13 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {96, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {97, 1},   //  Start Position Fx=0
-  {98, 20},  //  End Position   Fx=1
-  {99, 1},    //  Current Position
+  {98, 200},  //  End Position   Fx=1
+  {99, 2},    //  Current Position
   {100, 0}, //F14 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {101, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {102, 1},   //  Start Position Fx=0
-  {103, 4},  //  End Position   Fx=1
+  {103, 200},  //  End Position   Fx=1
   {104, 1},    //  Current Position
   {105, 3}, //F15 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {106, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {107, 1},   //  Start Position Fx=0
   {108, 60},  //  End Position   Fx=1
-  {109, 20},    //  Current Position
+  {109, 1},    //  Current Position
   {110, 0}, //F16 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {111, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
   {112, 1},   //  Start Position Fx=0
@@ -295,7 +304,7 @@ void loop()   //****************************************************************
   // from the Arduino loop() function for correct library operation
   Dcc.process();
   SoftwareServo::refresh();
-  delay(4);
+  delay(3);
   for (int i=0; i < numfpins; i++) {
     if (ftn_queue[i].inuse==1)  {
 

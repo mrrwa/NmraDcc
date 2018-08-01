@@ -1,9 +1,23 @@
-// Production 17 Function DCC Decoder 
-// Version 5.4  Geoff Bunza 2014,2015,2016
+// Production 2 Motor 13 Function DCC Decoder    Dec_2MotDrive_12LED_1Srv_6Ftn.ino
+// Version 6.0  Geoff Bunza 2014,2015,2016,2017,2018
+// Now works with both short and long DCC Addesses
+
 // NO LONGER REQUIRES modified software servo Lib
 // Software restructuring mods added from Alex Shepherd and Franz-Peter
 //   With sincere thanks
-
+/*
+ * Motor selection is via motor select Function 13 (Motor1) and Function 14 (Motor2)  
+ * Motor speed for each can only be changed if the corresponding Function is on 
+ * (F13 and/or F14). Motor speed is maintained if the corresponding Motor select function 
+ * is off. Thus, each motor can be controlled independently and run at different speeds.
+ *  F0-F12 control LEDs on Pro Mini Digital Pins 5,6,7,8,11,12,13,14,15,16,17,18,19
+ *  Simple speed control is made via throttle speed setting for two motors. Motor selection 
+ *  is via motor select Function 13 (Motor1) and Function 14 (Motor2).  Motor speed for each 
+ *  can only be changed if the corresponding Function is on (F13 and/or F14). Motor speed is
+ *  maintained if the corresponding motor select function is off. Thus, each motor can be 
+ *  controlled independently and run at different speeds. The other functions are configurable 
+ *  but are preset for LED on/off control.
+*/
 // ******** UNLESS YOU WANT ALL CV'S RESET UPON EVERY POWER UP
 // ******** AFTER THE INITIAL DECODER LOAD REMOVE THE "//" IN THE FOOLOWING LINE!!
 //#define DECODER_LOADED
@@ -18,7 +32,7 @@
 SoftwareServo servo[13];
 #define servo_start_delay 50
 #define servo_init_delay 7
-#define servo_slowdown  3   //servo loop counter limit
+#define servo_slowdown  12   //servo loop counter limit
 int servo_slow_counter = 0; //servo loop counter to slowdown servo transit
 
 uint8_t Motor1Speed       = 0;
@@ -42,7 +56,7 @@ int m0l = 10;   //B H Bridge     //Motor2
 
 int speedup = 112;   //Right track time differntial
 int deltime = 1500;
-int tim_delay = 100;
+int tim_delay = 80;
 int numfpins = 17;
 int num_active_fpins = 13;
 byte fpins [] = {3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19};
@@ -57,6 +71,7 @@ const int FunctionPin6 = 13;
 const int FunctionPin7 = 14;     //A0
 const int FunctionPin8 = 15;     //A1
 
+
 const int FunctionPin9 = 16;     //A2
 const int FunctionPin10 = 17;    //A3
 const int FunctionPin11 = 18;    //A4
@@ -69,7 +84,6 @@ NmraDcc  Dcc ;
 DCC_MSG  Packet ;
 uint8_t CV_DECODER_MASTER_RESET = 120;
 int t;  // temp
-#define This_Decoder_Address 24
 struct QUEUE
 {
   int inuse;
@@ -78,20 +92,29 @@ struct QUEUE
   int stop_value;
   int start_value;
 };
-QUEUE *ftn_queue = new QUEUE[16];
+QUEUE *ftn_queue = new QUEUE[17];
 
-extern uint8_t Decoder_Address = This_Decoder_Address;
 struct CVPair
 {
   uint16_t  CV;
   uint8_t   Value;
 };
+
+#define This_Decoder_Address 24
+
 CVPair FactoryDefaultCVs [] =
 {
-  {CV_MULTIFUNCTION_PRIMARY_ADDRESS, This_Decoder_Address},
-  {CV_ACCESSORY_DECODER_ADDRESS_MSB, 0},
-  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB, 0},
-  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB, 0},
+  {CV_MULTIFUNCTION_PRIMARY_ADDRESS, This_Decoder_Address&0x7F },
+  
+  // These two CVs define the Long DCC Address
+  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB, ((This_Decoder_Address>>8)&0x7F)+192 },
+  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB, This_Decoder_Address&0xFF },
+  
+  // ONLY uncomment 1 CV_29_CONFIG line below as approprate DEFAULT IS SHORT ADDRESS
+//  {CV_29_CONFIG,          0},                                           // Short Address 14 Speed Steps
+  {CV_29_CONFIG, CV29_F0_LOCATION}, // Short Address 28/128 Speed Steps
+//  {CV_29_CONFIG, CV29_EXT_ADDRESSING | CV29_F0_LOCATION},   // Long  Address 28/128 Speed Steps  
+
   {CV_DECODER_MASTER_RESET, 0},
   {30, 0}, //F0 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {31, 1},    //F0 Rate  Blink=Eate,PWM=Rate,Servo=Rate
@@ -186,13 +209,16 @@ CVPair FactoryDefaultCVs [] =
   {119, 28},    //  Current Position
 };
 
-uint8_t FactoryDefaultCVIndex = 95;
+uint8_t FactoryDefaultCVIndex = sizeof(FactoryDefaultCVs)/sizeof(CVPair);
 void notifyCVResetFactoryDefault()
 {
   // Make FactoryDefaultCVIndex non-zero and equal to num CV's to be reset 
   // to flag to the loop() function that a reset to Factory Defaults needs to be done
   FactoryDefaultCVIndex = sizeof(FactoryDefaultCVs)/sizeof(CVPair);
 };
+
+// NOTE: NO PROGRAMMING ACK IS SET UP TO MAXIMAIZE 
+// OUTPUT PINS FOR FUNCTIONS
 
 void setup()   //******************************************************
 {
@@ -206,23 +232,21 @@ void setup()   //******************************************************
       pinMode(fpins[i], OUTPUT);
       digitalWrite(fpins[i], 0);
      }
-  for (int i=0; i < numfpins; i++) {
+  for (int i=8; i < numfpins; i++) {
      digitalWrite(fpins[i], 1);
-     delay (tim_delay/10);
+     delay (tim_delay);
   }
   delay( tim_delay);
-  for (int i=0; i < numfpins; i++) {
+  for (int i=8; i < numfpins; i++) {
      digitalWrite(fpins[i], 0);
-     delay (tim_delay/10);
+     delay (tim_delay);
   }
-  delay( tim_delay);
-  
   // Setup which External Interrupt, the Pin it's associated with that we're using 
   Dcc.pin(0, 2, 0);
   // Call the main DCC Init function to enable the DCC Receiver
-  Dcc.init( MAN_ID_DIY, 100, FLAGS_MY_ADDRESS_ONLY, 0 );
+  Dcc.init( MAN_ID_DIY, 600, FLAGS_MY_ADDRESS_ONLY, 0 );
   delay(800);
-   
+
 #if defined(DECODER_LOADED)
   if ( Dcc.getCV(CV_DECODER_MASTER_RESET)== CV_DECODER_MASTER_RESET ) 
 #endif 
@@ -309,7 +333,6 @@ void setup()   //******************************************************
     }
   }
 }
-
 void loop()   //**********************************************************************
 {
   //MUST call the NmraDcc.process() method frequently 
@@ -455,7 +478,6 @@ void notifyDccSpeed( uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_D
      Motor2ForwardDir  = ForwardDir;
    }
 }
-
 void notifyDccFunc( uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint8_t FuncState)  {
   switch(FuncGrp)
   {

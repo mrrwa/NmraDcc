@@ -1,5 +1,6 @@
-// Production 17 Function DCC Decoder 
-// Version 5.4  Geoff Bunza 2014,2015,2016
+// Production 17 Function DCC Decoder   Dec_17LED_1Ftn.ino
+// Version 6.0  Geoff Bunza 2014,2015,2016,2017,2018
+// Now works with both short and long DCC Addesses
 
 // ******** UNLESS YOU WANT ALL CV'S RESET UPON EVERY POWER UP
 // ******** AFTER THE INITIAL DECODER LOAD REMOVE THE "//" IN THE FOOLOWING LINE!!
@@ -9,7 +10,7 @@
 
 int tim_delay = 500;
 #define numleds  17
-byte ledpins [] = {0,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19};
+byte ledpins [] = {3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19};
 
 const int FunctionPin0 = 3;
 const int FunctionPin1 = 4;
@@ -26,7 +27,6 @@ const int FunctionPin9 = 12;
 const int FunctionPin10 = 13;
 const int FunctionPin11 = 14;     //A0
 const int FunctionPin12 = 15;     //A1
-
 const int FunctionPin13 = 16;     //A2
 const int FunctionPin14 = 17;     //A3
 const int FunctionPin15 = 18;     //A4
@@ -34,7 +34,6 @@ const int FunctionPin16 = 19;     //A5
 NmraDcc  Dcc ;
 DCC_MSG  Packet ;
 uint8_t CV_DECODER_MASTER_RESET = 120;
-#define This_Decoder_Address 24
 
 struct CVPair
 {
@@ -42,15 +41,25 @@ struct CVPair
   uint8_t   Value;
 };
 CVPair FactoryDefaultCVs [] =
+
+#define This_Decoder_Address 24
+
 {
-  {CV_MULTIFUNCTION_PRIMARY_ADDRESS, This_Decoder_Address},
-  {CV_ACCESSORY_DECODER_ADDRESS_MSB, 0},
-  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB, 0},
-  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB, 0},
+  {CV_MULTIFUNCTION_PRIMARY_ADDRESS, This_Decoder_Address&0x7F },
+  
+  // These two CVs define the Long DCC Address
+  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB, ((This_Decoder_Address>>8)&0x7F)+192 },
+  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB, This_Decoder_Address&0xFF },
+  
+  // ONLY uncomment 1 CV_29_CONFIG line below as approprate DEFAULT IS SHORT ADDRESS
+//  {CV_29_CONFIG,          0},                                           // Short Address 14 Speed Steps
+  {CV_29_CONFIG, CV29_F0_LOCATION}, // Short Address 28/128 Speed Steps
+//  {CV_29_CONFIG, CV29_EXT_ADDRESSING | CV29_F0_LOCATION},   // Long  Address 28/128 Speed Steps  
+
   {CV_DECODER_MASTER_RESET, 0},
 };
 
-uint8_t FactoryDefaultCVIndex = 4;
+uint8_t FactoryDefaultCVIndex = sizeof(FactoryDefaultCVs)/sizeof(CVPair);
 void notifyCVResetFactoryDefault()
 {
   // Make FactoryDefaultCVIndex non-zero and equal to num CV's to be reset 
@@ -78,7 +87,7 @@ void setup()
   // Setup which External Interrupt, the Pin it's associated with that we're using and enable the Pull-Up 
   Dcc.pin(0, 2, 0);
   // Call the main DCC Init function to enable the DCC Receiver
-  Dcc.init( MAN_ID_DIY, 100, FLAGS_MY_ADDRESS_ONLY, 0 );
+  Dcc.init( MAN_ID_DIY, 600, FLAGS_MY_ADDRESS_ONLY, 0 );
   delay(800);
 #if defined(DECODER_LOADED)
   if ( Dcc.getCV(CV_DECODER_MASTER_RESET)== CV_DECODER_MASTER_RESET ) 

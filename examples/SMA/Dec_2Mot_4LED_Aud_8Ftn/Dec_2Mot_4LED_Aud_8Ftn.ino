@@ -1,10 +1,36 @@
-// Production 17 Function DCC Decoder 
+// Production 2 Motor w/Audio 13 Function DCC Decoder    Dec_2Mot_10LED_Audio_8Ftn.ino
 // Version 6.0  Geoff Bunza 2014,2015,2016,2017,2018
 // Now works with both short and long DCC Addesses
+
 // NO LONGER REQUIRES modified software servo Lib
 // Software restructuring mods added from Alex Shepherd and Franz-Peter
 //   With sincere thanks
-
+/*
+ * Motor selection is via motor select Function 13 (Motor1) and Function 14 (Motor2)  
+ * Motor speed for each can only be changed if the corresponding Function is on 
+ * (F13 and/or F14). Motor speed is maintained if the corresponding Motor select function 
+ * is off. Thus, each motor can be controlled independently and run at different speeds.
+ * F0 LED Pin 8
+ * F1-F6  6 Functions Configures As Audio Play
+ * F7-F9  3 Functions Configures As LEDs
+ * F13 Motor1 Control Enable
+ * F14 Motor2 Control Enable
+ *  Pro Mini Transmit-7 (TX) connected to DFPlayer Receive (RX)Pin 2 via 470 Ohm Resistor
+ *  Pro Mini Receive (RX) connected to DFPlayer Transmit (TX)  Pin 3
+ *  Remember to connect +5V and GND to the DFPlayer too: DFPLAYER PINS 1 & 7,10 respectively
+ *  This is a “mobile/function” decoder that adds audio play to dual motor control and 
+ *  LED functions. Audio tracks or clips are stored on a micro SD card for playing, 
+ *  in a folder labeled mp3, with tracks named 0001.mp3, 0002.mp3, etc. F0 is configured 
+ *  as an on/off LED function, F1-F5 play audio tracks 1-5 respectively. 
+ *  F6 plays a random selection in random order from tracks 1-6. 
+ *  F7-F9 control LEDs on Pro Mini Digital Pins 11-13.
+ *  Simple speed control is made via throttle speed setting for two motors. Motor selection 
+ *  is via motor select Function 13 (Motor1) and Function 14 (Motor2).  Motor speed for each 
+ *  can only be changed if the corresponding Function is on (F13 and/or F14). Motor speed is
+ *  maintained if the corresponding motor select function is off. Thus, each motor can be 
+ *  controlled independently and run at different speeds. The other functions are configurable 
+ *  but are preset for LED on/off control.
+*/
 // ******** UNLESS YOU WANT ALL CV'S RESET UPON EVERY POWER UP
 // ******** AFTER THE INITIAL DECODER LOAD REMOVE THE "//" IN THE FOOLOWING LINE!!
 //#define DECODER_LOADED
@@ -13,43 +39,77 @@
 // ******** INFO TO THE SERIAL MONITOR
 //#define DEBUG
 
-
 #include <NmraDcc.h>
 #include <SoftwareServo.h> 
+#include <SoftwareSerial.h>
+#include <DFPlayer_Mini_Mp3.h>
+SoftwareSerial mySerial(6,7); // PRO MINI RX, PRO MINI TX serial to DFPlayer
 
-SoftwareServo servo[17];
+int busy_pin    =    5;       // DFPlayer Busy status pin
+#define num_clips    6        //number of sound tracks/clips on the Micro SD Memory Card
+int del_tim = 4000; 
+int tctr, tctr2, i;
+byte audio_on = 0;            // Audio ON sets this to 1; otherwise 0
+
+SoftwareServo servo[10];
 #define servo_start_delay 50
-#define servo_init_delay 7
-#define servo_slowdown  12   //servo loop counter limit
-int servo_slow_counter = 0; //servo loop counter to slowdown servo transit
+#define servo_init_delay  7
+#define servo_slowdown    4   //servo loop counter limit
+int servo_slow_counter =  0;  //servo loop counter to slowdown servo transit
 
-int tim_delay = 500;
-int numfpins = 17;
-byte fpins [] = {3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19};
-const int FunctionPin0 = 3;
-const int FunctionPin1 = 4;
-const int FunctionPin2 = 5;
-const int FunctionPin3 = 6;
-const int FunctionPin4 = 7;
+uint8_t Motor1Speed       = 0;
+uint8_t Motor1ForwardDir  = 1;
+uint8_t Motor1MaxSpeed    = 127;
+uint8_t Motor2Speed       = 0;
+uint8_t Motor2ForwardDir  = 1;
+uint8_t Motor2MaxSpeed    = 127;
+int kickstarton = 1400;  //kick start cycle on time
+int kickstarttime = 5;   //kick start duration on time
+int fwdon = 0;
+int fwdtime = 1;
+int bwdon  = 0;
+int bwdtime = 1;
+int bwdshift = 0;
+int cyclewidth = 2047;
+int m2h = 3;    //R H Bridge     //Motor1
+int m2l = 4;    //B H Bridge     //Motor1
+int m0h = 9;    //R H Bridge     //Motor2
+int m0l = 10;   //B H Bridge     //Motor2
 
-const int FunctionPin5 = 8;
-const int FunctionPin6 = 9;
-const int FunctionPin7 = 10;
-const int FunctionPin8 = 11;
+int speedup = 112;   //Right track time differntial
+int deltime = 1500;
+int tim_delay = 100;
+int numfpins = 14;
+int num_active_fpins = 10;
+byte fpins [] = {3,4,8,9,10,11,12,13,14,15,16,17,18,19};
+const int FunctionPin0 = 8;
+const int FunctionPin1 = 11;
+const int FunctionPin2 = 12;
+const int FunctionPin3 = 13;
+const int FunctionPin4 = 14;    //A0
 
-const int FunctionPin9 = 12;
-const int FunctionPin10 = 13;
-const int FunctionPin11 = 14;     //A0
-const int FunctionPin12 = 15;     //A1
+const int FunctionPin5 = 15;    //A1
+const int FunctionPin6 = 16;    //A2
+const int FunctionPin7 = 17;    //A3
+const int FunctionPin8 = 18;    //A4
+const int FunctionPin9 = 19;    //A5
 
-const int FunctionPin13 = 16;     //A2
-const int FunctionPin14 = 17;     //A3 & LOAD ACK
-const int FunctionPin15 = 18;     //A4
-const int FunctionPin16 = 19;     //A5
+const int FunctionPin10 = 20;   // Place holders ONLY
+const int FunctionPin11 = 20;
+const int FunctionPin12 = 20;
+const int FunctionPin13 = 20;
+const int FunctionPin14 = 20;
+const int FunctionPin15 = 20;
+const int FunctionPin16 = 20;
+
+int Function13_value = 0;
+int Function14_value = 0;
+
 NmraDcc  Dcc ;
 DCC_MSG  Packet ;
 uint8_t CV_DECODER_MASTER_RESET = 120;
 int t;  // temp
+
 struct QUEUE
 {
   int inuse;
@@ -82,97 +142,56 @@ CVPair FactoryDefaultCVs [] =
 //  {CV_29_CONFIG, CV29_EXT_ADDRESSING | CV29_F0_LOCATION},   // Long  Address 28/128 Speed Steps  
 
   {CV_DECODER_MASTER_RESET, 0},
-  {30, 2}, //F0 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
-  {31, 1},    //F0 Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {32, 28},   //F0  Start Position F0=0
-  {33, 140},  //F0  End Position   F0=1
-  {34, 28},   //F0  Current Position
-  {35, 2},  //F1 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
-  {36, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {37, 28},   //  Start Position Fx=0
-  {38, 140},  //  End Position   Fx=1
-  {39, 28},  //  Current Position
-  {40, 2},  //F2 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
-  {41, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {42, 28},   //  Start Position Fx=0
+  {30, 0}, //F0 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade,6=Audio
+  {31, 10},    //F0 Rate  Blink=Eate,PWM=Rate,Servo=Rate,Audio=Volume(0-30)
+  {32, 0},   //F0  Start Position F0=0,Audio=Audio Track/Clip#
+  {33, 8},  //F0  End Position   F0=1
+  {34, 1},   //F0  Current Position
+  {35, 6},  //F1 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade,6=Audio
+  {36, 22},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate,Audio=Volume(0-30)
+  {37, 1},   //  Start Position Fx=0,Audio=Audio Track/Clip#
+  {38, 8},  //  End Position   Fx=1
+  {39, 1},  //  Current Position
+  {40, 6},  //F2 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade,6=Audio
+  {41, 22},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate,Audio=Volume(0-30)
+  {42, 2},   //  Start Position Fx=0,Audio=Audio Track/Clip#
   {43, 140},  //  End Position   Fx=1
-  {44, 28},    //  Current Position
-  {45, 2}, //F3 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
-  {46, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {47, 28},   //  Start Position Fx=0
+  {44, 0},    //  Current Position
+  {45, 6}, //F3 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade,6=Audio
+  {46, 22},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate,Audio=Volume(0-30)
+  {47, 3},   //  Start Position Fx=0,Audio=Audio Track/Clip#
   {48, 140},  //  End Position   Fx=1
-  {49, 28},    //  Current Position
-  {50, 2}, //F4 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
-  {51, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {52, 28},    //  Start Position Fx=0
+  {49, 0},    //  Current Position
+  {50, 6}, //F4 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade,6=Audio
+  {51, 22},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate,Audio=Volume(0-30)
+  {52, 4},    //  Start Position Fx=0,Audio=Audio Track/Clip#
   {53, 140},    //  End Position   Fx=1
-  {54, 28},    //  Current Position
-  {55, 2}, //F5 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
-  {56, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {57, 28},    //  Start Position Fx=0
+  {54, 0},    //  Current Position
+  {55, 6}, //F5 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade,6=Audio
+  {56, 22},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate,Audio=Volume(0-30)
+  {57, 5},    //  Start Position Fx=0,Audio=Audio Track/Clip#
   {58, 140},    //  End Position   Fx=1
   {59, 28},    //  Current Position
-  {60, 2}, //F6 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
-  {61, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {62, 28},    //  Start Position Fx=0
+  {60, 7}, //F6 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade,6=Audio
+  {61, 22},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate,Audio=Volume(0-30)
+  {62, 6},    //  Start Position Fx=0,Audio=Audio Track/Clip#
   {63, 140},    //  End Position   Fx=1
   {64, 28},    //  Current Position
-  {65, 2}, //F7 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
-  {66, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {67, 28},   //  Start Position Fx=0
+  {65, 0}, //F7 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade,6=Audio
+  {66, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate,Audio=Volume(0-30)
+  {67, 28},   //  Start Position Fx=0,Audio=Audio Track/Clip#
   {68,140},  //  End Position   Fx=1
   {69, 28},    //  Current Position
-  {70, 2}, //F8 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
-  {71, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {72, 28},   //  Start Position Fx=0
+  {70, 0}, //F8 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade,6=Audio
+  {71, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate,Audio=Volume(0-30)
+  {72, 28},   //  Start Position Fx=0,Audio=Audio Track/Clip#
   {73, 140},  //  End Position   Fx=1
   {74, 28},    //  Current Position
-  {75, 2}, //F9 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
-  {76, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {77, 28},   //  Start Position Fx=0
+  {75, 0}, //F9 Config  0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade,6=Audio
+  {76, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate,Audio=Volume(0-30)
+  {77, 28},   //  Start Position Fx=0,Audio=Audio Track/Clip#
   {78, 140},  //  End Position   Fx=1
   {79, 28},    //  Current Position
-  {80, 0}, //F10 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
-  {81, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {82, 1},   //  Start Position Fx=0
-  {83, 5},  //  End Position   Fx=1
-  {84, 1},    //  Current Position
-  {85, 1}, //F11 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
-  {86, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {87, 1},   //  Start Position Fx=0
-  {88, 50},  //  End Position   Fx=1
-  {89, 1},    //  Current Position
-  {90, 1}, //F12 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
-  {91, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {92, 1},   //  Start Position Fx=0
-  {93, 100},  //  End Position   Fx=1
-  {94, 1},    //  Current Position
-  {95, 3}, //F13 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
-  {96, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {97, 1},   //  Start Position Fx=0
-  {98, 200},  //  End Position   Fx=1
-  {99, 2},    //  Current Position
-  {100, 0}, //F14 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
-  {101, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {102, 1},   //  Start Position Fx=0
-  {103, 200},  //  End Position   Fx=1
-  {104, 1},    //  Current Position
-  {105, 3}, //F15 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
-  {106, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {107, 1},   //  Start Position Fx=0
-  {108, 60},  //  End Position   Fx=1
-  {109, 1},    //  Current Position
-  {110, 0}, //F16 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
-  {111, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {112, 1},   //  Start Position Fx=0
-  {113, 4},  //  End Position   Fx=1
-  {114, 1},    //  Current Position
-//FUTURE USE
-  {115, 0}, //F17 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
-  {116, 1},    // Rate  Blink=Eate,PWM=Rate,Servo=Rate
-  {117, 28},   //  Start Position Fx=0
-  {118, 50},  //  End Position   Fx=1
-  {119, 28},    //  Current Position
 };
 
 uint8_t FactoryDefaultCVIndex = sizeof(FactoryDefaultCVs)/sizeof(CVPair);
@@ -185,29 +204,26 @@ void notifyCVResetFactoryDefault()
 
 // NOTE: NO PROGRAMMING ACK IS SET UP TO MAXIMAIZE 
 // OUTPUT PINS FOR FUNCTIONS
+
 void setup()   //******************************************************
 {
 #ifdef DEBUG
   Serial.begin(115200);
 #endif
-  int i;
+  pinMode (busy_pin, INPUT);
+  mySerial.begin (9600);
+  mp3_set_serial (mySerial);    //set softwareSerial for DFPlayer-mini mp3 module 
+  mp3_reset ();
+  delay(100);
+  mp3_set_volume (18);
+  delay(50);
+  audio_on = 0;
   uint8_t cv_value;
   // initialize the digital pins as outputs
     for (int i=0; i < numfpins; i++) {
       pinMode(fpins[i], OUTPUT);
       digitalWrite(fpins[i], 0);
      }
-  for (int i=0; i < numfpins; i++) {
-     digitalWrite(fpins[i], 1);
-     delay (tim_delay/10);
-  }
-  delay( tim_delay);
-  for (int i=0; i < numfpins; i++) {
-     digitalWrite(fpins[i], 0);
-     delay (tim_delay/10);
-  }
-  delay( tim_delay);
-  
   // Setup which External Interrupt, the Pin it's associated with that we're using 
   Dcc.pin(0, 2, 0);
   // Call the main DCC Init function to enable the DCC Receiver
@@ -216,7 +232,7 @@ void setup()   //******************************************************
    
 #if defined(DECODER_LOADED)
   if ( Dcc.getCV(CV_DECODER_MASTER_RESET)== CV_DECODER_MASTER_RESET ) 
-#endif  
+#endif 
   
      {
        for (int j=0; j < FactoryDefaultCVIndex; j++ )
@@ -224,9 +240,9 @@ void setup()   //******************************************************
          digitalWrite(fpins[14], 1);
          delay (1000);
          digitalWrite(fpins[14], 0);
-     }    
-  for ( i=0; i < numfpins; i++) {
-    cv_value = Dcc.getCV( 30+(i*5)) ;
+     }
+  for ( i=0; i < num_active_fpins; i++) {
+    cv_value = Dcc.getCV( 30+(i*5)) ;   
 #ifdef DEBUG
     Serial.print(" cv_value: ");
     Serial.println(cv_value, DEC) ;
@@ -293,24 +309,45 @@ void setup()   //******************************************************
            ftn_queue[i].stop_value = int(Dcc.getCV( 33+(i*5))) *10.;
          }
          break;         
-       case 6:   // NEXT FEATURE to pin
-         break;         
+       case 6:   // Audio Track Play
+         ftn_queue[i].inuse = 0;
+         ftn_queue[i].increment = int (char (Dcc.getCV( 31+(i*5))));
+         ftn_queue[i].start_value = int (Dcc.getCV( 32+(i*5)));
+         audio_on = 0;
+         break;
+       case 7:   // Audio Random Track Play
+         ftn_queue[i].inuse = 0;
+         ftn_queue[i].increment = int (char (Dcc.getCV( 31+(i*5))));
+         ftn_queue[i].start_value = int (Dcc.getCV( 32+(i*5)));
+         audio_on = 0;
+         break;
+       case 8:   // NEXT FEATURE to pin
+         break;   
        default:
          break;
     }
   }
-
 }
+
 void loop()   //**********************************************************************
 {
   //MUST call the NmraDcc.process() method frequently 
   // from the Arduino loop() function for correct library operation
   Dcc.process();
   SoftwareServo::refresh();
-  delay(3);
-  for (int i=0; i < numfpins; i++) {
+  delay(2);
+  if (Motor1Speed != 0) {
+    if (Motor1ForwardDir == 0)  gofwd1 (fwdtime, int((Motor1Speed&0x7f)*21));
+    else gobwd1 (bwdtime, int((Motor1Speed&0x7f)*21));
+  }
+  if (Motor2Speed != 0) {
+    if (Motor2ForwardDir == 0)  gofwd2 (fwdtime, int((Motor2Speed&0x7f)*21));
+    else gobwd2 (bwdtime, int((Motor2Speed&0x7f)*21));
+  }
+  //
+  for (int i=0; i < num_active_fpins; i++) {
     if (ftn_queue[i].inuse==1)  {
-
+    
     switch (Dcc.getCV( 30+(i*5))) {
       case 0:
         break;
@@ -369,27 +406,98 @@ void loop()   //****************************************************************
 	   case 5:   // Fade On
 
          break;         
-       case 6:   // NEXT FEATURE to pin
-         break;         
+       case 6:   // Audio Track Play
+         if (digitalRead(busy_pin)== HIGH) {
+          ftn_queue[i].inuse = 0;
+         }
+         break;
+       case 7:   // Audio Random Track/Clip Play
+          if (digitalRead(busy_pin)== HIGH) {
+          ftn_queue[i].inuse = 0;
+/* Insert the following code if you want continuous random play as long as F6 is selected
+          if (ftn_queue[i].inuse ==1) {  // Audio Off continue playing clips
+            mp3_play (random(1,num_clips));  //  play random clip
+            delay(5);
+          }
+*/
+         }
+         break;
+       case 8:   // NEXT FEATURE to pin
+         break;  
        default:
          break;  
       }
     }
   }
 }
+void gofwd1(int fcnt,int fcycle) {
+   int icnt;
+   int totcycle;
+   icnt = 0;
+   while (icnt < fcnt)
+  {
+    digitalWrite(m2h, HIGH);     //Motor1
+    delayMicroseconds(fcycle);
+    digitalWrite(m2h, LOW);     //Motor1
+    delayMicroseconds(cyclewidth - fcycle);
+    icnt++;
+  }
+}
+void gobwd1(int bcnt,int bcycle) {
+   int icnt;
+   icnt=0;
+   while (icnt < bcnt)
+  {
+    digitalWrite(m2l, HIGH);     //Motor1
+    delayMicroseconds(bcycle); 
+    digitalWrite(m2l, LOW);      //Motor1
+    delayMicroseconds(cyclewidth - bcycle);
+    icnt++;
+  }
+}
+void gofwd2(int fcnt,int fcycle) {
+   int icnt;
+   int totcycle;
+   icnt = 0;
+   while (icnt < fcnt)
+  {
+    digitalWrite(m0h, HIGH);     //Motor2
+    delayMicroseconds(fcycle);
+    digitalWrite(m0h, LOW);     //Motor2
+    delayMicroseconds(cyclewidth - fcycle);
+    icnt++;
+  }
+}
+void gobwd2(int bcnt,int bcycle) {
+   int icnt;
+   icnt=0;
+   while (icnt < bcnt)
+  {
+    digitalWrite(m0l, HIGH);     //Motor2
+    delayMicroseconds(bcycle); 
+    digitalWrite(m0l, LOW);      //Motor2
+    delayMicroseconds(cyclewidth - bcycle);
+    icnt++;
+  }
+}
+void notifyDccSpeed( uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DIRECTION ForwardDir, DCC_SPEED_STEPS SpeedSteps )  {
+   if (Function13_value==1)  {
+     Motor1Speed = Speed;
+     Motor1ForwardDir  = ForwardDir;
+   }
+   if (Function14_value==1)  {
+     Motor2Speed       = Speed;
+     Motor2ForwardDir  = ForwardDir;
+   }
+}
 
 void notifyDccFunc( uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uint8_t FuncState)  {
 #ifdef DEBUG
-    Serial.print(" addr: ");
-    Serial.print(Addr, DEC) ;
-    Serial.print("  at: ");
-    Serial.print(AddrType, DEC) ;
-    Serial.print("  fg : ");
-    Serial.print(FuncGrp, DEC) ;
-    Serial.print("  fs: ");
-    Serial.println(FuncState, DEC) ;
-#endif  
-  
+   Serial.print("Addr= ");
+   Serial.println(Addr, DEC) ;
+   Serial.print("FuncState= ");
+   Serial.println(FuncState, DEC) ;
+#endif
   switch(FuncGrp)
   {
   case FN_0_4:    //Function Group 1 F0 F4 F3 F2 F1
@@ -401,7 +509,7 @@ void notifyDccFunc( uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uin
       break;
 	  
   case FN_5_8:    //Function Group 1 S FFFF == 1 F8 F7 F6 F5  &  == 0  F12 F11 F10 F9 F8
-  	  exec_function( 5, FunctionPin5, (FuncState & FN_BIT_05));
+  	exec_function( 5, FunctionPin5, (FuncState & FN_BIT_05));
 	  exec_function( 6, FunctionPin6, (FuncState & FN_BIT_06)>>1 );
 	  exec_function( 7, FunctionPin7, (FuncState & FN_BIT_07)>>2 );
 	  exec_function( 8, FunctionPin8, (FuncState & FN_BIT_08)>>3 );
@@ -409,16 +517,16 @@ void notifyDccFunc( uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP FuncGrp, uin
 	  
   case FN_9_12:
 	  exec_function( 9, FunctionPin9,   (FuncState & FN_BIT_09));
-	  exec_function( 10, FunctionPin10, (FuncState & FN_BIT_10)>>1 );
-	  exec_function( 11, FunctionPin11, (FuncState & FN_BIT_11)>>2 );
-	  exec_function( 12, FunctionPin12, (FuncState & FN_BIT_12)>>3 );
+//	  exec_function( 10, FunctionPin10, (FuncState & FN_BIT_10)>>1 );
+//	  exec_function( 11, FunctionPin11, (FuncState & FN_BIT_11)>>2 );
+//	  exec_function( 12, FunctionPin12, (FuncState & FN_BIT_12)>>3 );
 	  break;
 
   case FN_13_20:   //Function Group 2 FuncState == F20-F13 Function Control
-      exec_function( 13, FunctionPin13, (FuncState & FN_BIT_13));
-	  exec_function( 14, FunctionPin14, (FuncState & FN_BIT_14)>>1 );
-	  exec_function( 15, FunctionPin15, (FuncState & FN_BIT_15)>>2 );
-	  exec_function( 16, FunctionPin16, (FuncState & FN_BIT_16)>>3 );
+      Function13_value = (FuncState & FN_BIT_13);
+	    Function14_value = (FuncState & FN_BIT_14)>>1;
+//	  exec_function( 15, FunctionPin15, (FuncState & FN_BIT_15)>>2 );
+//	  exec_function( 16, FunctionPin16, (FuncState & FN_BIT_16)>>3 );
       break;
 	
   case FN_21_28:
@@ -496,11 +604,66 @@ void exec_function (int function, int pin, int FuncState)  {
           }
         }
       break;
-    case 6:    // Future Function
-      ftn_queue[function].inuse = 0;
+    
+    case 6:    // Audio Play
+#ifdef DEBUG
+   Serial.print("function= ");
+   Serial.println(function, DEC) ;
+   Serial.print("FuncState= ");
+   Serial.println(FuncState, DEC) ;
+#endif
+      if ((digitalRead(busy_pin)==HIGH)&&(FuncState!=0)) {  // Audio Off = Not Playing
+          ftn_queue[function].inuse = 1;
+          mp3_set_volume (ftn_queue[function].increment);
+          delay(8);
+          mp3_play (ftn_queue[function].start_value);  //  play clip function
+          delay(5);
+        }
+        if ((digitalRead(busy_pin)==LOW)&&(FuncState==0)) {  // Audio On = Playing
+          ftn_queue[function].inuse = 0;   // Fuunction turned off so get ready to stop
+        }  
+      break;
+    case 7:    // Random Audio Function
+ #ifdef DEBUG
+   Serial.print("function= ");
+   Serial.println(function, DEC) ;
+   Serial.print("FuncState= ");
+   Serial.println(FuncState, DEC) ;
+#endif
+       if ((digitalRead(busy_pin)==HIGH)&&(FuncState!=0)) {  // Audio Off = Not Playing
+          ftn_queue[function].inuse = 1;
+          mp3_set_volume (ftn_queue[function].increment);
+          delay(8);
+          mp3_play (random(1,num_clips+1));  //  play random clip
+          delay(5);
+        }
+        if ((digitalRead(busy_pin)==LOW)&&(FuncState==0)) {  // Audio On = Playing
+          ftn_queue[function].inuse = 0;   // Fuunction turned off so get ready to stop
+        } 
       break;
     default:
       ftn_queue[function].inuse = 0;
       break;
   }
 }
+/*
+   mp3_play ();   //start play
+   mp3_play (5);  //play "mp3/0005.mp3"
+   mp3_next ();   //play next 
+   mp3_prev ();   //play previous
+   mp3_set_volume (uint16_t volume);  //0~30
+   mp3_set_EQ (); //0~5
+   mp3_pause ();
+   mp3_stop ();
+   void mp3_get_state ();   //send get state command
+   void mp3_get_volume (); 
+   void mp3_get_u_sum (); 
+   void mp3_get_tf_sum (); 
+   void mp3_get_flash_sum (); 
+   void mp3_get_tf_current (); 
+   void mp3_get_u_current (); 
+   void mp3_get_flash_current (); 
+   void mp3_single_loop (boolean state);  //set single loop 
+   void mp3_DAC (boolean state); 
+   void mp3_random_play (); 
+ */

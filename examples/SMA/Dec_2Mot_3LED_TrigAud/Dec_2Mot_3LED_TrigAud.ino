@@ -1,7 +1,7 @@
 // Production 2 Motor w/Triggered Audio Multi Function DCC Decoder    Dec_2Mot_3LED_TrigAudio.ino
-// Version 6.0  Geoff Bunza 2014,2015,2016,2017,2018
+// Version 6.01a  Geoff Bunza 2014,2015,2016,2017,2018
 // Now works with both short and long DCC Addesses
-
+// Improved motor control added
 // This decoder will control 2 motors and play audio clips by function:
 // F0=LED on pin 8, F1-F4 Controls playing specific audio tracks in the 3rd CV (start) at the volume in the 2nd CV (rate)
 // F5 Controls playing audio track in CV57 at the volume in CV56 ONLY when F5 is ON and Pin17/A3 is held low, 
@@ -21,7 +21,7 @@
  * Motor speed for each can only be changed if the corresponding Function is on 
  * (F13 and/or F14). Motor speed is maintained if the corresponding Motor select function 
  * is off. Thus, each motor can be controlled independently and run at different speeds.
- * F0 LED Pin 8
+ * F0 LED Pin 13
  * F1-F6  6 Functions Configures As Audio Play
  * F7-F8  2 Functions Configures As LEDs by default PINS 18 and 19
  * F13 Motor1 Control Enable
@@ -68,12 +68,10 @@ SoftwareServo servo[10];
 #define servo_slowdown    4   //servo loop counter limit
 int servo_slow_counter =  0;  //servo loop counter to slowdown servo transit
 
-uint8_t Motor1Speed       = 0;
+int     Motor1Speed       = 0;
 uint8_t Motor1ForwardDir  = 1;
-uint8_t Motor1MaxSpeed    = 127;
-uint8_t Motor2Speed       = 0;
+int     Motor2Speed       = 0;
 uint8_t Motor2ForwardDir  = 1;
-uint8_t Motor2MaxSpeed    = 127;
 int kickstarton = 1400;  //kick start cycle on time
 int kickstarttime = 5;   //kick start duration on time
 int fwdon = 0;
@@ -82,6 +80,7 @@ int bwdon  = 0;
 int bwdtime = 1;
 int bwdshift = 0;
 int cyclewidth = 2047;
+int loopdelay =14;
 int m2h = 3;    //R H Bridge     //Motor1
 int m2l = 4;    //B H Bridge     //Motor1
 int m0h = 9;    //R H Bridge     //Motor2
@@ -89,31 +88,31 @@ int m0l = 10;   //B H Bridge     //Motor2
 
 int speedup = 112;   //Right track time differntial
 int deltime = 1500;
-int tim_delay = 100;
+int tim_delay = 30;
 int numfpins = 13;
 int num_active_fpins = 9;
 byte fpins [] = {3,4,8,9,10,11,12,13,14,15,16,18};
-const int FunctionPin0 = 8;
-const int FunctionPin1 = 11;
-const int FunctionPin2 = 12;
-const int FunctionPin3 = 13;
-const int FunctionPin4 = 14;    //A0
+const int FunctionPin0 = 13;
+const int FunctionPin1 = 20;   // Place holders ONLY
+const int FunctionPin2 = 20;   // Place holders ONLY
+const int FunctionPin3 = 20;   // Place holders ONLY
+const int FunctionPin4 = 20;    //A0 Place holders ONLY
 
-const int FunctionPin5 = 15;    //A1
-const int FunctionPin6 = 16;    //A2
-const int FunctionPin7 = 18;    //A5
-const int FunctionPin8 = 19;    //A4
+const int FunctionPin5 = 20;    //A1 Place holders ONLY
+const int FunctionPin6 = 20;    //A2 Place holders ONLY
+const int FunctionPin7 = 18;    //A5 Place holders ONLY
+const int FunctionPin8 = 19;    //A4 Place holders ONLY
 
 const int AudioTriggerPin = 17;  //A3  NOW USED AS Audio Trigger Pin INPUT_PULLUP
 
-const int FunctionPin9 = 20;   // Place holders ONLY
+const int FunctionPin9  = 20;   // Place holders ONLY
 const int FunctionPin10 = 20;   // Place holders ONLY
-const int FunctionPin11 = 20;
-const int FunctionPin12 = 20;
-const int FunctionPin13 = 20;
-const int FunctionPin14 = 20;
-const int FunctionPin15 = 20;
-const int FunctionPin16 = 20;
+const int FunctionPin11 = 20;   // Place holders ONLY
+const int FunctionPin12 = 20;   // Place holders ONLY
+const int FunctionPin13 = 20;   // Place holders ONLY
+const int FunctionPin14 = 20;   // Place holders ONLY
+const int FunctionPin15 = 20;   // Place holders ONLY
+const int FunctionPin16 = 20;   // Place holders ONLY
 
 int Function13_value = 0;
 int Function14_value = 0;
@@ -122,7 +121,6 @@ NmraDcc  Dcc ;
 DCC_MSG  Packet ;
 uint8_t CV_DECODER_MASTER_RESET = 120;
 int t;  // temp
-
 struct QUEUE
 {
   int inuse;
@@ -242,7 +240,7 @@ void setup()   //******************************************************
   // Setup which External Interrupt, the Pin it's associated with that we're using 
   Dcc.pin(0, 2, 0);
   // Call the main DCC Init function to enable the DCC Receiver
-  Dcc.init( MAN_ID_DIY, 600, FLAGS_MY_ADDRESS_ONLY, 0 );
+  Dcc.init( MAN_ID_DIY, 601, FLAGS_MY_ADDRESS_ONLY, 0 );
   delay(800);
    
 #if defined(DECODER_LOADED)
@@ -354,14 +352,28 @@ void loop()   //****************************************************************
   Dcc.process();
   SoftwareServo::refresh();
   delay(2);
+#ifdef DEBUG
+   Serial.print("Motor1Speed= ");
+   Serial.println(Motor1Speed, DEC) ;
+   Serial.print("Motor2Speed= ");
+   Serial.println(Motor2Speed, DEC) ;
+#endif  
   if (Motor1Speed != 0) {
-    if (Motor1ForwardDir == 0)  gofwd1 (fwdtime, int((Motor1Speed&0x7f)*21));
-    else gobwd1 (bwdtime, int((Motor1Speed&0x7f)*21));
+    if (Motor1ForwardDir == 0)  gofwd1 (fwdtime, Motor1Speed<<4);
+      else gobwd1 (bwdtime, Motor1Speed<<4); 
   }
+  else {
+      digitalWrite(m2h, LOW);     //Motor1 OFF
+      digitalWrite(m2l, LOW);     //Motor1 OFF
+    }
   if (Motor2Speed != 0) {
-    if (Motor2ForwardDir == 0)  gofwd2 (fwdtime, int((Motor2Speed&0x7f)*21));
-    else gobwd2 (bwdtime, int((Motor2Speed&0x7f)*21));
-  }
+    if (Motor2ForwardDir == 0)  gofwd2 (fwdtime, Motor2Speed<<4);
+      else  gobwd2 (bwdtime, Motor2Speed<<4);
+      }
+    else {
+    digitalWrite(m0h, LOW);     //Motor1 OFF
+    digitalWrite(m0l, LOW);     //Motor1 OFF
+   }
   //
   for (int i=0; i < num_active_fpins; i++) {
     if (ftn_queue[i].inuse==1)  {
@@ -460,61 +472,73 @@ void loop()   //****************************************************************
 }
 void gofwd1(int fcnt,int fcycle) {
    int icnt;
-   int totcycle;
+   int delta_tp,delta_tm;
+   delta_tp = fcycle+loopdelay<<2;
+   delta_tm = cyclewidth-fcycle-loopdelay;
    icnt = 0;
    while (icnt < fcnt)
   {
     digitalWrite(m2h, HIGH);     //Motor1
-    delayMicroseconds(fcycle);
+    delayMicroseconds(delta_tp);
     digitalWrite(m2h, LOW);     //Motor1
-    delayMicroseconds(cyclewidth - fcycle);
+    delayMicroseconds(delta_tm);
     icnt++;
   }
 }
 void gobwd1(int bcnt,int bcycle) {
    int icnt;
+   int delta_tp,delta_tm;
+   delta_tp = bcycle+loopdelay<<2;
+   delta_tm = cyclewidth-bcycle-loopdelay;
    icnt=0;
    while (icnt < bcnt)
   {
     digitalWrite(m2l, HIGH);     //Motor1
-    delayMicroseconds(bcycle); 
+    delayMicroseconds(delta_tp); 
     digitalWrite(m2l, LOW);      //Motor1
-    delayMicroseconds(cyclewidth - bcycle);
+    delayMicroseconds(delta_tm);
     icnt++;
   }
 }
 void gofwd2(int fcnt,int fcycle) {
    int icnt;
-   int totcycle;
+   int delta_tp,delta_tm;
+   delta_tp = fcycle+loopdelay<<2;
+   delta_tm = cyclewidth-fcycle-loopdelay;
    icnt = 0;
    while (icnt < fcnt)
   {
     digitalWrite(m0h, HIGH);     //Motor2
-    delayMicroseconds(fcycle);
+    delayMicroseconds(delta_tp);
     digitalWrite(m0h, LOW);     //Motor2
-    delayMicroseconds(cyclewidth - fcycle);
+    delayMicroseconds(delta_tm);
     icnt++;
   }
 }
 void gobwd2(int bcnt,int bcycle) {
    int icnt;
+   int delta_tp,delta_tm;
+   delta_tp = bcycle+loopdelay<<2;
+   delta_tm = cyclewidth-bcycle-loopdelay;
    icnt=0;
    while (icnt < bcnt)
   {
     digitalWrite(m0l, HIGH);     //Motor2
-    delayMicroseconds(bcycle); 
+    delayMicroseconds(delta_tp); 
     digitalWrite(m0l, LOW);      //Motor2
-    delayMicroseconds(cyclewidth - bcycle);
+    delayMicroseconds(delta_tm);
     icnt++;
   }
 }
 void notifyDccSpeed( uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t Speed, DCC_DIRECTION ForwardDir, DCC_SPEED_STEPS SpeedSteps )  {
    if (Function13_value==1)  {
-     Motor1Speed = Speed;
+     Motor1Speed = (Speed & 0x7f );
+     if (Motor1Speed == 1)  Motor1Speed=0;
      Motor1ForwardDir  = ForwardDir;
    }
    if (Function14_value==1)  {
-     Motor2Speed       = Speed;
+     Motor2Speed = (Speed & 0x7f );
+     if (Motor2Speed == 1)  Motor2Speed=0;
      Motor2ForwardDir  = ForwardDir;
    }
 }

@@ -1,6 +1,6 @@
 // Production 17 Function DCC Decoder 
 // Production 17 Switch Acessory DCC Decoder    AccDec_13Servos_4LED_6Ftn.ino
-// Version 6.0  Geoff Bunza 2014,2015,2016,2017,2018
+// Version 6.01  Geoff Bunza 2014,2015,2016,2017,2018
 // Now works with both short and long DCC Addesses for CV Control Default 24 (LSB CV 121 ; MSB CV 122)
 // ACCESSORY DECODER  DEFAULT ADDRESS IS 40 (MAX 40-56 SWITCHES)
 // ACCESSRY DECODER ADDRESS CAN NOW BE SET ABOVE 255
@@ -82,12 +82,15 @@ CVPair FactoryDefaultCVs [] =
   
   {CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB, 0},
   {CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB, 0},
+
   // Speed Steps don't matter for this decoder
   // ONLY uncomment 1 CV_29_CONFIG line below as approprate DEFAULT IS SHORT ADDRESS
-//  {CV_29_CONFIG,          0},                                           // Short Address 14 Speed Steps
-  {CV_29_CONFIG, CV29_F0_LOCATION}, // Short Address 28/128 Speed Steps
-//  {CV_29_CONFIG,          CV29_EXT_ADDRESSING | CV29_F0_LOCATION},   // Long  Address 28/128 Speed Steps  
-  
+  //  {CV_29_CONFIG,          0},                                           // Short Address 14 Speed Steps
+  //  {CV_29_CONFIG, CV29_F0_LOCATION}, // Short Address 28/128 Speed Steps
+  //  {CV_29_CONFIG, CV29_EXT_ADDRESSING | CV29_F0_LOCATION},   // Long  Address 28/128 Speed Steps  
+  {CV_29_CONFIG,CV29_ACCESSORY_DECODER|CV29_OUTPUT_ADDRESS_MODE|CV29_F0_LOCATION}, // Accesory Decoder Short Address
+  //  {CV_29_CONFIG, CV29_ACCESSORY_DECODER|CV29_OUTPUT_ADDRESS_MODE|CV29_EXT_ADDRESSING | CV29_F0_LOCATION},  // Accesory Decoder  Long  Address 
+
   {CV_DECODER_MASTER_RESET, 0},
   {CV_To_Store_SET_CV_Address, SET_CV_Address&0xFF },   // LSB Set CV Address
   {CV_To_Store_SET_CV_Address+1,(SET_CV_Address>>8)&0x3F },  //MSB Set CV Address
@@ -217,7 +220,7 @@ void setup()   //******************************************************
   // Setup which External Interrupt, the Pin it's associated with that we're using 
   Dcc.pin(0, 2, 0);
   // Call the main DCC Init function to enable the DCC Receiver
-  Dcc.init( MAN_ID_DIY, 600, FLAGS_OUTPUT_ADDRESS_MODE | FLAGS_DCC_ACCESSORY_DECODER, CV_To_Store_SET_CV_Address);
+  Dcc.init( MAN_ID_DIY, 601, FLAGS_OUTPUT_ADDRESS_MODE | FLAGS_DCC_ACCESSORY_DECODER, CV_To_Store_SET_CV_Address);
   delay(800);
    
   #if defined(DECODER_LOADED)

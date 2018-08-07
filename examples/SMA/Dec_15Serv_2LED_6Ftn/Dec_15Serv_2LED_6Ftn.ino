@@ -1,5 +1,5 @@
 // Production 17 Function DCC Decoder    Dec_15Serv_2LED_6Ftn.ino
-// Version 5.4  Geoff Bunza 2014,2015,2016
+// Version 6.01  Geoff Bunza 2014,2015,2016
 // NO LONGER REQUIRES modified software servo Lib
 // Software restructuring mods added from Alex Shepherd and Franz-Peter
 //   With sincere thanks
@@ -68,10 +68,17 @@ struct CVPair
 
 CVPair FactoryDefaultCVs [] =
 {
-  {CV_MULTIFUNCTION_PRIMARY_ADDRESS, This_Decoder_Address},
-  {CV_ACCESSORY_DECODER_ADDRESS_MSB, 0},
-  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB, 0},
-  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB, 0},
+  {CV_MULTIFUNCTION_PRIMARY_ADDRESS, This_Decoder_Address&0x7F },
+  
+  // These two CVs define the Long DCC Address
+  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB, ((This_Decoder_Address>>8)&0x7F)+192 },
+  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB, This_Decoder_Address&0xFF },
+  
+  // ONLY uncomment 1 CV_29_CONFIG line below as approprate DEFAULT IS SHORT ADDRESS
+//  {CV_29_CONFIG,          0},                                           // Short Address 14 Speed Steps
+  {CV_29_CONFIG, CV29_F0_LOCATION}, // Short Address 28/128 Speed Steps
+//  {CV_29_CONFIG, CV29_EXT_ADDRESSING | CV29_F0_LOCATION},   // Long  Address 28/128 Speed Steps  
+
   {CV_DECODER_MASTER_RESET, 0},
   {30, 2}, //F0 Config 0=On/Off,1=Blink,2=Servo,3=DBL LED Blink,4=Pulsed,5=fade
   {31, 1},    //F0 Rate  Blink=Eate,PWM=Rate,Servo=Rate
@@ -200,7 +207,7 @@ void setup()   //******************************************************
   // Setup which External Interrupt, the Pin it's associated with that we're using 
   Dcc.pin(0, 2, 0);
   // Call the main DCC Init function to enable the DCC Receiver
-  Dcc.init( MAN_ID_DIY, 100, FLAGS_MY_ADDRESS_ONLY, 0 );
+  Dcc.init( MAN_ID_DIY, 601, FLAGS_MY_ADDRESS_ONLY, 0 );
   delay(800);
    
 #if defined(DECODER_LOADED)

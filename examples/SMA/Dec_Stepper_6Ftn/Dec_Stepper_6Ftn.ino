@@ -1,5 +1,5 @@
 // Production Stepper Drive DCC Decoder    Dec_Stepper_6Ftn.ino
-// Version 6.0  Geoff Bunza 2014,2015,2016,2017,2018
+// Version 6.01  Geoff Bunza 2014,2015,2016,2017,2018
 // Now works with both short and long DCC Addesses
 
 // NO LONGER REQUIRES modified software servo Lib
@@ -236,7 +236,7 @@ void setup()   //******************************************************
   // Setup which External Interrupt, the Pin it's associated with that we're using 
   Dcc.pin(0, 2, 0);
   // Call the main DCC Init function to enable the DCC Receiver
-  Dcc.init( MAN_ID_DIY, 600, FLAGS_MY_ADDRESS_ONLY, 0 );
+  Dcc.init( MAN_ID_DIY, 601, FLAGS_MY_ADDRESS_ONLY, 0 );
   delay(800);
    
 #if defined(DECODER_LOADED)

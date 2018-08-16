@@ -1,5 +1,5 @@
 // Production 17 Function DCC Decoder    Dec_13Serv_4LED_6Ftn.ino
-// Version 5.4  Geoff Bunza 2014,2015,2016
+// Version 6.01  Geoff Bunza 2014,2015,2016
 // NO LONGER REQUIRES modified software servo Lib
 // Software restructuring mods added from Alex Shepherd and Franz-Peter
 //   With sincere thanks
@@ -11,7 +11,6 @@
 // ******** EMOVE THE "//" IN THE FOOLOWING LINE TO SEND DEBUGGING
 // ******** INFO TO THE SERIAL MONITOR
 //#define DEBUG
-
 
 #include <NmraDcc.h>
 #include <SoftwareServo.h> 
@@ -208,7 +207,7 @@ void setup()   //******************************************************
   // Setup which External Interrupt, the Pin it's associated with that we're using 
   Dcc.pin(0, 2, 0);
   // Call the main DCC Init function to enable the DCC Receiver
-  Dcc.init( MAN_ID_DIY, 100, FLAGS_MY_ADDRESS_ONLY, 0 );
+  Dcc.init( MAN_ID_DIY, 601, FLAGS_MY_ADDRESS_ONLY, 0 );
   delay(800);
    
 #if defined(DECODER_LOADED)

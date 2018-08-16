@@ -1,5 +1,5 @@
 // Production 17 Function DCC Decoder   Dec_Dir_and_Fade.ino
-// Version 6.0  Geoff Bunza 2014,2015,2016,2017,2018
+// Version 6.01  Geoff Bunza 2014,2015,2016,2017,2018
 // Now works with both short and long DCC Addesses
 // LED control is dependent on direction of travel and Fade can be added
 
@@ -110,7 +110,7 @@ void setup()
   // Setup which External Interrupt, the Pin it's associated with that we're using and enable the Pull-Up 
   Dcc.pin(0, 2, 0);
   // Call the main DCC Init function to enable the DCC Receiver
-  Dcc.init( MAN_ID_DIY, 600, FLAGS_MY_ADDRESS_ONLY, 0 );
+  Dcc.init( MAN_ID_DIY, 601, FLAGS_MY_ADDRESS_ONLY, 0 );
 }
 void loop()
 {

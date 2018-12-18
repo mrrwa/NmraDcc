@@ -32,7 +32,7 @@
 // Uncomment the following Line to Enable Service Mode CV Programming
 #define NMRA_DCC_PROCESS_SERVICEMODE
 
-// Uncomment the following line to Enable MutliFunction Decoder Operations
+// Uncomment the following line to Enable MultiFunction Decoder Operations
 #define NMRA_DCC_PROCESS_MULTIFUNCTION
 
 // Uncomment the following line to Enable 14 Speed Step Support
@@ -96,14 +96,17 @@ typedef struct
 #define CV_MANUFACTURER_ID                     8
 #define CV_29_CONFIG                          29
 
-#if defined(ESP8266)
-#include <spi_flash.h>
-#define MAXCV     SPI_FLASH_SEC_SIZE
+#if defined(ESP32)
+	#include <esp_log.h>
+	#define MAXCV     SPI_FLASH_SEC_SIZE
+#elif defined(ESP8266)
+	#include <spi_flash.h>
+	#define MAXCV     SPI_FLASH_SEC_SIZE
 #elif defined( __STM32F1__)
-#define MAXCV	(EEPROM_PAGE_SIZE/4 - 1)	// number of storage places (CV address could be larger
+	#define MAXCV	(EEPROM_PAGE_SIZE/4 - 1)	// number of storage places (CV address could be larger
 											// because STM32 uses virtual adresses)
 #else
-#define MAXCV    E2END     					// the upper limit of the CV value currently defined to max memory.
+	#define MAXCV    E2END     					// the upper limit of the CV value currently defined to max memory.
 #endif
 
 typedef enum {
@@ -651,7 +654,7 @@ extern uint8_t notifyIsSetCVReady(void) __attribute__ ((weak));
  *  notifyCVChange()  Called when a CV value is changed.
  *                    This is called whenever a CV's value is changed.
  *  notifyDccCVChange()  Called only when a CV value is changed by a Dcc packet or a internal lib function.
- *                    it is NOT called if the CV is chaged by means of the setCV() method.
+ *                    it is NOT called if the CV is changed by means of the setCV() method.
  *                    Note: It is not called if notifyCVWrite() is defined
  *                    or if the value in the EEPROM is the same as the value
  *                    in the write command. 

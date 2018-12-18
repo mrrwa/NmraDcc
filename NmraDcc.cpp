@@ -25,6 +25,7 @@
 //			  2017-01-19 added STM32F1 support by Franz-Peter
 //            2017-11-29 Ken West (kgw4449@gmail.com):
 //                       Minor fixes to pass NMRA Baseline Conformance Tests.
+//            2018-12-17 added ESP32 support by Trusty (thierry@lapajaparis.net)
 //
 //------------------------------------------------------------------------
 //
@@ -174,9 +175,22 @@
         #define MODE_TP3 pinMode( D7,OUTPUT ) ; // GPIO 13
         #define SET_TP3  GPOS = (1 << D7);
         #define CLR_TP3  GPOC = (1 << D7);
-        #define MODE_TP4 pinMode( D7,OUTPUT ); // GPIO 15
+        #define MODE_TP4 pinMode( D8,OUTPUT ) ; // GPIO 15
         #define SET_TP4  GPOC = (1 << D8);
         #define CLR_TP4  GPOC = (1 << D8);
+    #elif defined(ESP32)
+        #define MODE_TP1 pinMode( 33,OUTPUT ) ; // GPIO 33
+        #define SET_TP1  GPOS = (1 << 33);
+        #define CLR_TP1  GPOC = (1 << 33);
+        #define MODE_TP2 pinMode( 25,OUTPUT ) ; // GPIO 25
+        #define SET_TP2  GPOS = (1 << 25);
+        #define CLR_TP2  GPOC = (1 << 25);
+        #define MODE_TP3 pinMode( 26,OUTPUT ) ; // GPIO 26
+        #define SET_TP3  GPOS = (1 << 26);
+        #define CLR_TP3  GPOC = (1 << 26);
+        #define MODE_TP4 pinMode( 27,OUTPUT ) ; // GPIO 27
+        #define SET_TP4  GPOC = (1 << 27);
+        #define CLR_TP4  GPOC = (1 << 27);
         
         
     //#elif defined(__AVR_ATmega128__) ||defined(__AVR_ATmega1281__)||defined(__AVR_ATmega2561__)
@@ -534,6 +548,9 @@ uint8_t readEEPROM( unsigned int CV ) {
 void writeEEPROM( unsigned int CV, uint8_t Value ) {
     EEPROM.write(CV, Value) ;
   #if defined(ESP8266)
+    EEPROM.commit();
+  #endif
+  #if defined(ESP32)
     EEPROM.commit();
   #endif
 }
@@ -1297,6 +1314,9 @@ void NmraDcc::initAccessoryDecoder( uint8_t ManufacturerId, uint8_t VersionId, u
 void NmraDcc::init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, uint8_t OpsModeAddressBaseCV )
 {
   #if defined(ESP8266)
+    EEPROM.begin(MAXCV);
+  #endif
+  #if defined(ESP32)
     EEPROM.begin(MAXCV);
   #endif
   // Clear all the static member variables

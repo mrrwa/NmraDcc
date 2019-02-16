@@ -244,8 +244,10 @@ struct countOf_t countOf;
 
 #if defined ( __STM32F1__ )
 static ExtIntTriggerMode ISREdge;
+static ExtIntTriggerMode ISRWatch;
 #else
-static byte  ISREdge;   // RISING or FALLING
+static byte  ISREdge;   // Holder of the Next Edge we're looking for: RISING or FALLING
+static byte  ISRWatch;  // Interrupt Handler Edge Filter 
 #endif
 static word  bitMax, bitMin;
 
@@ -301,8 +303,35 @@ DCC_PROCESSOR_STATE ;
 
 DCC_PROCESSOR_STATE DccProcState ;
 
+#ifdef ESP32
+portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
+
+void IRAM_ATTR ExternalInterruptHandler(void)
+#else
 void ExternalInterruptHandler(void)
+#endif
 {
+//   switch (ISRWatch)
+//   {
+//     case RISING: if (digitalRead(DccProcState.ExtIntPinNum)) break; 
+//     case FALLING: if (digitalRead(DccProcState.ExtIntPinNum)) return; break; 
+//   }
+	// First compare the edge we're looking for to the pin state 
+	switch (ISRWatch)
+	{
+		case CHANGE:
+			break;
+				
+		case RISING:
+			if (digitalRead(DccProcState.ExtIntPinNum) != HIGH)
+				return; 
+			break;
+				
+		case FALLING:
+			if (digitalRead(DccProcState.ExtIntPinNum) != LOW)
+				return;
+			break; 
+	}
 // Bit evaluation without Timer 0 ------------------------------
     uint8_t DccBitVal;
     static int8_t  bit1, bit2 ;
@@ -350,11 +379,9 @@ void ExternalInterruptHandler(void)
         DccRx.State = WAIT_START_BIT ;
         // While waiting for the start bit, detect halfbit lengths. We will detect the correct
         // sync and detect whether we see a false (e.g. motorola) protocol
-		#if defined ( __STM32F1__ )
-		detachInterrupt( DccProcState.ExtIntNum );
-		#endif
-        attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, CHANGE);
-        halfBit = 0;
+        halfBit = 0;        
+		ISRWatch = CHANGE;
+		
         bitMax = MAX_ONEBITHALF;
         bitMin = MIN_ONEBITHALF;
         CLR_TP1;
@@ -397,10 +424,9 @@ void ExternalInterruptHandler(void)
                 bitMin = MIN_ONEBITFULL;
                 DccRx.BitCount = 0;
 				SET_TP4;
-				#if defined ( __STM32F1__ )
-				detachInterrupt( DccProcState.ExtIntNum );
-				#endif
-                attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+				
+				ISRWatch = ISREdge;
+				
 				SET_TP3;
 				CLR_TP4;
             }
@@ -436,10 +462,9 @@ void ExternalInterruptHandler(void)
             DccRx.TempByte = 0 ;
         }
 		SET_TP4;
-			#if defined ( __STM32F1__ )
-			detachInterrupt( DccProcState.ExtIntNum );
-			#endif
-			attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+		
+			ISRWatch = ISREdge;
+			
         CLR_TP1;
 		CLR_TP4;
         break;
@@ -468,10 +493,9 @@ void ExternalInterruptHandler(void)
 		
         CLR_TP1;
 		SET_TP4;
-		#if defined ( __STM32F1__ )
-		detachInterrupt( DccProcState.ExtIntNum );
-		#endif
-		attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+		
+		ISRWatch = ISREdge;
+		
 		CLR_TP4;
         break;
             
@@ -509,8 +533,14 @@ void ExternalInterruptHandler(void)
       DccRx.State = WAIT_PREAMBLE ;
       bitMax = MAX_PRAEAMBEL;
       bitMin = MIN_ONEBITFULL;
+#ifdef ESP32
+	  portENTER_CRITICAL_ISR(&mux);
+#endif
       DccRx.PacketCopy = DccRx.PacketBuf ;
       DccRx.DataReady = 1 ;
+#ifdef ESP32
+	  portEXIT_CRITICAL_ISR(&mux);
+#endif
       SET_TP3;
     }
     else  // Get next Byte
@@ -1326,15 +1356,17 @@ void NmraDcc::init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, ui
   MODE_TP2;
   MODE_TP3;
   MODE_TP4;
-  ISREdge = RISING;
   bitMax = MAX_ONEBITFULL;
   bitMin = MIN_ONEBITFULL;
-  attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, RISING);
-
+  
   DccProcState.Flags = Flags ;
   DccProcState.OpsModeAddressBaseCV = OpsModeAddressBaseCV ;
   DccProcState.myDccAddress = -1;
   DccProcState.inAccDecDCCAddrNextReceivedMode = 0;
+
+  ISREdge = RISING;
+  ISRWatch = ISREdge;
+  attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, CHANGE);
 
   // Set the Bits that control Multifunction or Accessory behaviour
   // and if the Accessory decoder optionally handles Output Addressing 
@@ -1439,13 +1471,24 @@ uint8_t NmraDcc::process()
   {
     // We need to do this check with interrupts disabled
     //SET_TP4;
+#ifdef ESP32
+    portENTER_CRITICAL(&mux);
+#else
     noInterrupts();
+#endif
+
     Msg = DccRx.PacketCopy ;
     DccRx.DataReady = 0 ;
+
+#ifdef ESP32
+    portEXIT_CRITICAL(&mux);
+#else
     interrupts();
-      #ifdef DCC_DBGVAR
-      countOf.Tel++;
-      #endif
+#endif
+
+     #ifdef DCC_DBGVAR
+     countOf.Tel++;
+     #endif
     
     uint8_t xorValue = 0 ;
     

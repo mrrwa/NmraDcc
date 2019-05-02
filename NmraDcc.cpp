@@ -26,6 +26,7 @@
 //            2017-11-29 Ken West (kgw4449@gmail.com):
 //                       Minor fixes to pass NMRA Baseline Conformance Tests.
 //            2018-12-17 added ESP32 support by Trusty (thierry@lapajaparis.net)
+//            2019-02-17 added ESP32 specific changes by Hans Tanner
 //
 //------------------------------------------------------------------------
 //
@@ -244,7 +245,9 @@ struct countOf_t countOf;
 
 #if defined ( __STM32F1__ )
 static ExtIntTriggerMode ISREdge;
-static ExtIntTriggerMode ISRWatch;
+#elif defined ( ESP32 )
+static byte  ISREdge;   // Holder of the Next Edge we're looking for: RISING or FALLING
+static byte  ISRWatch;  // Interrupt Handler Edge Filter 
 #else
 static byte  ISREdge;   // Holder of the Next Edge we're looking for: RISING or FALLING
 static byte  ISRWatch;  // Interrupt Handler Edge Filter 
@@ -311,6 +314,7 @@ void IRAM_ATTR ExternalInterruptHandler(void)
 void ExternalInterruptHandler(void)
 #endif
 {
+#ifdef ESP32
 //   switch (ISRWatch)
 //   {
 //     case RISING: if (digitalRead(DccProcState.ExtIntPinNum)) break; 
@@ -332,6 +336,7 @@ void ExternalInterruptHandler(void)
 				return;
 			break; 
 	}
+#endif
 // Bit evaluation without Timer 0 ------------------------------
     uint8_t DccBitVal;
     static int8_t  bit1, bit2 ;
@@ -379,9 +384,16 @@ void ExternalInterruptHandler(void)
         DccRx.State = WAIT_START_BIT ;
         // While waiting for the start bit, detect halfbit lengths. We will detect the correct
         // sync and detect whether we see a false (e.g. motorola) protocol
-        halfBit = 0;        
+
+    #if defined ( __STM32F1__ )
+		detachInterrupt( DccProcState.ExtIntNum );
+		#endif
+        #ifdef ESP32
 		ISRWatch = CHANGE;
-		
+        #else
+        attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, CHANGE);
+        #endif
+        halfBit = 0;
         bitMax = MAX_ONEBITHALF;
         bitMin = MIN_ONEBITHALF;
         CLR_TP1;
@@ -424,9 +436,15 @@ void ExternalInterruptHandler(void)
                 bitMin = MIN_ONEBITFULL;
                 DccRx.BitCount = 0;
 				SET_TP4;
-				
+
+        #if defined ( __STM32F1__ )
+				detachInterrupt( DccProcState.ExtIntNum );
+				#endif
+                #ifdef ESP32
 				ISRWatch = ISREdge;
-				
+                #else
+                attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+                #endif
 				SET_TP3;
 				CLR_TP4;
             }
@@ -462,9 +480,15 @@ void ExternalInterruptHandler(void)
             DccRx.TempByte = 0 ;
         }
 		SET_TP4;
-		
-			ISRWatch = ISREdge;
-			
+
+			#if defined ( __STM32F1__ )
+			detachInterrupt( DccProcState.ExtIntNum );
+			#endif
+            #ifdef ESP32
+            ISRWatch = ISREdge;
+            #else
+			attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+            #endif
         CLR_TP1;
 		CLR_TP4;
         break;
@@ -493,9 +517,16 @@ void ExternalInterruptHandler(void)
 		
         CLR_TP1;
 		SET_TP4;
-		
-		ISRWatch = ISREdge;
-		
+
+		#if defined ( __STM32F1__ )
+		detachInterrupt( DccProcState.ExtIntNum );
+		#endif
+        #ifdef ESP32
+        ISRWatch = ISREdge;
+        #else
+		attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+        #endif
+
 		CLR_TP4;
         break;
             
@@ -1358,15 +1389,20 @@ void NmraDcc::init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, ui
   MODE_TP4;
   bitMax = MAX_ONEBITFULL;
   bitMin = MIN_ONEBITFULL;
-  
+
   DccProcState.Flags = Flags ;
   DccProcState.OpsModeAddressBaseCV = OpsModeAddressBaseCV ;
   DccProcState.myDccAddress = -1;
   DccProcState.inAccDecDCCAddrNextReceivedMode = 0;
 
   ISREdge = RISING;
+
+  #ifdef ESP32
   ISRWatch = ISREdge;
   attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, CHANGE);
+  #else
+  attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, RISING);
+  #endif
 
   // Set the Bits that control Multifunction or Accessory behaviour
   // and if the Accessory decoder optionally handles Output Addressing 
@@ -1476,7 +1512,6 @@ uint8_t NmraDcc::process()
 #else
     noInterrupts();
 #endif
-
     Msg = DccRx.PacketCopy ;
     DccRx.DataReady = 0 ;
 
@@ -1485,10 +1520,9 @@ uint8_t NmraDcc::process()
 #else
     interrupts();
 #endif
-
-     #ifdef DCC_DBGVAR
-     countOf.Tel++;
-     #endif
+      #ifdef DCC_DBGVAR
+      countOf.Tel++;
+      #endif
     
     uint8_t xorValue = 0 ;
     

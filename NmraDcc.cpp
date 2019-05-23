@@ -249,7 +249,8 @@ static ExtIntTriggerMode ISREdge;
 static byte  ISREdge;   // Holder of the Next Edge we're looking for: RISING or FALLING
 static byte  ISRWatch;  // Interrupt Handler Edge Filter 
 #else
-static byte  ISREdge;   // RISING or FALLING
+static byte  ISREdge;   // Holder of the Next Edge we're looking for: RISING or FALLING
+static byte  ISRWatch;  // Interrupt Handler Edge Filter 
 #endif
 static word  bitMax, bitMin;
 
@@ -383,7 +384,8 @@ void ExternalInterruptHandler(void)
         DccRx.State = WAIT_START_BIT ;
         // While waiting for the start bit, detect halfbit lengths. We will detect the correct
         // sync and detect whether we see a false (e.g. motorola) protocol
-		#if defined ( __STM32F1__ )
+
+    #if defined ( __STM32F1__ )
 		detachInterrupt( DccProcState.ExtIntNum );
 		#endif
         #ifdef ESP32
@@ -434,7 +436,8 @@ void ExternalInterruptHandler(void)
                 bitMin = MIN_ONEBITFULL;
                 DccRx.BitCount = 0;
 				SET_TP4;
-				#if defined ( __STM32F1__ )
+
+        #if defined ( __STM32F1__ )
 				detachInterrupt( DccProcState.ExtIntNum );
 				#endif
                 #ifdef ESP32
@@ -477,6 +480,7 @@ void ExternalInterruptHandler(void)
             DccRx.TempByte = 0 ;
         }
 		SET_TP4;
+
 			#if defined ( __STM32F1__ )
 			detachInterrupt( DccProcState.ExtIntNum );
 			#endif
@@ -513,6 +517,7 @@ void ExternalInterruptHandler(void)
 		
         CLR_TP1;
 		SET_TP4;
+
 		#if defined ( __STM32F1__ )
 		detachInterrupt( DccProcState.ExtIntNum );
 		#endif
@@ -521,6 +526,7 @@ void ExternalInterruptHandler(void)
         #else
 		attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
         #endif
+
 		CLR_TP4;
         break;
             
@@ -1390,6 +1396,7 @@ void NmraDcc::init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, ui
   DccProcState.inAccDecDCCAddrNextReceivedMode = 0;
 
   ISREdge = RISING;
+
   #ifdef ESP32
   ISRWatch = ISREdge;
   attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, CHANGE);
@@ -1507,6 +1514,7 @@ uint8_t NmraDcc::process()
 #endif
     Msg = DccRx.PacketCopy ;
     DccRx.DataReady = 0 ;
+
 #ifdef ESP32
     portEXIT_CRITICAL(&mux);
 #else

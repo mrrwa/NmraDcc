@@ -310,6 +310,8 @@ DCC_PROCESSOR_STATE DccProcState ;
 portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 
 void IRAM_ATTR ExternalInterruptHandler(void)
+#elif defined(ESP8266)
+void ICACHE_RAM_ATTR ExternalInterruptHandler(void)
 #else
 void ExternalInterruptHandler(void)
 #endif
@@ -340,9 +342,9 @@ void ExternalInterruptHandler(void)
 // Bit evaluation without Timer 0 ------------------------------
     uint8_t DccBitVal;
     static int8_t  bit1, bit2 ;
-    static word  lastMicros;
+    static unsigned long  lastMicros = 0;
     static byte halfBit, DCC_IrqRunning;
-    unsigned int  actMicros, bitMicros;
+    unsigned long  actMicros, bitMicros;
     if ( DCC_IrqRunning ) {
         // nested DCC IRQ - obviously there are glitches
         // ignore this interrupt and increment glitchcounter

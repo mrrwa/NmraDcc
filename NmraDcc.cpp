@@ -1101,7 +1101,7 @@ void execDccProcessor( DCC_MSG * pDccMsg )
         DccProcState.DuplicateCount = 0 ;
         memcpy( &DccProcState.LastMsg, pDccMsg, sizeof( DCC_MSG ) ) ;
       }
-      // Wait until you see 2 identicle packets before acting on a Service Mode Packet 
+      // Wait until you see 2 identical packets before acting on a Service Mode Packet 
       else
       {
         DccProcState.DuplicateCount++ ;

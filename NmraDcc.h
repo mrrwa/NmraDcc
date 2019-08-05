@@ -49,9 +49,11 @@
 #ifndef NMRADCC_IS_IN
 #define NMRADCC_IS_IN
 
-#define NMRADCC_VERSION     200     // Version 2.0.0
+#define NMRADCC_VERSION     201     // Version 2.0.1
 
 #define MAX_DCC_MESSAGE_LEN 6    // including XOR-Byte
+
+//#define ALLOW_NESTED_IRQ      // uncomment to enable nested IRQ's ( only for AVR! )
 
 typedef struct
 {
@@ -105,6 +107,9 @@ typedef struct
 #elif defined( __STM32F1__)
 	#define MAXCV	(EEPROM_PAGE_SIZE/4 - 1)	// number of storage places (CV address could be larger
 											// because STM32 uses virtual adresses)
+    #undef ALLOW_NESTED_IRQ                 // This is done with NVIC on STM32
+    #define PRIO_DCC_IRQ    9
+    #define PRIO_SYSTIC     8               // MUST be higher priority than DCC Irq
 #else
 	#define MAXCV    E2END     					// the upper limit of the CV value currently defined to max memory.
 #endif

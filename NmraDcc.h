@@ -699,9 +699,8 @@ extern void    notifyCVResetFactoryDefault(void) __attribute__ ((weak));
  */
 extern void    notifyCVAck(void) __attribute__ ((weak));
 /*+
- *  notifyAdvancedCVAck() Called when a CV write must be acknowledged.
- *                This callback must increase the current drawn by this
- *                decoder by at least 60mA for 6ms +/- 1ms.
+ *  notifyAdvancedCVAck() Called when a CV write must be acknowledged via Advanced Acknowledgement.
+ *                This callback must send the Advanced Acknowledgement via RailComm.
  *
  *  Inputs:
  *    None

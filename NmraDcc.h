@@ -97,7 +97,7 @@ typedef struct
 #define CV_29_CONFIG                          29
 
 #if defined(ESP32)
-	#include <esp_log.h>
+	#include <esp_spi_flash.h>
 	#define MAXCV     SPI_FLASH_SEC_SIZE
 #elif defined(ESP8266)
 	#include <spi_flash.h>
@@ -698,6 +698,17 @@ extern void    notifyCVResetFactoryDefault(void) __attribute__ ((weak));
  *    None
  */
 extern void    notifyCVAck(void) __attribute__ ((weak));
+/*+
+ *  notifyAdvancedCVAck() Called when a CV write must be acknowledged via Advanced Acknowledgement.
+ *                This callback must send the Advanced Acknowledgement via RailComm.
+ *
+ *  Inputs:
+ *    None
+ *                                                                                                        *
+ *  Returns:
+ *    None
+ */
+extern void    notifyAdvancedCVAck(void) __attribute__ ((weak));
 /*+
  *  notifyServiceMode(bool) Called when state of 'inServiceMode' changes
  *

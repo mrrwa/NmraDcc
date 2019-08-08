@@ -295,7 +295,8 @@ typedef struct
   uint8_t	ExtIntNum; 
   uint8_t	ExtIntPinNum;
   int16_t   myDccAddress;	// Cached value of DCC Address from CVs
-  uint8_t   inAccDecDCCAddrNextReceivedMode; 
+  uint8_t   inAccDecDCCAddrNextReceivedMode;
+  uint8_t	cv29Value; 
 #ifdef DCC_DEBUG
   uint8_t	IntCount;
   uint8_t	TickCount;
@@ -604,6 +605,13 @@ void ackCV(void)
     notifyCVAck() ;
 }
 
+void ackAdvancedCV(void)
+{
+  if( notifyAdvancedCVAck && (DccProcState.cv29Value & CV29_ADV_ACK) )
+    notifyAdvancedCVAck() ;
+}
+
+
 uint8_t readEEPROM( unsigned int CV ) {
     return EEPROM.read(CV) ;
 }
@@ -663,6 +671,7 @@ uint8_t writeCV( unsigned int CV, uint8_t Value)
   {
     case CV_29_CONFIG:
       // copy addressmode Bit to Flags
+      DccProcState.cv29Value = Value;
       DccProcState.Flags = ( DccProcState.Flags & ~FLAGS_CV29_BITS) | (Value & FLAGS_CV29_BITS);
       // no break, because myDccAdress must also be reset
     case CV_ACCESSORY_DECODER_ADDRESS_LSB:	// Also same CV for CV_MULTIFUNCTION_PRIMARY_ADDRESS
@@ -691,23 +700,19 @@ uint8_t writeCV( unsigned int CV, uint8_t Value)
 
 uint16_t getMyAddr(void)
 {
-  uint8_t   CV29Value ;
-  
   if( DccProcState.myDccAddress != -1 )	// See if we can return the cached value 
   	return( DccProcState.myDccAddress );
 
-  CV29Value = readCV( CV_29_CONFIG ) ;
-
-  if( CV29Value & CV29_ACCESSORY_DECODER )  // Accessory Decoder?
+  if( DccProcState.cv29Value & CV29_ACCESSORY_DECODER )  // Accessory Decoder?
   {
-    if( CV29Value & CV29_OUTPUT_ADDRESS_MODE ) 
+    if( DccProcState.cv29Value & CV29_OUTPUT_ADDRESS_MODE ) 
       DccProcState.myDccAddress = ( readCV( CV_ACCESSORY_DECODER_ADDRESS_MSB ) << 8 ) | readCV( CV_ACCESSORY_DECODER_ADDRESS_LSB );
     else
       DccProcState.myDccAddress = ( ( readCV( CV_ACCESSORY_DECODER_ADDRESS_MSB ) & 0b00000111) << 6 ) | ( readCV( CV_ACCESSORY_DECODER_ADDRESS_LSB ) & 0b00111111) ;
   }
   else   // Multi-Function Decoder?
   {
-    if( CV29Value & CV29_EXT_ADDRESSING )  // Two Byte Address?
+    if( DccProcState.cv29Value & CV29_EXT_ADDRESSING )  // Two Byte Address?
       DccProcState.myDccAddress = ( ( readCV( CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB ) - 192 ) << 8 ) | readCV( CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB ) ;
 
     else
@@ -728,7 +733,7 @@ void processDirectOpsOperation( uint8_t Cmd, uint16_t CVAddr, uint8_t Value )
       if( validCV( CVAddr, 1 ) )
       {
         if( writeCV( CVAddr, Value ) == Value )
-          ackCV();
+          ackAdvancedCV();
       }
     }
 
@@ -737,7 +742,7 @@ void processDirectOpsOperation( uint8_t Cmd, uint16_t CVAddr, uint8_t Value )
       if( validCV( CVAddr, 0 ) )
       {
         if( readCV( CVAddr ) == Value )
-          ackCV();
+          ackAdvancedCV();
       }
     }
   }
@@ -762,7 +767,7 @@ void processDirectOpsOperation( uint8_t Cmd, uint16_t CVAddr, uint8_t Value )
           tempValue &= ~BitMask ;  // Turn the Bit Off
 
         if( writeCV( CVAddr, tempValue ) == tempValue )
-          ackCV() ;
+          ackAdvancedCV() ;
       }
     }
 
@@ -774,12 +779,12 @@ void processDirectOpsOperation( uint8_t Cmd, uint16_t CVAddr, uint8_t Value )
         if( BitValue ) 
         {
           if( tempValue & BitMask )
-            ackCV() ;
+            ackAdvancedCV() ;
         }
         else
         {
           if( !( tempValue & BitMask)  )
-            ackCV() ;
+            ackAdvancedCV() ;
         }
       }
     }
@@ -873,7 +878,7 @@ void processMultiFunctionMessage( uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t
   case 0b01100000:
     //TODO should we cache this info in DCC_PROCESSOR_STATE.Flags ?
 #ifdef NMRA_DCC_ENABLE_14_SPEED_STEP_MODE
-    speedSteps = (readCV( CV_29_CONFIG ) & CV29_F0_LOCATION) ? SPEED_STEP_28 : SPEED_STEP_14 ;
+    speedSteps = (DccProcState.cv29Value & CV29_F0_LOCATION) ? SPEED_STEP_28 : SPEED_STEP_14 ;
 #else
     speedSteps = SPEED_STEP_28 ;
 #endif    
@@ -1409,7 +1414,7 @@ void NmraDcc::init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, ui
   // Set the Bits that control Multifunction or Accessory behaviour
   // and if the Accessory decoder optionally handles Output Addressing 
   // we need to peal off the top two bits
-  writeCV( CV_29_CONFIG, ( readCV( CV_29_CONFIG ) & ~FLAGS_CV29_BITS ) | (Flags & FLAGS_CV29_BITS) ) ; 
+  DccProcState.cv29Value = writeCV( CV_29_CONFIG, ( readCV( CV_29_CONFIG ) & ~FLAGS_CV29_BITS ) | (Flags & FLAGS_CV29_BITS) ) ; 
 
   uint8_t doAutoFactoryDefault = 0;
   if((Flags & FLAGS_AUTO_FACTORY_DEFAULT) && (readCV(CV_VERSION_ID) == 255) && (readCV(CV_MANUFACTURER_ID) == 255))

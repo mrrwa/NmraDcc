@@ -1096,7 +1096,7 @@ void execDccProcessor( DCC_MSG * pDccMsg )
     {
       resetServiceModeTimer( 1 ) ;
 
-	//Check if size and data content of the DCC match with previous packed
+	//Only check the DCC Packet "Size" and "Data" fields and ignore the "PreambleBits" as they can be different to the previous packet
       if(pDccMsg->Size != DccProcState.LastMsg.Size || memcmp( pDccMsg->Data, &DccProcState.LastMsg.Data, pDccMsg->Size ) != 0 )	      
       {
         DccProcState.DuplicateCount = 0 ;

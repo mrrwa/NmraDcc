@@ -1096,8 +1096,8 @@ void execDccProcessor( DCC_MSG * pDccMsg )
     {
       resetServiceModeTimer( 1 ) ;
 
-      if( memcmp( pDccMsg, &DccProcState.LastMsg, sizeof( DCC_MSG ) ) == 0 ) //Ensure to check if return value is 0 --> Equal
-	      								     //Was having failed conditions with some CV's
+	//Check if size and data content of the DCC match with previous packed
+      if(pDccMsg->Size != DccProcState.LastMsg.Size || memcmp( pDccMsg->Data, &DccProcState.LastMsg.Data, pDccMsg->Size ) != 0 )	      
       {
         DccProcState.DuplicateCount = 0 ;
         memcpy( &DccProcState.LastMsg, pDccMsg, sizeof( DCC_MSG ) ) ;

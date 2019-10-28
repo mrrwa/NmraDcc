@@ -93,7 +93,7 @@
 #define MAX_ONEBITHALF  82
 #define MIN_ONEBITFULL  82
 #define MIN_ONEBITHALF  35
-#define MAX_BITDIFF     18
+#define MAX_BITDIFF     24
 
 
 // Debug-Ports
@@ -217,18 +217,12 @@
     #define MODE_TP2 
     #define SET_TP2 
     #define CLR_TP2 
-        //#define MODE_TP2 DDRC |= (1<<2) // A2
-        //#define SET_TP2 PORTC |= (1<<2)
-        //#define CLR_TP2 PORTC &= ~(1<<2)
     #define MODE_TP3 
     #define SET_TP3 
     #define CLR_TP3 
     #define MODE_TP4 
     #define SET_TP4 
     #define CLR_TP4 
-        //#define MODE_TP4 DDRC |= (1<<4) //A4 
-        //#define SET_TP4 PORTC |= (1<<4) 
-        //#define CLR_TP4 PORTC &= ~(1<<4) 
     
 #endif
 #ifdef DEBUG_PRINT
@@ -343,9 +337,10 @@ void ExternalInterruptHandler(void)
 // Bit evaluation without Timer 0 ------------------------------
     uint8_t DccBitVal;
     static int8_t  bit1, bit2 ;
-    static word  lastMicros = 0;
+    static unsigned int  lastMicros = 0;
     static byte halfBit, DCC_IrqRunning;
     unsigned int  actMicros, bitMicros;
+    #ifdef ALLOW_NESTED_IRQ
     if ( DCC_IrqRunning ) {
         // nested DCC IRQ - obviously there are glitches
         // ignore this interrupt and increment glitchcounter
@@ -356,6 +351,7 @@ void ExternalInterruptHandler(void)
         SET_TP3;
         return; //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> abort IRQ
     }
+    #endif
     SET_TP3;
     actMicros = micros();
     bitMicros = actMicros-lastMicros;
@@ -367,11 +363,12 @@ void ExternalInterruptHandler(void)
     }
     DccBitVal = ( bitMicros < bitMax );
     lastMicros = actMicros;
-    #ifdef debug
-    if(DccBitVal) {SET_TP2;} else {CLR_TP2;};
-    #endif
+    
+    #ifdef ALLOW_NESTED_IRQ
     DCC_IrqRunning = true;
     interrupts();  // time critical is only the micros() command,so allow nested irq's
+    #endif
+    
 #ifdef DCC_DEBUG
     DccProcState.TickCount++;
 #endif
@@ -432,13 +429,10 @@ void ExternalInterruptHandler(void)
             DccRx.BitCount++;
             if( abs(bit2-bit1) > MAX_BITDIFF ) {
                 // the length of the 2 halfbits differ too much -> wrong protokoll
-                CLR_TP2;
-                CLR_TP3;
                 DccRx.State = WAIT_PREAMBLE;
                 bitMax = MAX_PRAEAMBEL;
                 bitMin = MIN_ONEBITFULL;
                 DccRx.BitCount = 0;
-				SET_TP4;
 
         #if defined ( __STM32F1__ )
 				detachInterrupt( DccProcState.ExtIntNum );
@@ -565,6 +559,7 @@ void ExternalInterruptHandler(void)
     {
       CLR_TP3;
       DccRx.State = WAIT_PREAMBLE ;
+      DccRx.BitCount = 0 ;
       bitMax = MAX_PRAEAMBEL;
       bitMin = MIN_ONEBITFULL;
 #ifdef ESP32
@@ -594,9 +589,11 @@ void ExternalInterruptHandler(void)
         DccRx.TempByte = 0 ;
       }
   }
+  #ifdef ALLOW_NESTED_IRQ
+  DCC_IrqRunning = false;
+  #endif
   CLR_TP1;
   CLR_TP3;
-  DCC_IrqRunning = false;
 }
 
 void ackCV(void)
@@ -1363,6 +1360,17 @@ void NmraDcc::pin( uint8_t ExtIntNum, uint8_t ExtIntPinNum, uint8_t EnablePullup
 #if defined ( __STM32F1__ )
   // with STM32F1 the interuptnumber is equal the pin number
   DccProcState.ExtIntNum = ExtIntPinNum;
+  // because STM32F1 has a NVIC we must set interuptpriorities
+  const nvic_irq_num irqNum2nvic[] = { NVIC_EXTI0, NVIC_EXTI1, NVIC_EXTI2, NVIC_EXTI3, NVIC_EXTI4, 
+            NVIC_EXTI_9_5, NVIC_EXTI_9_5, NVIC_EXTI_9_5, NVIC_EXTI_9_5, NVIC_EXTI_9_5, 
+            NVIC_EXTI_15_10, NVIC_EXTI_15_10, NVIC_EXTI_15_10, NVIC_EXTI_15_10, NVIC_EXTI_15_10, NVIC_EXTI_15_10 };
+  exti_num irqNum =  (exti_num)(PIN_MAP[ExtIntPinNum].gpio_bit); 
+
+// DCC-Input IRQ must be able to interrupt other long low priority ( level15 ) IRQ's  
+  nvic_irq_set_priority ( irqNum2nvic[irqNum], PRIO_DCC_IRQ); 
+  
+// Systic must be able to interrupt DCC-IRQ to always get correct micros() values  
+  nvic_irq_set_priority(NVIC_SYSTICK, PRIO_SYSTIC); 
 #else
   DccProcState.ExtIntNum = ExtIntNum;
 #endif

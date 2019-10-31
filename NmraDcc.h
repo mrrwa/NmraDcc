@@ -53,6 +53,8 @@
 
 #define MAX_DCC_MESSAGE_LEN 6    // including XOR-Byte
 
+//#define ALLOW_NESTED_IRQ      // uncomment to enable nested IRQ's ( only for AVR! )
+
 typedef struct
 {
 	uint8_t	Size ;
@@ -97,7 +99,7 @@ typedef struct
 #define CV_29_CONFIG                          29
 
 #if defined(ESP32)
-	#include <esp_log.h>
+	#include <esp_spi_flash.h>
 	#define MAXCV     SPI_FLASH_SEC_SIZE
 #elif defined(ESP8266)
 	#include <spi_flash.h>
@@ -105,6 +107,9 @@ typedef struct
 #elif defined( __STM32F1__)
 	#define MAXCV	(EEPROM_PAGE_SIZE/4 - 1)	// number of storage places (CV address could be larger
 											// because STM32 uses virtual adresses)
+    #undef ALLOW_NESTED_IRQ                 // This is done with NVIC on STM32
+    #define PRIO_DCC_IRQ    9
+    #define PRIO_SYSTIC     8               // MUST be higher priority than DCC Irq
 #else
 	#define MAXCV    E2END     					// the upper limit of the CV value currently defined to max memory.
 #endif
@@ -698,6 +703,17 @@ extern void    notifyCVResetFactoryDefault(void) __attribute__ ((weak));
  *    None
  */
 extern void    notifyCVAck(void) __attribute__ ((weak));
+/*+
+ *  notifyAdvancedCVAck() Called when a CV write must be acknowledged via Advanced Acknowledgement.
+ *                This callback must send the Advanced Acknowledgement via RailComm.
+ *
+ *  Inputs:
+ *    None
+ *                                                                                                        *
+ *  Returns:
+ *    None
+ */
+extern void    notifyAdvancedCVAck(void) __attribute__ ((weak));
 /*+
  *  notifyServiceMode(bool) Called when state of 'inServiceMode' changes
  *

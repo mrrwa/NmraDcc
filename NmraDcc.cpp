@@ -93,7 +93,7 @@
 #define MAX_ONEBITHALF  82
 #define MIN_ONEBITFULL  82
 #define MIN_ONEBITHALF  35
-#define MAX_BITDIFF     18
+#define MAX_BITDIFF     24
 
 
 // Debug-Ports
@@ -217,18 +217,12 @@
     #define MODE_TP2 
     #define SET_TP2 
     #define CLR_TP2 
-        //#define MODE_TP2 DDRC |= (1<<2) // A2
-        //#define SET_TP2 PORTC |= (1<<2)
-        //#define CLR_TP2 PORTC &= ~(1<<2)
     #define MODE_TP3 
     #define SET_TP3 
     #define CLR_TP3 
     #define MODE_TP4 
     #define SET_TP4 
     #define CLR_TP4 
-        //#define MODE_TP4 DDRC |= (1<<4) //A4 
-        //#define SET_TP4 PORTC |= (1<<4) 
-        //#define CLR_TP4 PORTC &= ~(1<<4) 
     
 #endif
 #ifdef DEBUG_PRINT
@@ -295,7 +289,8 @@ typedef struct
   uint8_t	ExtIntNum; 
   uint8_t	ExtIntPinNum;
   int16_t   myDccAddress;	// Cached value of DCC Address from CVs
-  uint8_t   inAccDecDCCAddrNextReceivedMode; 
+  uint8_t   inAccDecDCCAddrNextReceivedMode;
+  uint8_t	cv29Value; 
 #ifdef DCC_DEBUG
   uint8_t	IntCount;
   uint8_t	TickCount;
@@ -310,6 +305,8 @@ DCC_PROCESSOR_STATE DccProcState ;
 portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 
 void IRAM_ATTR ExternalInterruptHandler(void)
+#elif defined(ESP8266)
+void ICACHE_RAM_ATTR ExternalInterruptHandler(void)
 #else
 void ExternalInterruptHandler(void)
 #endif
@@ -340,9 +337,10 @@ void ExternalInterruptHandler(void)
 // Bit evaluation without Timer 0 ------------------------------
     uint8_t DccBitVal;
     static int8_t  bit1, bit2 ;
-    static word  lastMicros;
+    static unsigned int  lastMicros = 0;
     static byte halfBit, DCC_IrqRunning;
     unsigned int  actMicros, bitMicros;
+    #ifdef ALLOW_NESTED_IRQ
     if ( DCC_IrqRunning ) {
         // nested DCC IRQ - obviously there are glitches
         // ignore this interrupt and increment glitchcounter
@@ -353,6 +351,7 @@ void ExternalInterruptHandler(void)
         SET_TP3;
         return; //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> abort IRQ
     }
+    #endif
     SET_TP3;
     actMicros = micros();
     bitMicros = actMicros-lastMicros;
@@ -364,11 +363,12 @@ void ExternalInterruptHandler(void)
     }
     DccBitVal = ( bitMicros < bitMax );
     lastMicros = actMicros;
-    #ifdef debug
-    if(DccBitVal) {SET_TP2;} else {CLR_TP2;};
-    #endif
+    
+    #ifdef ALLOW_NESTED_IRQ
     DCC_IrqRunning = true;
     interrupts();  // time critical is only the micros() command,so allow nested irq's
+    #endif
+    
 #ifdef DCC_DEBUG
     DccProcState.TickCount++;
 #endif
@@ -429,13 +429,10 @@ void ExternalInterruptHandler(void)
             DccRx.BitCount++;
             if( abs(bit2-bit1) > MAX_BITDIFF ) {
                 // the length of the 2 halfbits differ too much -> wrong protokoll
-                CLR_TP2;
-                CLR_TP3;
                 DccRx.State = WAIT_PREAMBLE;
                 bitMax = MAX_PRAEAMBEL;
                 bitMin = MIN_ONEBITFULL;
                 DccRx.BitCount = 0;
-				SET_TP4;
 
         #if defined ( __STM32F1__ )
 				detachInterrupt( DccProcState.ExtIntNum );
@@ -562,6 +559,7 @@ void ExternalInterruptHandler(void)
     {
       CLR_TP3;
       DccRx.State = WAIT_PREAMBLE ;
+      DccRx.BitCount = 0 ;
       bitMax = MAX_PRAEAMBEL;
       bitMin = MIN_ONEBITFULL;
 #ifdef ESP32
@@ -591,9 +589,11 @@ void ExternalInterruptHandler(void)
         DccRx.TempByte = 0 ;
       }
   }
+  #ifdef ALLOW_NESTED_IRQ
+  DCC_IrqRunning = false;
+  #endif
   CLR_TP1;
   CLR_TP3;
-  DCC_IrqRunning = false;
 }
 
 void ackCV(void)
@@ -601,6 +601,13 @@ void ackCV(void)
   if( notifyCVAck )
     notifyCVAck() ;
 }
+
+void ackAdvancedCV(void)
+{
+  if( notifyAdvancedCVAck && (DccProcState.cv29Value & CV29_ADV_ACK) )
+    notifyAdvancedCVAck() ;
+}
+
 
 uint8_t readEEPROM( unsigned int CV ) {
     return EEPROM.read(CV) ;
@@ -661,6 +668,7 @@ uint8_t writeCV( unsigned int CV, uint8_t Value)
   {
     case CV_29_CONFIG:
       // copy addressmode Bit to Flags
+      DccProcState.cv29Value = Value;
       DccProcState.Flags = ( DccProcState.Flags & ~FLAGS_CV29_BITS) | (Value & FLAGS_CV29_BITS);
       // no break, because myDccAdress must also be reset
     case CV_ACCESSORY_DECODER_ADDRESS_LSB:	// Also same CV for CV_MULTIFUNCTION_PRIMARY_ADDRESS
@@ -689,23 +697,19 @@ uint8_t writeCV( unsigned int CV, uint8_t Value)
 
 uint16_t getMyAddr(void)
 {
-  uint8_t   CV29Value ;
-  
   if( DccProcState.myDccAddress != -1 )	// See if we can return the cached value 
   	return( DccProcState.myDccAddress );
 
-  CV29Value = readCV( CV_29_CONFIG ) ;
-
-  if( CV29Value & CV29_ACCESSORY_DECODER )  // Accessory Decoder?
+  if( DccProcState.cv29Value & CV29_ACCESSORY_DECODER )  // Accessory Decoder?
   {
-    if( CV29Value & CV29_OUTPUT_ADDRESS_MODE ) 
+    if( DccProcState.cv29Value & CV29_OUTPUT_ADDRESS_MODE ) 
       DccProcState.myDccAddress = ( readCV( CV_ACCESSORY_DECODER_ADDRESS_MSB ) << 8 ) | readCV( CV_ACCESSORY_DECODER_ADDRESS_LSB );
     else
       DccProcState.myDccAddress = ( ( readCV( CV_ACCESSORY_DECODER_ADDRESS_MSB ) & 0b00000111) << 6 ) | ( readCV( CV_ACCESSORY_DECODER_ADDRESS_LSB ) & 0b00111111) ;
   }
   else   // Multi-Function Decoder?
   {
-    if( CV29Value & CV29_EXT_ADDRESSING )  // Two Byte Address?
+    if( DccProcState.cv29Value & CV29_EXT_ADDRESSING )  // Two Byte Address?
       DccProcState.myDccAddress = ( ( readCV( CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB ) - 192 ) << 8 ) | readCV( CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB ) ;
 
     else
@@ -726,7 +730,7 @@ void processDirectOpsOperation( uint8_t Cmd, uint16_t CVAddr, uint8_t Value )
       if( validCV( CVAddr, 1 ) )
       {
         if( writeCV( CVAddr, Value ) == Value )
-          ackCV();
+          ackAdvancedCV();
       }
     }
 
@@ -735,7 +739,7 @@ void processDirectOpsOperation( uint8_t Cmd, uint16_t CVAddr, uint8_t Value )
       if( validCV( CVAddr, 0 ) )
       {
         if( readCV( CVAddr ) == Value )
-          ackCV();
+          ackAdvancedCV();
       }
     }
   }
@@ -760,7 +764,7 @@ void processDirectOpsOperation( uint8_t Cmd, uint16_t CVAddr, uint8_t Value )
           tempValue &= ~BitMask ;  // Turn the Bit Off
 
         if( writeCV( CVAddr, tempValue ) == tempValue )
-          ackCV() ;
+          ackAdvancedCV() ;
       }
     }
 
@@ -772,12 +776,12 @@ void processDirectOpsOperation( uint8_t Cmd, uint16_t CVAddr, uint8_t Value )
         if( BitValue ) 
         {
           if( tempValue & BitMask )
-            ackCV() ;
+            ackAdvancedCV() ;
         }
         else
         {
           if( !( tempValue & BitMask)  )
-            ackCV() ;
+            ackAdvancedCV() ;
         }
       }
     }
@@ -871,7 +875,7 @@ void processMultiFunctionMessage( uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t
   case 0b01100000:
     //TODO should we cache this info in DCC_PROCESSOR_STATE.Flags ?
 #ifdef NMRA_DCC_ENABLE_14_SPEED_STEP_MODE
-    speedSteps = (readCV( CV_29_CONFIG ) & CV29_F0_LOCATION) ? SPEED_STEP_28 : SPEED_STEP_14 ;
+    speedSteps = (DccProcState.cv29Value & CV29_F0_LOCATION) ? SPEED_STEP_28 : SPEED_STEP_14 ;
 #else
     speedSteps = SPEED_STEP_28 ;
 #endif    
@@ -1094,12 +1098,13 @@ void execDccProcessor( DCC_MSG * pDccMsg )
     {
       resetServiceModeTimer( 1 ) ;
 
-      if( memcmp( pDccMsg, &DccProcState.LastMsg, sizeof( DCC_MSG ) ) )
+	//Only check the DCC Packet "Size" and "Data" fields and ignore the "PreambleBits" as they can be different to the previous packet
+      if(pDccMsg->Size != DccProcState.LastMsg.Size || memcmp( pDccMsg->Data, &DccProcState.LastMsg.Data, pDccMsg->Size ) != 0 )	      
       {
         DccProcState.DuplicateCount = 0 ;
         memcpy( &DccProcState.LastMsg, pDccMsg, sizeof( DCC_MSG ) ) ;
       }
-      // Wait until you see 2 identicle packets before acting on a Service Mode Packet 
+      // Wait until you see 2 identical packets before acting on a Service Mode Packet 
       else
       {
         DccProcState.DuplicateCount++ ;
@@ -1355,6 +1360,17 @@ void NmraDcc::pin( uint8_t ExtIntNum, uint8_t ExtIntPinNum, uint8_t EnablePullup
 #if defined ( __STM32F1__ )
   // with STM32F1 the interuptnumber is equal the pin number
   DccProcState.ExtIntNum = ExtIntPinNum;
+  // because STM32F1 has a NVIC we must set interuptpriorities
+  const nvic_irq_num irqNum2nvic[] = { NVIC_EXTI0, NVIC_EXTI1, NVIC_EXTI2, NVIC_EXTI3, NVIC_EXTI4, 
+            NVIC_EXTI_9_5, NVIC_EXTI_9_5, NVIC_EXTI_9_5, NVIC_EXTI_9_5, NVIC_EXTI_9_5, 
+            NVIC_EXTI_15_10, NVIC_EXTI_15_10, NVIC_EXTI_15_10, NVIC_EXTI_15_10, NVIC_EXTI_15_10, NVIC_EXTI_15_10 };
+  exti_num irqNum =  (exti_num)(PIN_MAP[ExtIntPinNum].gpio_bit); 
+
+// DCC-Input IRQ must be able to interrupt other long low priority ( level15 ) IRQ's  
+  nvic_irq_set_priority ( irqNum2nvic[irqNum], PRIO_DCC_IRQ); 
+  
+// Systic must be able to interrupt DCC-IRQ to always get correct micros() values  
+  nvic_irq_set_priority(NVIC_SYSTICK, PRIO_SYSTIC); 
 #else
   DccProcState.ExtIntNum = ExtIntNum;
 #endif
@@ -1407,7 +1423,7 @@ void NmraDcc::init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, ui
   // Set the Bits that control Multifunction or Accessory behaviour
   // and if the Accessory decoder optionally handles Output Addressing 
   // we need to peal off the top two bits
-  writeCV( CV_29_CONFIG, ( readCV( CV_29_CONFIG ) & ~FLAGS_CV29_BITS ) | (Flags & FLAGS_CV29_BITS) ) ; 
+  DccProcState.cv29Value = writeCV( CV_29_CONFIG, ( readCV( CV_29_CONFIG ) & ~FLAGS_CV29_BITS ) | (Flags & FLAGS_CV29_BITS) ) ; 
 
   uint8_t doAutoFactoryDefault = 0;
   if((Flags & FLAGS_AUTO_FACTORY_DEFAULT) && (readCV(CV_VERSION_ID) == 255) && (readCV(CV_MANUFACTURER_ID) == 255))

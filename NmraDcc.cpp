@@ -824,9 +824,8 @@ void processMultiFunctionMessage( uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t
     switch( Cmd & 0b00001110 )
     {
     case 0b00000000:  
-      if( notifyDccReset && ( Cmd & 0b00000001 ) ) // Hard Reset
-        if( notifyDccReset)
-          notifyDccReset( 1 ) ;
+      if( notifyDccReset)
+        notifyDccReset( Cmd & 0b00000001 ) ;
       break ;
 
     case 0b00000010:  // Factory Test

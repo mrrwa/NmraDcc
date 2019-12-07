@@ -49,7 +49,7 @@
 #ifndef NMRADCC_IS_IN
 #define NMRADCC_IS_IN
 
-#define NMRADCC_VERSION     201     // Version 2.0.1
+#define NMRADCC_VERSION     202     // Version 2.0.2
 
 #define MAX_DCC_MESSAGE_LEN 6    // including XOR-Byte
 
@@ -118,7 +118,7 @@ typedef enum {
     CV29_LOCO_DIR            = 0b00000001,	/** bit 0: Locomotive Direction: "0" = normal, "1" = reversed */
     CV29_F0_LOCATION         = 0b00000010,	/** bit 1: F0 location: "0" = bit 4 in Speed and Direction instructions, "1" = bit 4 in function group one instruction */
     CV29_APS                 = 0b00000100,	/** bit 2: Alternate Power Source (APS) "0" = NMRA Digital only, "1" = Alternate power source set by CV12 */
-    CV29_ADV_ACK             = 0b00001000, 	/** bit 3: ACK, Advanced Acknowledge mode enabled if 1, disabled if 0 */
+    CV29_RailCom_ENABLE      = 0b00001000, 	/** bit 3: BiDi ( RailCom ) is active */
     CV29_SPEED_TABLE_ENABLE  = 0b00010000, 	/** bit 4: STE, Speed Table Enable, "0" = values in CVs 2, 4 and 6, "1" = Custom table selected by CV 25 */
     CV29_EXT_ADDRESSING      = 0b00100000,	/** bit 5: "0" = one byte addressing, "1" = two byte addressing */
     CV29_OUTPUT_ADDRESS_MODE = 0b01000000,	/** bit 6: "0" = Decoder Address Mode "1" = Output Address Mode */
@@ -703,17 +703,8 @@ extern void    notifyCVResetFactoryDefault(void) __attribute__ ((weak));
  *    None
  */
 extern void    notifyCVAck(void) __attribute__ ((weak));
-/*+
- *  notifyAdvancedCVAck() Called when a CV write must be acknowledged via Advanced Acknowledgement.
- *                This callback must send the Advanced Acknowledgement via RailComm.
- *
- *  Inputs:
- *    None
- *                                                                                                        *
- *  Returns:
- *    None
- */
-extern void    notifyAdvancedCVAck(void) __attribute__ ((weak));
+
+
 /*+
  *  notifyServiceMode(bool) Called when state of 'inServiceMode' changes
  *

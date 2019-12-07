@@ -597,15 +597,9 @@ void ExternalInterruptHandler(void)
 }
 
 void ackCV(void)
-{
-  if( notifyCVAck )
+{  // create the ack pulse only in service mode
+  if( notifyCVAck && DccProcState.inServiceMode )
     notifyCVAck() ;
-}
-
-void ackAdvancedCV(void)
-{
-  if( notifyAdvancedCVAck && (DccProcState.cv29Value & CV29_ADV_ACK) )
-    notifyAdvancedCVAck() ;
 }
 
 
@@ -668,6 +662,8 @@ uint8_t writeCV( unsigned int CV, uint8_t Value)
   {
     case CV_29_CONFIG:
       // copy addressmode Bit to Flags
+      Value = Value &  ~CV29_RailCom_ENABLE;   // Bidi (RailCom) Bit must not be enabled, 
+                                            // because you cannot build a Bidi decoder with this lib.
       DccProcState.cv29Value = Value;
       DccProcState.Flags = ( DccProcState.Flags & ~FLAGS_CV29_BITS) | (Value & FLAGS_CV29_BITS);
       // no break, because myDccAdress must also be reset
@@ -730,7 +726,7 @@ void processDirectOpsOperation( uint8_t Cmd, uint16_t CVAddr, uint8_t Value )
       if( validCV( CVAddr, 1 ) )
       {
         if( writeCV( CVAddr, Value ) == Value )
-          ackAdvancedCV();
+          ackCV();
       }
     }
 
@@ -739,7 +735,7 @@ void processDirectOpsOperation( uint8_t Cmd, uint16_t CVAddr, uint8_t Value )
       if( validCV( CVAddr, 0 ) )
       {
         if( readCV( CVAddr ) == Value )
-          ackAdvancedCV();
+          ackCV();
       }
     }
   }
@@ -764,7 +760,7 @@ void processDirectOpsOperation( uint8_t Cmd, uint16_t CVAddr, uint8_t Value )
           tempValue &= ~BitMask ;  // Turn the Bit Off
 
         if( writeCV( CVAddr, tempValue ) == tempValue )
-          ackAdvancedCV() ;
+          ackCV() ;
       }
     }
 
@@ -776,12 +772,12 @@ void processDirectOpsOperation( uint8_t Cmd, uint16_t CVAddr, uint8_t Value )
         if( BitValue ) 
         {
           if( tempValue & BitMask )
-            ackAdvancedCV() ;
+            ackCV() ;
         }
         else
         {
           if( !( tempValue & BitMask)  )
-            ackAdvancedCV() ;
+            ackCV() ;
         }
       }
     }

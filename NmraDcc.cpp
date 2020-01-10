@@ -607,9 +607,9 @@ void ackCV(void)
 
 void ackAdvancedCV(void)
 {
-  if( notifyAdvancedCVAck && (DccProcState.cv29Value & CV29_ADV_ACK) )
+  if( notifyAdvancedCVAck && (DccProcState.cv29Value & CV29_RAILCOM_ENABLE) )
   {
-    DB_PRINT("ackAdvancedCV: Send Advanced ACK");
+    DB_PRINT("ackAdvancedCV: Send RailCom ACK");
     notifyAdvancedCVAck() ;
   }
 }
@@ -674,6 +674,8 @@ uint8_t writeCV( unsigned int CV, uint8_t Value)
   {
     case CV_29_CONFIG:
       // copy addressmode Bit to Flags
+      Value = Value &  ~CV29_RAILCOM_ENABLE;   // Bidi (RailCom) Bit must not be enabled, 
+                                            // because you cannot build a Bidi decoder with this lib.
       DccProcState.cv29Value = Value;
       DccProcState.Flags = ( DccProcState.Flags & ~FLAGS_CV29_BITS) | (Value & FLAGS_CV29_BITS);
       // no break, because myDccAdress must also be reset
@@ -1029,6 +1031,7 @@ void processServiceModeOperation( DCC_MSG * pDccMsg )
     DB_PRINT("CV Direct Byte and Bit Mode Mode Operation");
     CVAddr = ( ( ( pDccMsg->Data[0] & 0x03 ) << 8 ) | pDccMsg->Data[1] ) + 1 ;
     Value = pDccMsg->Data[2] ;
+    
     processDirectCVOperation( pDccMsg->Data[0] & 0b00001100, CVAddr, Value, ackCV) ;
   }
 }

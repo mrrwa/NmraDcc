@@ -41,7 +41,7 @@
 #endif
 
 // Uncomment to print DEBUG messages
-//#define DEBUG_PRINT		
+// #define DEBUG_PRINT		
 
 //------------------------------------------------------------------------
 // DCC Receive Routine
@@ -599,13 +599,19 @@ void ExternalInterruptHandler(void)
 void ackCV(void)
 {
   if( notifyCVAck )
+  {
+    DB_PRINT("ackCV: Send Basic ACK");
     notifyCVAck() ;
+  }
 }
 
 void ackAdvancedCV(void)
 {
   if( notifyAdvancedCVAck && (DccProcState.cv29Value & CV29_ADV_ACK) )
+  {
+    DB_PRINT("ackAdvancedCV: Send Advanced ACK");
     notifyAdvancedCVAck() ;
+  }
 }
 
 
@@ -719,7 +725,7 @@ uint16_t getMyAddr(void)
   return DccProcState.myDccAddress ;
 }
 
-void processDirectOpsOperation( uint8_t Cmd, uint16_t CVAddr, uint8_t Value )
+void processDirectCVOperation( uint8_t Cmd, uint16_t CVAddr, uint8_t Value, void (*ackFunction)() )
 {
   // is it a Byte Operation
   if( Cmd & 0x04 )
@@ -729,8 +735,9 @@ void processDirectOpsOperation( uint8_t Cmd, uint16_t CVAddr, uint8_t Value )
     {
       if( validCV( CVAddr, 1 ) )
       {
+        DB_PRINT("CV: %d Byte Write: %02X", CVAddr, Value)
         if( writeCV( CVAddr, Value ) == Value )
-          ackAdvancedCV();
+          ackFunction();
       }
     }
 
@@ -738,8 +745,9 @@ void processDirectOpsOperation( uint8_t Cmd, uint16_t CVAddr, uint8_t Value )
     {  
       if( validCV( CVAddr, 0 ) )
       {
+        DB_PRINT("CV: %d Byte Read: %02X", CVAddr, Value)
         if( readCV( CVAddr ) == Value )
-          ackAdvancedCV();
+          ackFunction();
       }
     }
   }
@@ -751,6 +759,8 @@ void processDirectOpsOperation( uint8_t Cmd, uint16_t CVAddr, uint8_t Value )
     uint8_t BitWrite = Value & 0x10 ;
 
     uint8_t tempValue = readCV( CVAddr ) ;  // Read the Current CV Value
+
+    DB_PRINT("CV: %d Current Value: %02X  Bit-Wise Mode: %s  Mask: %02X  Value: %02X", CVAddr, tempValue, BitWrite ? "Write":"Read", BitMask, BitValue);
 
     // Perform the Bit Write Operation
     if( BitWrite )
@@ -764,7 +774,7 @@ void processDirectOpsOperation( uint8_t Cmd, uint16_t CVAddr, uint8_t Value )
           tempValue &= ~BitMask ;  // Turn the Bit Off
 
         if( writeCV( CVAddr, tempValue ) == tempValue )
-          ackAdvancedCV() ;
+          ackFunction() ;
       }
     }
 
@@ -776,12 +786,12 @@ void processDirectOpsOperation( uint8_t Cmd, uint16_t CVAddr, uint8_t Value )
         if( BitValue ) 
         {
           if( tempValue & BitMask )
-            ackAdvancedCV() ;
+            ackFunction() ;
         }
         else
         {
           if( !( tempValue & BitMask)  )
-            ackAdvancedCV() ;
+            ackFunction() ;
         }
       }
     }
@@ -958,7 +968,7 @@ void processMultiFunctionMessage( uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t
   case 0b11100000:  // CV Access
     CVAddr = ( ( ( Cmd & 0x03 ) << 8 ) | Data1 ) + 1 ;
 
-    processDirectOpsOperation( Cmd, CVAddr, Data2 ) ;
+    processDirectCVOperation( Cmd, CVAddr, Data2, ackAdvancedCV) ;
     break;
   }
 }
@@ -973,7 +983,7 @@ void processServiceModeOperation( DCC_MSG * pDccMsg )
   if( pDccMsg->Size == 3) // 3 Byte Packets are for Address Only, Register and Paged Mode
   {
     uint8_t RegisterAddr ;
-    DB_PRINT("3-BytePkt");
+    DB_PRINT("CV Address, Register & Paged Mode Operation");
     RegisterAddr = pDccMsg->Data[0] & 0x07 ;
     Value = pDccMsg->Data[1] ;
 
@@ -1016,11 +1026,10 @@ void processServiceModeOperation( DCC_MSG * pDccMsg )
 
   else if( pDccMsg->Size == 4) // 4 Byte Packets are for Direct Byte & Bit Mode
   {
-    DB_PRINT("BB-Mode");
+    DB_PRINT("CV Direct Byte and Bit Mode Mode Operation");
     CVAddr = ( ( ( pDccMsg->Data[0] & 0x03 ) << 8 ) | pDccMsg->Data[1] ) + 1 ;
     Value = pDccMsg->Data[2] ;
-
-    processDirectOpsOperation( pDccMsg->Data[0] & 0b00001100, CVAddr, Value ) ;
+    processDirectCVOperation( pDccMsg->Data[0] & 0b00001100, CVAddr, Value, ackCV) ;
   }
 }
 #endif

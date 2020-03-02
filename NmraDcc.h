@@ -1,23 +1,13 @@
 //------------------------------------------------------------------------
 //
-// Model Railroading with Arduino - NmraDcc.h 
+// Model Railroading with Arduino - NmraDcc.h
 //
-// Copyright (c) 2008 - 2020 Alex Shepherd
+// Copyright (c) 2008 - 2018 Alex Shepherd
 //
-// 	This library is free software; you can redistribute it and/or
-// 	modify it under the terms of the GNU Lesser General Public
-// 	License as published by the Free Software Foundation; either
-// 	version 2.1 of the License, or (at your option) any later version.
-// 
-// 	This library is distributed in the hope that it will be useful,
-// 	but WITHOUT ANY WARRANTY; without even the implied warranty of
-// 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// 	Lesser General Public License for more details.
-// 
-// 	You should have received a copy of the GNU Lesser General Public
-// 	License along with this library; if not, write to the Free Software
-// 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-// 
+// This source file is subject of the GNU general public license 2,
+// that is available at the world-wide-web at
+// http://www.gnu.org/licenses/gpl.txt
+//
 //------------------------------------------------------------------------
 //
 // file:      NmraDcc.h
@@ -42,7 +32,7 @@
 // Uncomment the following Line to Enable Service Mode CV Programming
 #define NMRA_DCC_PROCESS_SERVICEMODE
 
-// Uncomment the following line to Enable MultiFunction Decoder Operations
+// Uncomment the following line to Enable MutliFunction Decoder Operations
 #define NMRA_DCC_PROCESS_MULTIFUNCTION
 
 // Uncomment the following line to Enable 14 Speed Step Support
@@ -50,8 +40,8 @@
 
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
-#else
-#include "WProgram.h"
+// #else
+// #include "WProgram.h"
 #endif
 
 #include "EEPROM.h"
@@ -59,11 +49,9 @@
 #ifndef NMRADCC_IS_IN
 #define NMRADCC_IS_IN
 
-#define NMRADCC_VERSION     203     // Version 2.0.3
+#define NMRADCC_VERSION     200     // Version 2.0.0
 
 #define MAX_DCC_MESSAGE_LEN 6    // including XOR-Byte
-
-//#define ALLOW_NESTED_IRQ      // uncomment to enable nested IRQ's ( only for AVR! )
 
 typedef struct
 {
@@ -76,7 +64,7 @@ typedef struct
 //  This section contains the NMRA Assigned DCC Manufacturer Id Codes that
 //  are used in projects
 //
-//  This value is to be used for CV8 
+//  This value is to be used for CV8
 //--------------------------------------------------------------------------
 
 #define MAN_ID_JMRI             0x12
@@ -86,14 +74,14 @@ typedef struct
 //--------------------------------------------------------------------------
 //  This section contains the Product/Version Id Codes for projects
 //
-//  This value is to be used for CV7 
+//  This value is to be used for CV7
 //
 //  NOTE: Each Product/Version Id Code needs to be UNIQUE for that particular
 //  the DCC Manufacturer Id Code
 //--------------------------------------------------------------------------
 
 // Product/Version Id Codes allocated under: MAN_ID_JMRI
- 
+
 // Product/Version Id Codes allocated under: MAN_ID_DIY
 
 // Standard CV Addresses
@@ -108,27 +96,21 @@ typedef struct
 #define CV_MANUFACTURER_ID                     8
 #define CV_29_CONFIG                          29
 
-#if defined(ESP32)
-	#include <esp_spi_flash.h>
-	#define MAXCV     SPI_FLASH_SEC_SIZE
-#elif defined(ESP8266)
-	#include <spi_flash.h>
-	#define MAXCV     SPI_FLASH_SEC_SIZE
+#if defined(ESP8266)
+#include <spi_flash.h>
+#define MAXCV     SPI_FLASH_SEC_SIZE
 #elif defined( __STM32F1__)
-	#define MAXCV	(EEPROM_PAGE_SIZE/4 - 1)	// number of storage places (CV address could be larger
+#define MAXCV	(EEPROM_PAGE_SIZE/4 - 1)	// number of storage places (CV address could be larger
 											// because STM32 uses virtual adresses)
-    #undef ALLOW_NESTED_IRQ                 // This is done with NVIC on STM32
-    #define PRIO_DCC_IRQ    9
-    #define PRIO_SYSTIC     8               // MUST be higher priority than DCC Irq
 #else
-	#define MAXCV    E2END     					// the upper limit of the CV value currently defined to max memory.
+#define MAXCV    E2END     					// the upper limit of the CV value currently defined to max memory.
 #endif
 
 typedef enum {
     CV29_LOCO_DIR            = 0b00000001,	/** bit 0: Locomotive Direction: "0" = normal, "1" = reversed */
     CV29_F0_LOCATION         = 0b00000010,	/** bit 1: F0 location: "0" = bit 4 in Speed and Direction instructions, "1" = bit 4 in function group one instruction */
     CV29_APS                 = 0b00000100,	/** bit 2: Alternate Power Source (APS) "0" = NMRA Digital only, "1" = Alternate power source set by CV12 */
-	CV29_RAILCOM_ENABLE      = 0b00001000, 	/** bit 3: BiDi ( RailCom ) is active */
+    CV29_ADV_ACK             = 0b00001000, 	/** bit 3: ACK, Advanced Acknowledge mode enabled if 1, disabled if 0 */
     CV29_SPEED_TABLE_ENABLE  = 0b00010000, 	/** bit 4: STE, Speed Table Enable, "0" = values in CVs 2, 4 and 6, "1" = Custom table selected by CV 25 */
     CV29_EXT_ADDRESSING      = 0b00100000,	/** bit 5: "0" = one byte addressing, "1" = two byte addressing */
     CV29_OUTPUT_ADDRESS_MODE = 0b01000000,	/** bit 6: "0" = Decoder Address Mode "1" = Output Address Mode */
@@ -140,7 +122,7 @@ typedef enum {
     SPEED_STEP_14 = 15,			/**< ESTOP=0, 1 to 15 */
 #endif
     SPEED_STEP_28 = 29,			/**< ESTOP=0, 1 to 29 */
-    SPEED_STEP_128 = 127		/**< ESTOP=0, 1 to 127 */ 
+    SPEED_STEP_128 = 127		/**< ESTOP=0, 1 to 127 */
 } DCC_SPEED_STEPS;
 
 typedef enum {
@@ -162,7 +144,7 @@ typedef enum
 	FN_21_28,
 #ifdef NMRA_DCC_ENABLE_14_SPEED_STEP_MODE
   FN_0				 /** function light is controlled by base line package (14 speed steps) */
-#endif  
+#endif
 } FN_GROUP;
 
 #define FN_BIT_00	0x10
@@ -213,7 +195,7 @@ class NmraDcc
 {
   private:
     DCC_MSG Msg ;
-    
+
   public:
     NmraDcc();
 
@@ -224,7 +206,7 @@ class NmraDcc
 #define FLAGS_OUTPUT_ADDRESS_MODE    0x40  // CV 29/541 bit 6
 #define FLAGS_DCC_ACCESSORY_DECODER  0x80  // CV 29/541 bit 7
 
-// Flag Bits that are cloned from CV29 relating the DCC Accessory Decoder 
+// Flag Bits that are cloned from CV29 relating the DCC Accessory Decoder
 #define FLAGS_CV29_BITS		(FLAGS_OUTPUT_ADDRESS_MODE | FLAGS_DCC_ACCESSORY_DECODER)
 
 
@@ -239,7 +221,7 @@ class NmraDcc
    *  Returns:
    *    None.
    */
-  void pin( uint8_t ExtIntNum, uint8_t ExtIntPinNum, uint8_t EnablePullup); 
+  void pin( uint8_t ExtIntNum, uint8_t ExtIntPinNum, uint8_t EnablePullup);
 
   /*+
    *  pin() is called from setup() and sets up the pin used to receive DCC packets.
@@ -374,7 +356,7 @@ void pin( uint8_t ExtIntPinNum, uint8_t EnablePullup);
    *          and short or long address selection for Multifunction decoders.
    */
   uint16_t getAddr(void);
-	
+
   /*+
    *  getX()  return debugging data if DCC_DEBUG is defined.
    *          You would really need to be modifying the library to need them.
@@ -482,7 +464,7 @@ extern void    notifyDccSpeedRaw( uint16_t Addr, DCC_ADDR_TYPE AddrType, uint8_t
  *                                  FN_0_4    - Functions  0 to  4. Mask FN_BIT_00 - FN_BIT_04
  *                                  FN_5_8    - Functions  5 to  8. Mask FN_BIT_05 - FN_BIT_08
  *                                  FN_9_12   - Functions  9 to 12. Mask FN_BIT_09 - FN_BIT_12
- *                                  FN_13_20  - Functions 13 to 20. Mask FN_BIT_13 - FN_BIT_20 
+ *                                  FN_13_20  - Functions 13 to 20. Mask FN_BIT_13 - FN_BIT_20
  *                                  FN_21_28  - Functions 21 to 28. Mask FN_BIT_21 - FN_BIT_28
  *    FuncState   - Function state. Bitmask where active functions have a 1 at that bit.
  *                                  You must & FuncState with the appropriate
@@ -512,7 +494,7 @@ extern void    notifyDccFunc( uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP Fu
  *  Returns:
  *    None
  */
- 
+
 extern void    notifyDccAccTurnoutBoard( uint16_t BoardAddr, uint8_t OutputPair, uint8_t Direction, uint8_t OutputPower ) __attribute__ ((weak));
 /*+
  *  notifyDccAccTurnoutOutput() Output oriented callback for a turnout accessory decoder.
@@ -669,10 +651,10 @@ extern uint8_t notifyIsSetCVReady(void) __attribute__ ((weak));
  *  notifyCVChange()  Called when a CV value is changed.
  *                    This is called whenever a CV's value is changed.
  *  notifyDccCVChange()  Called only when a CV value is changed by a Dcc packet or a internal lib function.
- *                    it is NOT called if the CV is changed by means of the setCV() method.
+ *                    it is NOT called if the CV is chaged by means of the setCV() method.
  *                    Note: It is not called if notifyCVWrite() is defined
  *                    or if the value in the EEPROM is the same as the value
- *                    in the write command. 
+ *                    in the write command.
  *
  *  Inputs:
  *    CV        - CV number.
@@ -714,17 +696,6 @@ extern void    notifyCVResetFactoryDefault(void) __attribute__ ((weak));
  */
 extern void    notifyCVAck(void) __attribute__ ((weak));
 /*+
- *  notifyAdvancedCVAck() Called when a CV write must be acknowledged via Advanced Acknowledgement.
- *                This callback must send the Advanced Acknowledgement via RailComm.
- *
- *  Inputs:
- *    None
- *                                                                                                        *
- *  Returns:
- *    None
- */
-extern void    notifyAdvancedCVAck(void) __attribute__ ((weak));
-/*+
  *  notifyServiceMode(bool) Called when state of 'inServiceMode' changes
  *
  *  Inputs:
@@ -735,7 +706,7 @@ extern void    notifyAdvancedCVAck(void) __attribute__ ((weak));
  */
 extern void    notifyServiceMode(bool) __attribute__ ((weak));
 
-// Deprecated, only for backward compatibility with version 1.4.2. 
+// Deprecated, only for backward compatibility with version 1.4.2.
 // Don't use in new designs. These functions may be dropped in future versions
 extern void notifyDccAccState( uint16_t Addr, uint16_t BoardAddr, uint8_t OutputAddr, uint8_t State ) __attribute__ ((weak));
 extern void notifyDccSigState( uint16_t Addr, uint8_t OutputIndex, uint8_t State) __attribute__ ((weak));

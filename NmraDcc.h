@@ -54,8 +54,6 @@
 #include "WProgram.h"
 #endif
 
-#include "EEPROM.h"
-
 #ifndef NMRADCC_IS_IN
 #define NMRADCC_IS_IN
 

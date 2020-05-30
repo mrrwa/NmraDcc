@@ -46,9 +46,7 @@
 //------------------------------------------------------------------------
 
 #include "NmraDcc.h"
-#ifdef __AVR_MEGA__
-#include <avr/eeprom.h>
-#endif
+#include "EEPROM.h"
 
 // Uncomment to print DEBUG messages
 // #define DEBUG_PRINT		
@@ -629,7 +627,8 @@ uint8_t readEEPROM( unsigned int CV ) {
     return EEPROM.read(CV) ;
 }
 
-void writeEEPROM( unsigned int CV, uint8_t Value ) {
+void writeEEPROM( unsigned int CV, uint8_t Value )
+{
     EEPROM.write(CV, Value) ;
   #if defined(ESP8266)
     EEPROM.commit();
@@ -639,12 +638,15 @@ void writeEEPROM( unsigned int CV, uint8_t Value ) {
   #endif
 }
 
-bool readyEEPROM() {
-    #ifdef __AVR_MEGA__
-        return eeprom_is_ready();
-    #else
-        return true;
-    #endif
+bool readyEEPROM()
+{
+#if defined ARDUINO_ARCH_MEGAAVR
+	return bit_is_clear(NVMCTRL.STATUS,NVMCTRL_EEBUSY_bp);
+#elif defined __AVR_MEGA__
+	return eeprom_is_ready();
+#else
+	return true;
+#endif
 }
 
 

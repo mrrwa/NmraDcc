@@ -37,7 +37,7 @@
 //                       Minor fixes to pass NMRA Baseline Conformance Tests.
 //            2018-12-17 added ESP32 support by Trusty (thierry@lapajaparis.net)
 //            2019-02-17 added ESP32 specific changes by Hans Tanner
-//
+//            2020-05-15 changes to pass NMRA Tests ( always search for preamble )
 //------------------------------------------------------------------------
 //
 // purpose:   Provide a simplified interface to decode NMRA DCC packets
@@ -82,19 +82,26 @@
 //           DCC 1: _________XXXXXXXXX_________XXXXXXXXX_________
 //                           |<--------146us------>|
 //                           ^-INTx            ^-INTx
-//                           less than 138us: its a one-Bit
+//                           less than 146us: its a one-Bit
 //                                        
 //
 //                           |<-----------------232us----------->|
 //           DCC 0: _________XXXXXXXXXXXXXXXXXX__________________XXXXXXXX__________
 //                           |<--------146us------->|
 //                           ^-INTx                              ^-INTx
-//                           greater than 138us: its a zero bit
+//                           greater than 146us: its a zero bit
 //                                        
 //                                        
 //                                           
 //           
+
 //------------------------------------------------------------------------
+// if this is commented out, bit synchronisation is only done after a wrong checksum
+#define SYNC_ALWAYS
+
+// if this is commented out, Zero-Bit_Stretching is not supported
+// ( Bits longer than 2* MAX ONEBIT are treated as error )
+#define SUPPORT_ZERO_BIT_STRETCHING
 
 #define MAX_ONEBITFULL  146
 #define MAX_PRAEAMBEL   146 
@@ -185,7 +192,7 @@
         #define SET_TP3  GPOS = (1 << D7);
         #define CLR_TP3  GPOC = (1 << D7);
         #define MODE_TP4 pinMode( D8,OUTPUT ) ; // GPIO 15
-        #define SET_TP4  GPOC = (1 << D8);
+        #define SET_TP4  GPOS = (1 << D8);
         #define CLR_TP4  GPOC = (1 << D8);
     #elif defined(ESP32)
         #define MODE_TP1 pinMode( 33,OUTPUT ) ; // GPIO 33
@@ -198,7 +205,7 @@
         #define SET_TP3  GPOS = (1 << 26);
         #define CLR_TP3  GPOC = (1 << 26);
         #define MODE_TP4 pinMode( 27,OUTPUT ) ; // GPIO 27
-        #define SET_TP4  GPOC = (1 << 27);
+        #define SET_TP4  GPOS = (1 << 27);
         #define CLR_TP4  GPOC = (1 << 27);
         
         
@@ -254,12 +261,17 @@ static byte  ISRWatch;  // Interrupt Handler Edge Filter
 static byte  ISREdge;   // Holder of the Next Edge we're looking for: RISING or FALLING
 static byte  ISRWatch;  // Interrupt Handler Edge Filter 
 #endif
+byte ISRLevel;          // expected Level at DCC input during ISR ( to detect glitches )
+byte ISRChkMask;       // Flag if Level must be checked
 static word  bitMax, bitMin;
 
 typedef enum
 {
   WAIT_PREAMBLE = 0,
   WAIT_START_BIT,
+  #ifndef SYNC_ALWAYS
+  WAIT_START_BIT_FULL,
+  #endif
   WAIT_DATA,
   WAIT_END_BIT
 } 
@@ -280,6 +292,7 @@ struct DccRx_t
   uint8_t         DataReady ;
   uint8_t         BitCount ;
   uint8_t         TempByte ;
+  uint8_t         chkSum;
   DCC_MSG         PacketBuf;
   DCC_MSG         PacketCopy;
 } 
@@ -296,6 +309,8 @@ typedef struct
   DCC_MSG   LastMsg ;
   uint8_t	ExtIntNum; 
   uint8_t	ExtIntPinNum;
+  volatile uint8_t   *ExtIntPort;     // use port and bitmask to read input at AVR in ISR
+  uint8_t   ExtIntMask;     // digitalRead is too slow on AVR
   int16_t   myDccAddress;	// Cached value of DCC Address from CVs
   uint8_t   inAccDecDCCAddrNextReceivedMode;
   uint8_t	cv29Value; 
@@ -319,6 +334,8 @@ void ICACHE_RAM_ATTR ExternalInterruptHandler(void)
 void ExternalInterruptHandler(void)
 #endif
 {
+    SET_TP3;
+
 #ifdef ESP32
 //   switch (ISRWatch)
 //   {
@@ -346,7 +363,7 @@ void ExternalInterruptHandler(void)
     uint8_t DccBitVal;
     static int8_t  bit1, bit2 ;
     static unsigned int  lastMicros = 0;
-    static byte halfBit, DCC_IrqRunning;
+    static byte halfBit, DCC_IrqRunning, preambleBitCount;
     unsigned int  actMicros, bitMicros;
     #ifdef ALLOW_NESTED_IRQ
     if ( DCC_IrqRunning ) {
@@ -360,17 +377,53 @@ void ExternalInterruptHandler(void)
         return; //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> abort IRQ
     }
     #endif
-    SET_TP3;
     actMicros = micros();
     bitMicros = actMicros-lastMicros;
-    if ( bitMicros < bitMin ) {
-        // too short - my be false interrupt due to glitch or false protocol -> ignore
+
+        CLR_TP3; SET_TP3;
+#ifdef __AVR_MEGA__
+    if ( bitMicros < bitMin || ( DccRx.State != WAIT_START_BIT && (*DccProcState.ExtIntPort & DccProcState.ExtIntMask) != (ISRLevel) ) ) {
+#else
+    if ( bitMicros < bitMin || ( DccRx.State != WAIT_START_BIT && digitalRead( DccProcState.ExtIntPinNum ) != (ISRLevel) ) ) {
+#endif
+        // too short - my be false interrupt due to glitch or false protocol  or level does not match RISING / FALLING edge -> ignore this IRQ
         CLR_TP3;
-        SET_TP4; CLR_TP4;
+        SET_TP4; /*delayMicroseconds(1); */ CLR_TP4;
         return; //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> abort IRQ
     }
-    DccBitVal = ( bitMicros < bitMax );
+        CLR_TP3;  SET_TP3;
+
     lastMicros = actMicros;
+#ifndef SUPPORT_ZERO_BIT_STRETCHING
+    //if ( bitMicros > MAX_ZEROBITFULL ) {
+    if ( bitMicros > (bitMax*2) ) {
+        // too long - my be false protocol -> start over
+        DccRx.State = WAIT_PREAMBLE ;
+        DccRx.BitCount = 0 ;
+        preambleBitCount = 0;
+        // SET_TP2; CLR_TP2;
+        bitMax = MAX_PRAEAMBEL;
+        bitMin = MIN_ONEBITFULL;
+        #if defined ( __STM32F1__ )
+        detachInterrupt( DccProcState.ExtIntNum );
+        #endif
+        #ifdef ESP32
+        ISRWatch = ISREdge;
+        #else
+        attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+        #endif
+        // enable level-checking
+        ISRChkMask = DccProcState.ExtIntMask;
+        ISRLevel = (ISREdge==RISING)? DccProcState.ExtIntMask : 0 ;
+        CLR_TP3;
+        //CLR_TP3;
+        return; //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> abort IRQ
+    }
+        CLR_TP3;
+        SET_TP3;
+#endif
+    
+    DccBitVal = ( bitMicros < bitMax );
     
     #ifdef ALLOW_NESTED_IRQ
     DCC_IrqRunning = true;
@@ -380,43 +433,37 @@ void ExternalInterruptHandler(void)
 #ifdef DCC_DEBUG
     DccProcState.TickCount++;
 #endif
-
   switch( DccRx.State )
   {
   case WAIT_PREAMBLE:
-    if( DccBitVal )
-    {
-        SET_TP1;
-      DccRx.BitCount++;
-     if( DccRx.BitCount > 10 ) {
-        DccRx.State = WAIT_START_BIT ;
-        // While waiting for the start bit, detect halfbit lengths. We will detect the correct
-        // sync and detect whether we see a false (e.g. motorola) protocol
-
-    #if defined ( __STM32F1__ )
-		detachInterrupt( DccProcState.ExtIntNum );
-		#endif
-        #ifdef ESP32
-		ISRWatch = CHANGE;
-        #else
-        attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, CHANGE);
-        #endif
-        halfBit = 0;
-        bitMax = MAX_ONEBITHALF;
-        bitMin = MIN_ONEBITHALF;
-        CLR_TP1;
-      }
-    } else {
-        SET_TP1;
-        DccRx.BitCount = 0 ;
-        CLR_TP1;
-    }
+    // We don't have to do anything special - looking for a preamble condition is done always
+    SET_TP2;
     break;
 
+#ifndef SYNC_ALWAYS
+  case WAIT_START_BIT_FULL:
+    // wait for startbit without level checking
+    if ( !DccBitVal ) {
+        // we got the startbit
+        CLR_TP2;CLR_TP1;
+        DccRx.State = WAIT_DATA ;
+        CLR_TP1;
+        // initialize packet buffer
+        DccRx.PacketBuf.Size = 0;
+        /*for(uint8_t i = 0; i< MAX_DCC_MESSAGE_LEN; i++ )
+            DccRx.PacketBuf.Data[i] = 0;*/
+        DccRx.PacketBuf.PreambleBits = preambleBitCount;
+        DccRx.BitCount = 0 ;
+        DccRx.chkSum = 0 ;
+        DccRx.TempByte = 0 ;
+        //SET_TP1;
+    }
+    break;
+#endif    
   case WAIT_START_BIT:
     // we are looking for first half "0" bit after preamble
     switch ( halfBit ) {
-      case 0:  //SET_TP1;
+      case 0: 
         // check first part
         if ( DccBitVal ) {
             // is still 1-bit (Preamble)
@@ -424,104 +471,114 @@ void ExternalInterruptHandler(void)
             bit1=bitMicros;
         } else {
             // was "0" half bit, maybe the startbit
-			SET_TP1;
-            halfBit = 4;
-			CLR_TP1;
-        }
+			halfBit = 4;
+		}
         break;
-      case 1: //SET_TP1; // previous halfbit was '1'
+      case 1: // previous halfbit was '1'
         if ( DccBitVal ) {
             // its a '1' halfBit -> we are still in the preamble
             halfBit = 0;
             bit2=bitMicros;
-            DccRx.BitCount++;
+            preambleBitCount++;
             if( abs(bit2-bit1) > MAX_BITDIFF ) {
                 // the length of the 2 halfbits differ too much -> wrong protokoll
                 DccRx.State = WAIT_PREAMBLE;
                 bitMax = MAX_PRAEAMBEL;
                 bitMin = MIN_ONEBITFULL;
-                DccRx.BitCount = 0;
-
-        #if defined ( __STM32F1__ )
+                preambleBitCount = 0;
+                // SET_TP2; CLR_TP2;
+                #if defined ( __STM32F1__ )
 				detachInterrupt( DccProcState.ExtIntNum );
 				#endif
                 #ifdef ESP32
 				ISRWatch = ISREdge;
                 #else
                 attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+                // enable level checking ( with direct port reading @ AVR )
+                ISRChkMask = DccProcState.ExtIntMask;       
+                ISRLevel = (ISREdge==RISING)? DccProcState.ExtIntMask : 0 ;
                 #endif
 				SET_TP3;
-				CLR_TP4;
+                CLR_TP4;
             }
         } else {
             // first '0' half detected in second halfBit
             // wrong sync or not a DCC protokoll
-			CLR_TP3;
-            halfBit = 3;
-			SET_TP3;
+            CLR_TP3;
+			halfBit = 3;
+            SET_TP3;
         }
         break;
-      case 3: //SET_TP1;  // previous halfbit was '0'  in second halfbit  
+      case 3: // previous halfbit was '0'  in second halfbit  
         if ( DccBitVal ) {
             // its a '1' halfbit -> we got only a half '0' bit -> cannot be DCC
             DccRx.State = WAIT_PREAMBLE;
             bitMax = MAX_PRAEAMBEL;
             bitMin = MIN_ONEBITFULL;
-            DccRx.BitCount = 0;
+            preambleBitCount = 0;
+            // SET_TP2; CLR_TP2;
         } else {
             // we got two '0' halfbits -> it's the startbit
             // but sync is NOT ok, change IRQ edge.
+            CLR_TP2;CLR_TP1;
             if ( ISREdge == RISING ) ISREdge = FALLING; else ISREdge = RISING;
             DccRx.State = WAIT_DATA ;
+            CLR_TP1;
             bitMax = MAX_ONEBITFULL;
             bitMin = MIN_ONEBITFULL;
             DccRx.PacketBuf.Size = 0;
-            DccRx.PacketBuf.PreambleBits = 0;
-            for(uint8_t i = 0; i< MAX_DCC_MESSAGE_LEN; i++ )
-            DccRx.PacketBuf.Data[i] = 0;
-
-            DccRx.PacketBuf.PreambleBits = DccRx.BitCount;
+            /*for(uint8_t i = 0; i< MAX_DCC_MESSAGE_LEN; i++ )
+            DccRx.PacketBuf.Data[i] = 0;*/
+            DccRx.PacketBuf.PreambleBits = preambleBitCount;
             DccRx.BitCount = 0 ;
+            DccRx.chkSum = 0 ;
             DccRx.TempByte = 0 ;
+            //SET_TP1;
         }
-		SET_TP4;
+		//SET_TP4;
 
-			#if defined ( __STM32F1__ )
-			detachInterrupt( DccProcState.ExtIntNum );
-			#endif
-            #ifdef ESP32
-            ISRWatch = ISREdge;
-            #else
-			attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
-            #endif
-        CLR_TP1;
-		CLR_TP4;
+        #if defined ( __STM32F1__ )
+        detachInterrupt( DccProcState.ExtIntNum );
+        #endif
+        #ifdef ESP32
+        ISRWatch = ISREdge;
+        #else
+        attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+        #endif
+        // enable level-checking
+        ISRChkMask = DccProcState.ExtIntMask;
+        ISRLevel = (ISREdge==RISING)? DccProcState.ExtIntMask : 0 ;
+        //CLR_TP4;
         break;
-      case 4: SET_TP1; // previous (first) halfbit was 0
+      case 4: // previous (first) halfbit was 0
         // if this halfbit is 0 too, we got the startbit
         if ( DccBitVal ) {
             // second halfbit is 1 -> unknown protokoll
             DccRx.State = WAIT_PREAMBLE;
             bitMax = MAX_PRAEAMBEL;
             bitMin = MIN_ONEBITFULL;
+            preambleBitCount = 0;
+            CLR_TP2;CLR_TP1;
             DccRx.BitCount = 0;
         } else {
             // we got the startbit
+            CLR_TP2;CLR_TP1;
             DccRx.State = WAIT_DATA ;
+            CLR_TP1;
             bitMax = MAX_ONEBITFULL;
             bitMin = MIN_ONEBITFULL;
+            // initialize packet buffer
             DccRx.PacketBuf.Size = 0;
-            DccRx.PacketBuf.PreambleBits = 0;
-            for(uint8_t i = 0; i< MAX_DCC_MESSAGE_LEN; i++ )
-            DccRx.PacketBuf.Data[i] = 0;
-
-            DccRx.PacketBuf.PreambleBits = DccRx.BitCount;
+            /*for(uint8_t i = 0; i< MAX_DCC_MESSAGE_LEN; i++ )
+            DccRx.PacketBuf.Data[i] = 0;*/
+            DccRx.PacketBuf.PreambleBits = preambleBitCount;
             DccRx.BitCount = 0 ;
+            DccRx.chkSum = 0 ;
             DccRx.TempByte = 0 ;
+            //SET_TP1;
         }
 		
-        CLR_TP1;
-		SET_TP4;
+        //SET_TP4;
 
 		#if defined ( __STM32F1__ )
 		detachInterrupt( DccProcState.ExtIntNum );
@@ -531,14 +588,18 @@ void ExternalInterruptHandler(void)
         #else
 		attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
         #endif
+        // enable level-checking
+        ISRChkMask = DccProcState.ExtIntMask;
+        ISRLevel = (ISREdge==RISING)? DccProcState.ExtIntMask : 0 ;
 
-		CLR_TP4;
+		//CLR_TP4;
         break;
             
     }        
     break;
 
   case WAIT_DATA:
+    CLR_TP2;
     DccRx.BitCount++;
     DccRx.TempByte = ( DccRx.TempByte << 1 ) ;
     if( DccBitVal )
@@ -557,30 +618,44 @@ void ExternalInterruptHandler(void)
       {
         DccRx.State = WAIT_END_BIT ;
         DccRx.PacketBuf.Data[ DccRx.PacketBuf.Size++ ] = DccRx.TempByte ;
+        DccRx.chkSum ^= DccRx.TempByte;
       }
     }
     break;
 
   case WAIT_END_BIT:
+    SET_TP2;CLR_TP2;
     DccRx.BitCount++;
-    if( DccBitVal ) // End of packet?
-    {
-      CLR_TP3;
+    if( DccBitVal ) { // End of packet?
+      CLR_TP3; SET_TP4;
       DccRx.State = WAIT_PREAMBLE ;
       DccRx.BitCount = 0 ;
       bitMax = MAX_PRAEAMBEL;
       bitMin = MIN_ONEBITFULL;
-#ifdef ESP32
-	  portENTER_CRITICAL_ISR(&mux);
-#endif
-      DccRx.PacketCopy = DccRx.PacketBuf ;
-      DccRx.DataReady = 1 ;
-#ifdef ESP32
-	  portEXIT_CRITICAL_ISR(&mux);
-#endif
-      SET_TP3;
-    }
-    else  // Get next Byte
+      SET_TP1;
+      if ( DccRx.chkSum == 0 ) { 
+        // Packet is valid
+        #ifdef ESP32
+        portENTER_CRITICAL_ISR(&mux);
+        #endif
+        DccRx.PacketCopy = DccRx.PacketBuf ;
+        DccRx.DataReady = 1 ;
+        #ifdef ESP32
+        portEXIT_CRITICAL_ISR(&mux);
+        #endif
+        // SET_TP2; CLR_TP2;
+        preambleBitCount = 0 ;
+      } else {
+        // Wrong checksum
+        CLR_TP1;
+        #ifdef DCC_DBGVAR
+        DB_PRINT("Cerr");
+        countOf.Err++;
+        #endif
+      }
+
+      SET_TP3; CLR_TP4;
+    } else  { // Get next Byte
       // KGW - Abort immediately if packet is too long.
       if( DccRx.PacketBuf.Size == MAX_DCC_MESSAGE_LEN ) // Packet is too long - abort
       {
@@ -596,11 +671,60 @@ void ExternalInterruptHandler(void)
         DccRx.BitCount = 0 ;
         DccRx.TempByte = 0 ;
       }
+    }
   }
+
+  // unless we're already looking for the start bit 
+  // we always search for a preamble ( ( 10 or more consecutive 1 bits )
+  // if we found it within a packet, the packet decoding is aborted because
+  // that much one bits cannot be valid in a packet.
+  if ( DccRx.State != WAIT_START_BIT ) {
+    if( DccBitVal )
+    {
+      preambleBitCount++;
+      //SET_TP2;
+      if( preambleBitCount > 10 ) {
+        CLR_TP2;
+#ifndef SYNC_ALWAYS
+        if ( DccRx.chkSum == 0 ) { 
+            // sync must be correct if chksum was ok, no need to check sync
+            DccRx.State = WAIT_START_BIT_FULL;
+        } else {
+#endif
+        DccRx.State = WAIT_START_BIT ;
+            SET_TP2;
+            // While waiting for the start bit, detect halfbit lengths. We will detect the correct
+            // sync and detect whether we see a false (e.g. motorola) protocol
+
+            #if defined ( __STM32F1__ )
+            detachInterrupt( DccProcState.ExtIntNum );
+            #endif
+            #ifdef ESP32
+            ISRWatch = CHANGE;
+            #else
+            attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, CHANGE);
+            #endif
+            ISRChkMask = 0;         // AVR level check is always true with this settings
+            ISRLevel = 0;           // ( there cannot be false edge IRQ's with CHANGE )
+            halfBit = 0;
+            bitMax = MAX_ONEBITHALF;
+            bitMin = MIN_ONEBITHALF;
+            //CLR_TP1;
+#ifndef SYNC_ALWAYS
+        }
+#endif
+      }
+    } else {
+        CLR_TP1;
+        preambleBitCount = 0 ;
+        // SET_TP2; CLR_TP2;
+    }
+  }
+
   #ifdef ALLOW_NESTED_IRQ
   DCC_IrqRunning = false;
   #endif
-  CLR_TP1;
+  //CLR_TP1;
   CLR_TP3;
 }
 
@@ -623,7 +747,8 @@ void ackAdvancedCV(void)
 }
 
 
-uint8_t readEEPROM( unsigned int CV ) {
+uint8_t readEEPROM( unsigned int CV )
+{
     return EEPROM.read(CV) ;
 }
 
@@ -648,7 +773,6 @@ bool readyEEPROM()
 	return true;
 #endif
 }
-
 
 uint8_t validCV( uint16_t CV, uint8_t Writable )
 {
@@ -1398,7 +1522,14 @@ void NmraDcc::pin( uint8_t ExtIntNum, uint8_t ExtIntPinNum, uint8_t EnablePullup
   DccProcState.ExtIntNum = ExtIntNum;
 #endif
   DccProcState.ExtIntPinNum = ExtIntPinNum;
-	
+#ifdef __AVR_MEGA__
+    // because digitalRead at AVR is slow, we will read the dcc input in the ISR
+    // by direct port access.
+    DccProcState.ExtIntPort = portInputRegister( digitalPinToPort(ExtIntPinNum) );
+    DccProcState.ExtIntMask = digitalPinToBitMask( ExtIntPinNum );
+#else
+    DccProcState.ExtIntMask = 1;
+#endif	
   pinMode( ExtIntPinNum, INPUT );
   if( EnablePullup )
     digitalWrite(ExtIntPinNum, HIGH);
@@ -1435,6 +1566,9 @@ void NmraDcc::init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, ui
   DccProcState.inAccDecDCCAddrNextReceivedMode = 0;
 
   ISREdge = RISING;
+  // level checking to detect false IRQ's fired by glitches
+  ISRLevel = DccProcState.ExtIntMask;
+  ISRChkMask = DccProcState.ExtIntMask;
 
   #ifdef ESP32
   ISRWatch = ISREdge;
@@ -1545,7 +1679,6 @@ uint8_t NmraDcc::process()
   if( DccRx.DataReady )
   {
     // We need to do this check with interrupts disabled
-    //SET_TP4;
 #ifdef ESP32
     portENTER_CRITICAL(&mux);
 #else
@@ -1559,25 +1692,16 @@ uint8_t NmraDcc::process()
 #else
     interrupts();
 #endif
-      #ifdef DCC_DBGVAR
-      countOf.Tel++;
-      #endif
+    // Checking of the XOR-byte is now done in the ISR already
+    #ifdef DCC_DBGVAR
+    countOf.Tel++;
+    #endif
+    // Clear trailing bytes
+    for ( byte i=Msg.Size; i< MAX_DCC_MESSAGE_LEN; i++ ) Msg.Data[i] = 0;
     
-    uint8_t xorValue = 0 ;
-    
-    for(uint8_t i = 0; i < DccRx.PacketCopy.Size; i++)
-      xorValue ^= DccRx.PacketCopy.Data[i];
-    if(xorValue) {
-      #ifdef DCC_DBGVAR
-      DB_PRINT("Cerr");
-      countOf.Err++;
-      #endif
-      return 0 ;
-    } else {
-		if( notifyDccMsg ) 	notifyDccMsg( &Msg );
+	if( notifyDccMsg ) 	notifyDccMsg( &Msg );
 		
-        execDccProcessor( &Msg );
-    }
+     execDccProcessor( &Msg );
     return 1 ;
   }
 

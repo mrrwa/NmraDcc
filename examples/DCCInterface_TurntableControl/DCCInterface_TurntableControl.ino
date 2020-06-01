@@ -1,8 +1,8 @@
 // DCC Stepper Motor Controller ( A4988 ) Example for Model Railroad Turntable Control
 //
-// See: https://www.dccinterface.com/how-to/assemblyguide/
+// See: https://www.dccinterface.com/product/arduino-model-railway-dcc-stepper-motor-controller-a4988-assembled/
 // 
-// Author: Alex Shepherd 2017-12-04
+// Author: Alex Shepherd 2020-06-01
 // 
 // This example requires two Arduino Libraries:
 //
@@ -22,12 +22,22 @@
 // The lines below define the pins used to connect to the A4988 driver module
 #define A4988_STEP_PIN      4
 #define A4988_DIRECTION_PIN 5
-// Uncomment the next line to enable Powering-Off the Stepper when its not running to reduce heating the motor and driver
 #define A4988_ENABLE_PIN    6
+
+#ifdef A4988_ENABLE_PIN
+// Uncomment the next line to enable Powering-Off the Stepper when its not running to reduce heating the motor and driver
+//#define DISABLE_OUTPUTS_IDLE
+#endif
+
+// By default the stepper motor will move the shortest distance to the desired position.
+// If you need the turntable to only move in the Positive/Increasing or Negative/Decreasing step numbers to better handle backlash in the mechanism
+// Then uncomment the appropriate line below
+//#define ALWAYS_MOVE_POSITIVE
+//#define ALWAYS_MOVE_NEGATIVE
 
 // The lines below define the stepping speed and acceleration, which you may need to tune for your application
 #define STEPPER_MAX_SPEED     800   // Sets the maximum permitted speed
-#define STEPPER_ACCELARATION  1000   // Sets the acceleration/deceleration rate
+#define STEPPER_ACCELARATION  1000  // Sets the acceleration/deceleration rate
 #define STEPPER_SPEED         300   // Sets the desired constant speed for use with runSpeed()
 
 // The line below defines the number of "Full Steps" your stepper motor does for a full rotation
@@ -92,6 +102,9 @@ TurnoutPosition turnoutPositions[] = {
 // --------------------------------------------------------------------------------------------
 // You shouldn't need to edit anything below this line unless you're needing to make big changes... ;)
 // --------------------------------------------------------------------------------------------
+#if defined(ALWAYS_MOVE_POSITIVE) && defined(ALWAYS_MOVE_NEGATIVE)
+#error ONLY uncomment one of ALWAYS_MOVE_POSITIVE or ALWAYS_MOVE_NEGATIVE but NOT both
+#endif
 
 #define MAX_TURNOUT_POSITIONS (sizeof(turnoutPositions) / sizeof(TurnoutPosition))
 
@@ -104,11 +117,12 @@ NmraDcc  Dcc ;
 // Variables to store the last DCC Turnout message Address and Direction  
 uint16_t lastAddr = 0xFFFF ;
 uint8_t lastDirection = 0xFF;
+int     lastStep = 0;
 
 // This function is called whenever a normal DCC Turnout Packet is received
 void notifyDccAccTurnoutOutput( uint16_t Addr, uint8_t Direction, uint8_t OutputPower )
 {
-  Serial.print("notifyDccAccTurnoutOutput: ") ;
+  Serial.print(F("notifyDccAccTurnoutOutput: "));
   Serial.print(Addr,DEC) ;
   Serial.print(',');
   Serial.print(Direction,DEC) ;
@@ -131,23 +145,50 @@ void notifyDccAccTurnoutOutput( uint16_t Addr, uint8_t Direction, uint8_t Output
 #ifdef A4988_ENABLE_PIN
       stepper1.enableOutputs();
 #endif
-      if (Direction)
-      {
-        Serial.println(turnoutPositions[i].positionFront, DEC);
-        stepper1.moveTo(turnoutPositions[i].positionFront);
-        break;
-      }
+
+      int newStep;
+      if(Direction)
+        newStep = turnoutPositions[i].positionFront;
       else
-      {
-        Serial.println(turnoutPositions[i].positionBack, DEC);
-        stepper1.moveTo(turnoutPositions[i].positionBack);
-        break;
-      }
+        newStep = turnoutPositions[i].positionBack;
+
+      Serial.print(newStep, DEC);
+      
+      Serial.print(F("  Last Step: "));
+      Serial.print(lastStep, DEC);
+      
+      int diffStep = newStep - lastStep;
+      Serial.print(F("  Diff Step: "));
+      Serial.print(diffStep, DEC);
+
+#if defined ALWAYS_MOVE_POSITIVE
+      Serial.print(F("  Positive"));       
+      if(diffStep < 0)
+        diffStep += FULL_TURN_STEPS;
+        
+#elif defined ALWAYS_MOVE_NEGATIVE
+      Serial.print(F("  Negative"));       
+      if(diffStep > 0)
+        diffStep -= FULL_TURN_STEPS;
+#else
+      if(diffStep > HALF_TURN_STEPS)
+        diffStep = diffStep - FULL_TURN_STEPS;
+        
+      else if(diffStep < -HALF_TURN_STEPS)
+        diffStep = diffStep + FULL_TURN_STEPS;
+#endif
+
+      Serial.print(F("  Move: "));
+      Serial.println(diffStep, DEC);
+      stepper1.move(diffStep);
+
+      lastStep = newStep;
+      break;
     }
   }
 };
 
-#ifdef A4988_ENABLE_PIN
+#ifdef DISABLE_OUTPUTS_IDLE
 bool lastIsRunningState ;
 #endif 
 
@@ -161,8 +202,12 @@ void setupStepperDriver()
   stepper1.setMaxSpeed(STEPPER_MAX_SPEED);        // Sets the maximum permitted speed
   stepper1.setAcceleration(STEPPER_ACCELARATION); // Sets the acceleration/deceleration rate
   stepper1.setSpeed(STEPPER_SPEED);               // Sets the desired constant speed for use with runSpeed()
- 
+
 #ifdef A4988_ENABLE_PIN
+  stepper1.enableOutputs();
+#endif
+
+#ifdef DISABLE_OUTPUTS_IDLE
   lastIsRunningState = stepper1.isRunning();
 #endif
 }
@@ -173,14 +218,19 @@ bool moveToHomePosition()
 
   pinMode(HOME_SENSOR_PIN, INPUT_PULLUP);
 
+#ifdef ALWAYS_MOVE_NEGATIVE
+  stepper1.move(0 - (FULL_TURN_STEPS * 2));
+#else
   stepper1.move(FULL_TURN_STEPS * 2);
+#endif  
   while(digitalRead(HOME_SENSOR_PIN) != HOME_SENSOR_ACTIVE_STATE)
     stepper1.run();
 
   if(digitalRead(HOME_SENSOR_PIN) == HOME_SENSOR_ACTIVE_STATE)
   {
-    Serial.println(F("Found Home Position - Setting Current Position to 0"));
+    stepper1.stop();
     stepper1.setCurrentPosition(0);
+    Serial.println(F("Found Home Position - Setting Current Position to 0"));
     return true;
   }
   else
@@ -210,27 +260,31 @@ void setup()
   Serial.print(F("Full Rotation Steps: "));
   Serial.println(FULL_TURN_STEPS);
 
+  Serial.print(F("Movement Strategy: "));
+#if defined ALWAYS_MOVE_POSITIVE
+  Serial.println(F("Positive Direction Only"));
+#elif defined ALWAYS_MOVE_NEGATIVE
+  Serial.println(F("Negative Direction Only"));
+#else
+  Serial.println(F("Shortest Distance"));
+#endif
+
   for(uint8_t i = 0; i < MAX_TURNOUT_POSITIONS; i++)
   {
-    Serial.print("DCC Addr: ");
+    Serial.print(F("DCC Addr: "));
     Serial.print(turnoutPositions[i].dccAddress);
 
-    Serial.print(" Front: ");
+    Serial.print(F(" Front: "));
     Serial.print(turnoutPositions[i].positionFront);
 
-    Serial.print(" Back: ");
+    Serial.print(F(" Back: "));
     Serial.println(turnoutPositions[i].positionBack);
   }
   
   setupStepperDriver();
-
   if(moveToHomePosition());
   { 
     setupDCCDecoder();
-
-  #ifdef A4988_ENABLE_PIN
-    stepper1.enableOutputs();
-  #endif
 
     // Fake a DCC Packet to cause the Turntable to move to Position 1
     notifyDccAccTurnoutOutput(POSITION_01_DCC_ADDRESS, 1, 1);
@@ -245,7 +299,7 @@ void loop()
   // Process the Stepper Library
   stepper1.run();
 
-#ifdef A4988_ENABLE_PIN
+#ifdef DISABLE_OUTPUTS_IDLE
   if(stepper1.isRunning() != lastIsRunningState)
   {
     lastIsRunningState = stepper1.isRunning();

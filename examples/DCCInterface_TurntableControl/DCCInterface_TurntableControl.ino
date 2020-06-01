@@ -26,7 +26,7 @@
 
 #ifdef A4988_ENABLE_PIN
 // Uncomment the next line to enable Powering-Off the Stepper when its not running to reduce heating the motor and driver
-//#define DISABLE_OUTPUTS_IDLE
+#define DISABLE_OUTPUTS_IDLE
 #endif
 
 // By default the stepper motor will move the shortest distance to the desired position.

@@ -116,131 +116,129 @@
 //#define debug     // Testpulse for logic analyser
 #ifdef debug
 #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-#define MODE_TP1 DDRF |= (1<<2) //pinA2
-#define SET_TP1 PORTF |= (1<<2)
-#define CLR_TP1 PORTF &= ~(1<<2)
-#define MODE_TP2 DDRF |= (1<<3) //pinA3
-#define SET_TP2 PORTF |= (1<<3)
-#define CLR_TP2 PORTF &= ~(1<<3)
-#define MODE_TP3 DDRF |= (1<<4) //pinA4
-#define SET_TP3 PORTF |= (1<<4)
-#define CLR_TP3 PORTF &= ~(1<<4)
-#define MODE_TP4 DDRF |= (1<<5) //pinA5
-#define SET_TP4 PORTF |= (1<<5)
-#define CLR_TP4 PORTF &= ~(1<<5)
+    #define MODE_TP1 DDRF |= (1<<2) //pinA2
+    #define SET_TP1 PORTF |= (1<<2)
+    #define CLR_TP1 PORTF &= ~(1<<2)
+    #define MODE_TP2 DDRF |= (1<<3) //pinA3
+    #define SET_TP2 PORTF |= (1<<3)
+    #define CLR_TP2 PORTF &= ~(1<<3)
+    #define MODE_TP3 DDRF |= (1<<4) //pinA4
+    #define SET_TP3 PORTF |= (1<<4)
+    #define CLR_TP3 PORTF &= ~(1<<4)
+    #define MODE_TP4 DDRF |= (1<<5) //pinA5
+    #define SET_TP4 PORTF |= (1<<5)
+    #define CLR_TP4 PORTF &= ~(1<<5)
 #elif defined(__AVR_ATmega32U4__)
-#define MODE_TP1 DDRF |= (1<<4) //A3
-#define SET_TP1 PORTF |= (1<<4)
-#define CLR_TP1 PORTF &= ~(1<<4)
-#define MODE_TP2 DDRF |= (1<<5) //A2
-#define SET_TP2 PORTF |= (1<<5)
-#define CLR_TP2 PORTF &= ~(1<<5)
-#define MODE_TP3
-#define SET_TP3
-#define CLR_TP3
-#define MODE_TP4
-#define SET_TP4
-#define CLR_TP4
+    #define MODE_TP1 DDRF |= (1<<4) //A3
+    #define SET_TP1 PORTF |= (1<<4)
+    #define CLR_TP1 PORTF &= ~(1<<4)
+    #define MODE_TP2 DDRF |= (1<<5) //A2
+    #define SET_TP2 PORTF |= (1<<5)
+    #define CLR_TP2 PORTF &= ~(1<<5)
+    #define MODE_TP3
+    #define SET_TP3
+    #define CLR_TP3
+    #define MODE_TP4
+    #define SET_TP4
+    #define CLR_TP4
 #elif defined(__AVR_ATmega328P__)
-#define MODE_TP1 DDRC |= (1<<1) //A1
-#define SET_TP1 PORTC |= (1<<1)
-#define CLR_TP1 PORTC &= ~(1<<1)
-#define MODE_TP2 DDRC |= (1<<2) // A2
-#define SET_TP2 PORTC |= (1<<2)
-#define CLR_TP2 PORTC &= ~(1<<2)
-#define MODE_TP3 DDRC |= (1<<3) //A3
-#define SET_TP3 PORTC |= (1<<3)
-#define CLR_TP3 PORTC &= ~(1<<3)
-#define MODE_TP4 DDRC |= (1<<4) //A4
-#define SET_TP4 PORTC |= (1<<4)
-#define CLR_TP4 PORTC &= ~(1<<4)
+    #define MODE_TP1 DDRC |= (1<<1) //A1
+    #define SET_TP1 PORTC |= (1<<1)
+    #define CLR_TP1 PORTC &= ~(1<<1)
+    #define MODE_TP2 DDRC |= (1<<2) // A2
+    #define SET_TP2 PORTC |= (1<<2)
+    #define CLR_TP2 PORTC &= ~(1<<2)
+    #define MODE_TP3 DDRC |= (1<<3) //A3
+    #define SET_TP3 PORTC |= (1<<3)
+    #define CLR_TP3 PORTC &= ~(1<<3)
+    #define MODE_TP4 DDRC |= (1<<4) //A4
+    #define SET_TP4 PORTC |= (1<<4)
+    #define CLR_TP4 PORTC &= ~(1<<4)
 #elif defined(__arm__) && (defined(__MK20DX128__) || defined(__MK20DX256__))
         // Teensys 3.x
-#define MODE_TP1 pinMode( A1,OUTPUT )   // A1= PortC, Bit0
-#define SET_TP1  GPIOC_PSOR = 0x01
-#define CLR_TP1  GPIOC_PCOR = 0x01
-#define MODE_TP2 pinMode( A2,OUTPUT )   // A2= PortB Bit0
-#define SET_TP2  GPIOB_PSOR = 0x01
-#define CLR_TP2  GPIOB_PCOR = 0x01
-#define MODE_TP3 pinMode( A3,OUTPUT )   // A3 = PortB Bit1
-#define SET_TP3  GPIOB_PSOR = 0x02
-#define CLR_TP3  GPIOB_PCOR = 0x02
-#define MODE_TP4 pinMode( A4,OUTPUT )   // A4 = PortB Bit3
-#define SET_TP4  GPIOB_PSOR = 0x08
-#define CLR_TP4  GPIOB_PCOR = 0x08
+    #define MODE_TP1 pinMode( A1,OUTPUT )   // A1= PortC, Bit0
+    #define SET_TP1  GPIOC_PSOR = 0x01
+    #define CLR_TP1  GPIOC_PCOR = 0x01
+    #define MODE_TP2 pinMode( A2,OUTPUT )   // A2= PortB Bit0
+    #define SET_TP2  GPIOB_PSOR = 0x01
+    #define CLR_TP2  GPIOB_PCOR = 0x01
+    #define MODE_TP3 pinMode( A3,OUTPUT )   // A3 = PortB Bit1
+    #define SET_TP3  GPIOB_PSOR = 0x02
+    #define CLR_TP3  GPIOB_PCOR = 0x02
+    #define MODE_TP4 pinMode( A4,OUTPUT )   // A4 = PortB Bit3
+    #define SET_TP4  GPIOB_PSOR = 0x08
+    #define CLR_TP4  GPIOB_PCOR = 0x08
 #elif defined (__STM32F1__)
         // STM32F103...
-#define MODE_TP1 pinMode( PB12,OUTPUT ) // TP1= PB12
-#define SET_TP1  gpio_write_bit( GPIOB,12, HIGH );
-#define CLR_TP1  gpio_write_bit( GPIOB,12, LOW );
-#define MODE_TP2 pinMode( PB13,OUTPUT ) // TP2= PB13
-#define SET_TP2  gpio_write_bit( GPIOB,13, HIGH );
-#define CLR_TP2  gpio_write_bit( GPIOB,13, LOW );
-#define MODE_TP3 pinMode( PB14,OUTPUT ) // TP3 = PB14
-#define SET_TP3  gpio_write_bit( GPIOB,14, HIGH );
-#define CLR_TP3  gpio_write_bit( GPIOB,14, LOW );
-#define MODE_TP4 pinMode( PB15,OUTPUT ) // TP4 = PB15
-#define SET_TP4  gpio_write_bit( GPIOB,15, HIGH );
-#define CLR_TP4  gpio_write_bit( GPIOB,15, LOW );
+    #define MODE_TP1 pinMode( PB12,OUTPUT ) // TP1= PB12
+    #define SET_TP1  gpio_write_bit( GPIOB,12, HIGH );
+    #define CLR_TP1  gpio_write_bit( GPIOB,12, LOW );
+    #define MODE_TP2 pinMode( PB13,OUTPUT ) // TP2= PB13
+    #define SET_TP2  gpio_write_bit( GPIOB,13, HIGH );
+    #define CLR_TP2  gpio_write_bit( GPIOB,13, LOW );
+    #define MODE_TP3 pinMode( PB14,OUTPUT ) // TP3 = PB14
+    #define SET_TP3  gpio_write_bit( GPIOB,14, HIGH );
+    #define CLR_TP3  gpio_write_bit( GPIOB,14, LOW );
+    #define MODE_TP4 pinMode( PB15,OUTPUT ) // TP4 = PB15
+    #define SET_TP4  gpio_write_bit( GPIOB,15, HIGH );
+    #define CLR_TP4  gpio_write_bit( GPIOB,15, LOW );
 #elif defined(ESP8266)
-#define MODE_TP1 pinMode( D5,OUTPUT ) ; // GPIO 14
-#define SET_TP1  GPOS = (1 << D5);
-#define CLR_TP1  GPOC = (1 << D5);
-#define MODE_TP2 pinMode( D6,OUTPUT ) ; // GPIO 12
-#define SET_TP2  GPOS = (1 << D6);
-#define CLR_TP2  GPOC = (1 << D6);
-#define MODE_TP3 pinMode( D7,OUTPUT ) ; // GPIO 13
-#define SET_TP3  GPOS = (1 << D7);
-#define CLR_TP3  GPOC = (1 << D7);
-#define MODE_TP4 pinMode( D8,OUTPUT ) ; // GPIO 15
-#define SET_TP4  GPOS = (1 << D8);
-#define CLR_TP4  GPOC = (1 << D8);
+    #define MODE_TP1 pinMode( D5,OUTPUT ) ; // GPIO 14
+    #define SET_TP1  GPOS = (1 << D5);
+    #define CLR_TP1  GPOC = (1 << D5);
+    #define MODE_TP2 pinMode( D6,OUTPUT ) ; // GPIO 12
+    #define SET_TP2  GPOS = (1 << D6);
+    #define CLR_TP2  GPOC = (1 << D6);
+    #define MODE_TP3 pinMode( D7,OUTPUT ) ; // GPIO 13
+    #define SET_TP3  GPOS = (1 << D7);
+    #define CLR_TP3  GPOC = (1 << D7);
+    #define MODE_TP4 pinMode( D8,OUTPUT ) ; // GPIO 15
+    #define SET_TP4  GPOS = (1 << D8);
+    #define CLR_TP4  GPOC = (1 << D8);
 #elif defined(ESP32)
-#define MODE_TP1 pinMode( 33,OUTPUT ) ; // GPIO 33
-#define SET_TP1  GPOS = (1 << 33);
-#define CLR_TP1  GPOC = (1 << 33);
-#define MODE_TP2 pinMode( 25,OUTPUT ) ; // GPIO 25
-#define SET_TP2  GPOS = (1 << 25);
-#define CLR_TP2  GPOC = (1 << 25);
-#define MODE_TP3 pinMode( 26,OUTPUT ) ; // GPIO 26
-#define SET_TP3  GPOS = (1 << 26);
-#define CLR_TP3  GPOC = (1 << 26);
-#define MODE_TP4 pinMode( 27,OUTPUT ) ; // GPIO 27
-#define SET_TP4  GPOS = (1 << 27);
-#define CLR_TP4  GPOC = (1 << 27);
-
-
+    #define MODE_TP1 pinMode( 33,OUTPUT ) ; // GPIO 33
+    #define SET_TP1  GPOS = (1 << 33);
+    #define CLR_TP1  GPOC = (1 << 33);
+    #define MODE_TP2 pinMode( 25,OUTPUT ) ; // GPIO 25
+    #define SET_TP2  GPOS = (1 << 25);
+    #define CLR_TP2  GPOC = (1 << 25);
+    #define MODE_TP3 pinMode( 26,OUTPUT ) ; // GPIO 26
+    #define SET_TP3  GPOS = (1 << 26);
+    #define CLR_TP3  GPOC = (1 << 26);
+    #define MODE_TP4 pinMode( 27,OUTPUT ) ; // GPIO 27
+    #define SET_TP4  GPOS = (1 << 27);
+    #define CLR_TP4  GPOC = (1 << 27);
     //#elif defined(__AVR_ATmega128__) ||defined(__AVR_ATmega1281__)||defined(__AVR_ATmega2561__)
 #else
-#define MODE_TP1
-#define SET_TP1
-#define CLR_TP1
-#define MODE_TP2
-#define SET_TP2
-#define CLR_TP2
-#define MODE_TP3
-#define SET_TP3
-#define CLR_TP3
-#define MODE_TP4
-#define SET_TP4
-#define CLR_TP4
-
+    // add your own device specific changes to this block (maybe with an ifdef conditional?)
+    #define MODE_TP1
+    #define SET_TP1
+    #define CLR_TP1
+    #define MODE_TP2
+    #define SET_TP2
+    #define CLR_TP2
+    #define MODE_TP3
+    #define SET_TP3
+    #define CLR_TP3
+    #define MODE_TP4
+    #define SET_TP4
+    #define CLR_TP4
 #endif
 #else
-#define MODE_TP1
-#define SET_TP1
-#define CLR_TP1
-#define MODE_TP2
-#define SET_TP2
-#define CLR_TP2
-#define MODE_TP3
-#define SET_TP3
-#define CLR_TP3
-#define MODE_TP4
-#define SET_TP4
-#define CLR_TP4
-
+    #define MODE_TP1
+    #define SET_TP1
+    #define CLR_TP1
+    #define MODE_TP2
+    #define SET_TP2
+    #define CLR_TP2
+    #define MODE_TP3
+    #define SET_TP3
+    #define CLR_TP3
+    #define MODE_TP4
+    #define SET_TP4
+    #define CLR_TP4
 #endif
+
 #ifdef DEBUG_PRINT
 #define DB_PRINT( x, ... ) { char dbgbuf[80]; sprintf_P( dbgbuf, (const char*) F( x ) , ##__VA_ARGS__ ) ; Serial.println( dbgbuf ); }
 #define DB_PRINT_( x, ... ) { char dbgbuf[80]; sprintf_P( dbgbuf, (const char*) F( x ) , ##__VA_ARGS__ ) ; Serial.print( dbgbuf ); }

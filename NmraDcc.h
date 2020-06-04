@@ -122,14 +122,14 @@ typedef struct {
 #endif
 
 typedef enum {
-    CV29_LOCO_DIR = 0 b00000001,                /** bit 0: Locomotive Direction: "0" = normal, "1" = reversed */
-    CV29_F0_LOCATION = 0 b00000010,             /** bit 1: F0 location: "0" = bit 4 in Speed and Direction instructions, "1" = bit 4 in function group one instruction */
-    CV29_APS = 0 b00000100,                     /** bit 2: Alternate Power Source (APS) "0" = NMRA Digital only, "1" = Alternate power source set by CV12 */
-    CV29_RAILCOM_ENABLE = 0 b00001000,          /** bit 3: BiDi ( RailCom ) is active */
-    CV29_SPEED_TABLE_ENABLE = 0 b00010000,      /** bit 4: STE, Speed Table Enable, "0" = values in CVs 2, 4 and 6, "1" = Custom table selected by CV 25 */
-    CV29_EXT_ADDRESSING = 0 b00100000,          /** bit 5: "0" = one byte addressing, "1" = two byte addressing */
-    CV29_OUTPUT_ADDRESS_MODE = 0 b01000000,     /** bit 6: "0" = Decoder Address Mode "1" = Output Address Mode */
-    CV29_ACCESSORY_DECODER = 0 b10000000,       /** bit 7: "0" = Multi-Function Decoder Mode "1" = Accessory Decoder Mode */
+    CV29_LOCO_DIR = 0b00000001,                /** bit 0: Locomotive Direction: "0" = normal, "1" = reversed */
+    CV29_F0_LOCATION = 0b00000010,             /** bit 1: F0 location: "0" = bit 4 in Speed and Direction instructions, "1" = bit 4 in function group one instruction */
+    CV29_APS = 0b00000100,                     /** bit 2: Alternate Power Source (APS) "0" = NMRA Digital only, "1" = Alternate power source set by CV12 */
+    CV29_RAILCOM_ENABLE = 0b00001000,          /** bit 3: BiDi ( RailCom ) is active */
+    CV29_SPEED_TABLE_ENABLE = 0b00010000,      /** bit 4: STE, Speed Table Enable, "0" = values in CVs 2, 4 and 6, "1" = Custom table selected by CV 25 */
+    CV29_EXT_ADDRESSING = 0b00100000,          /** bit 5: "0" = one byte addressing, "1" = two byte addressing */
+    CV29_OUTPUT_ADDRESS_MODE = 0b01000000,     /** bit 6: "0" = Decoder Address Mode "1" = Output Address Mode */
+    CV29_ACCESSORY_DECODER = 0b10000000,       /** bit 7: "0" = Multi-Function Decoder Mode "1" = Accessory Decoder Mode */
 } CV_29_BITS;
 
 typedef enum {

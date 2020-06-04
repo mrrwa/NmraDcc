@@ -730,22 +730,21 @@ static void ExternalInterruptHandler(void)
     CLR_TP3;
 }
 
-void ackCV(void)
+void NmraDcc::ackCV(CV_Type cvType)
 {
-    if (notifyCVAck) {
-        DB_PRINT("ackCV: Send Basic ACK");
-        notifyCVAck();
+    if (cvType == CV_REGULAR) {
+        if (notifyCVAck) {
+            DB_PRINT("ackCV: Send Basic ACK");
+            notifyCVAck();
+        }
+    }
+    else if (cvType == CV_ADVANCED) {
+        if (notifyAdvancedCVAck && (DccProcState.cv29Value & CV29_RAILCOM_ENABLE)) {
+            DB_PRINT("ackAdvancedCV: Send RailCom ACK");
+            notifyAdvancedCVAck();
+        }
     }
 }
-
-void ackAdvancedCV(void)
-{
-    if (notifyAdvancedCVAck && (DccProcState.cv29Value & CV29_RAILCOM_ENABLE)) {
-        DB_PRINT("ackAdvancedCV: Send RailCom ACK");
-        notifyAdvancedCVAck();
-    }
-}
-
 
 uint8_t NmraDcc::readEEPROM(unsigned int CV)
 {
@@ -872,7 +871,7 @@ uint16_t NmraDcc::getMyAddr(void)
     return DccProcState.myDccAddress;
 }
 
-void NmraDcc::processDirectCVOperation(uint8_t Cmd, uint16_t CVAddr, uint8_t Value, void (*ackFunction) ())
+void NmraDcc::processDirectCVOperation(uint8_t Cmd, uint16_t CVAddr, uint8_t Value, CV_Type cvType)
 {
     // is it a Byte Operation
     if (Cmd & 0x04) {
@@ -881,7 +880,7 @@ void NmraDcc::processDirectCVOperation(uint8_t Cmd, uint16_t CVAddr, uint8_t Val
             if (validCV(CVAddr, 1)) {
                 DB_PRINT("CV: %d Byte Write: %02X", CVAddr, Value)
                     if (writeCV(CVAddr, Value) == Value) {
-                        ackFunction();
+                        ackCV(cvType);
                     }
 
             }
@@ -889,7 +888,7 @@ void NmraDcc::processDirectCVOperation(uint8_t Cmd, uint16_t CVAddr, uint8_t Val
             if (validCV(CVAddr, 0)) {
                 DB_PRINT("CV: %d Byte Read: %02X", CVAddr, Value)
                     if (readCV(CVAddr) == Value) {
-                        ackFunction();
+                        ackCV(cvType);
                     }
             }
         }
@@ -915,7 +914,7 @@ void NmraDcc::processDirectCVOperation(uint8_t Cmd, uint16_t CVAddr, uint8_t Val
                 }
 
                 if (writeCV(CVAddr, tempValue) == tempValue) {
-                    ackFunction();
+                    ackCV(cvType);
                 }
             }
         }
@@ -924,11 +923,11 @@ void NmraDcc::processDirectCVOperation(uint8_t Cmd, uint16_t CVAddr, uint8_t Val
             if (validCV(CVAddr, 0)) {
                 if (BitValue) {
                     if (tempValue & BitMask) {
-                        ackFunction();
+                        ackCV(cvType);
                     }
                 } else {
                     if (!(tempValue & BitMask)) {
-                        ackFunction();
+                        ackCV(cvType);
                     }
                 }
             }
@@ -1099,7 +1098,7 @@ void NmraDcc::processMultiFunctionMessage(uint16_t Addr, DCC_ADDR_TYPE AddrType,
     case 0b11100000:           // CV Access
         CVAddr = (((Cmd & 0x03) << 8) | Data1) + 1;
 
-        processDirectCVOperation(Cmd, CVAddr, Data2, ackAdvancedCV);
+        processDirectCVOperation(Cmd, CVAddr, Data2, CV_ADVANCED);
         break;
     }
 }
@@ -1119,7 +1118,7 @@ void NmraDcc::processServiceModeOperation(DCC_MSG * pDccMsg)
 
         if (RegisterAddr == 5) {
             DccProcState.PageRegister = Value;
-            ackCV();
+            ackCV(CV_REGULAR);
         }
 
         else {
@@ -1136,13 +1135,13 @@ void NmraDcc::processServiceModeOperation(DCC_MSG * pDccMsg)
             if (pDccMsg->Data[0] & 0x08) {        // Perform the Write Operation
                 if (validCV(CVAddr, 1)) {
                     if (writeCV(CVAddr, Value) == Value) {
-                        ackCV();
+                        ackCV(CV_REGULAR);
                     }
                 }
             } else {                // Perform the Verify Operation
                 if (validCV(CVAddr, 0)) {
                     if (readCV(CVAddr) == Value) {
-                        ackCV();
+                        ackCV(CV_REGULAR);
                     }
                 }
             }
@@ -1152,7 +1151,7 @@ void NmraDcc::processServiceModeOperation(DCC_MSG * pDccMsg)
         CVAddr = (((pDccMsg->Data[0] & 0x03) << 8) | pDccMsg->Data[1]) + 1;
         Value = pDccMsg->Data[2];
 
-        processDirectCVOperation(pDccMsg->Data[0] & 0b00001100, CVAddr, Value, ackCV);
+        processDirectCVOperation(pDccMsg->Data[0] & 0b00001100, CVAddr, Value, CV_REGULAR);
     }
 }
 #endif

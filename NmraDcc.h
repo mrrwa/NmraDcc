@@ -122,6 +122,11 @@ typedef struct {
 #endif
 
 typedef enum {
+    CV_REGULAR,
+    CV_ADVANCED
+} CV_Type;
+
+typedef enum {
     CV29_LOCO_DIR = 0b00000001,                /** bit 0: Locomotive Direction: "0" = normal, "1" = reversed */
     CV29_F0_LOCATION = 0b00000010,             /** bit 1: F0 location: "0" = bit 4 in Speed and Direction instructions, "1" = bit 4 in function group one instruction */
     CV29_APS = 0b00000100,                     /** bit 2: Alternate Power Source (APS) "0" = NMRA Digital only, "1" = Alternate power source set by CV12 */
@@ -402,6 +407,7 @@ class NmraDcc {
 
 
   private:
+    void ackCV(CV_Type cvType);
     uint8_t readEEPROM(unsigned int CV);
     void writeEEPROM(unsigned int CV, uint8_t Value);
     bool readyEEPROM();
@@ -409,7 +415,7 @@ class NmraDcc {
     uint8_t readCV(unsigned int CV);
     uint8_t writeCV(unsigned int CV, uint8_t Value);
     uint16_t getMyAddr(void);
-    void processDirectCVOperation(uint8_t Cmd, uint16_t CVAddr, uint8_t Value, void (*ackFunction) ());
+    void processDirectCVOperation(uint8_t Cmd, uint16_t CVAddr, uint8_t Value, CV_Type cvType);
 #ifdef NMRA_DCC_PROCESS_MULTIFUNCTION
     void processMultiFunctionMessage(uint16_t Addr, DCC_ADDR_TYPE AddrType,
                                      uint8_t Cmd, uint8_t Data1, uint8_t Data2);

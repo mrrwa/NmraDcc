@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------
 //
-// Model Railroading with Arduino - NmraDcc.cpp 
+// Model Railroading with Arduino - NmraDcc.cpp
 //
 // Copyright (c) 2008 - 2020 Alex Shepherd
 //
@@ -8,16 +8,16 @@
 //      modify it under the terms of the GNU Lesser General Public
 //      License as published by the Free Software Foundation; either
 //      version 2.1 of the License, or (at your option) any later version.
-// 
+//
 //      This library is distributed in the hope that it will be useful,
 //      but WITHOUT ANY WARRANTY; without even the implied warranty of
 //      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 //      Lesser General Public License for more details.
-// 
+//
 //      You should have received a copy of the GNU Lesser General Public
 //      License along with this library; if not, write to the Free Software
 //      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-// 
+//
 //------------------------------------------------------------------------
 //
 // file:      NmraDcc.cpp
@@ -31,7 +31,7 @@
 //                       and new signature of notifyDccSpeed and notifyDccFunc
 //            2015-12-16 Version without use of Timer0 by Franz-Peter Müller
 //            2016-07-16 handle glitches on DCC line
-//                        2016-08-20 added ESP8266 support by Sven (littleyoda) 
+//                        2016-08-20 added ESP8266 support by Sven (littleyoda)
 //                        2017-01-19 added STM32F1 support by Franz-Peter
 //            2017-11-29 Ken West (kgw4449@gmail.com):
 //                       Minor fixes to pass NMRA Baseline Conformance Tests.
@@ -49,7 +49,7 @@
 #include "EEPROM.h"
 
 // Uncomment to print DEBUG messages
-// #define DEBUG_PRINT          
+// #define DEBUG_PRINT
 
 //------------------------------------------------------------------------
 // DCC Receive Routine
@@ -70,7 +70,7 @@
 //                           ^-INTx
 //                           |----------->|
 //                                        ^Timer-INT: reads one
-//           
+//
 // new DCC Receive Routine without Timer0 ........................................................
 //
 // Howto:    uses only one interrupt at the rising or falling edge of the DCC signal
@@ -83,17 +83,17 @@
 //                           |<--------146us------>|
 //                           ^-INTx            ^-INTx
 //                           less than 146us: its a one-Bit
-//                                        
+//
 //
 //                           |<-----------------232us----------->|
 //           DCC 0: _________XXXXXXXXXXXXXXXXXX__________________XXXXXXXX__________
 //                           |<--------146us------->|
 //                           ^-INTx                              ^-INTx
 //                           greater than 146us: its a zero bit
-//                                        
-//                                        
-//                                           
-//           
+//
+//
+//
+//
 
 //------------------------------------------------------------------------
 // if this is commented out, bit synchronisation is only done after a wrong checksum
@@ -115,23 +115,23 @@
 //#define debug     // Testpulse for logic analyser
 #ifdef debug
 #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-#define MODE_TP1 DDRF |= (1<<2)	//pinA2
+#define MODE_TP1 DDRF |= (1<<2) //pinA2
 #define SET_TP1 PORTF |= (1<<2)
 #define CLR_TP1 PORTF &= ~(1<<2)
-#define MODE_TP2 DDRF |= (1<<3)	//pinA3
+#define MODE_TP2 DDRF |= (1<<3) //pinA3
 #define SET_TP2 PORTF |= (1<<3)
 #define CLR_TP2 PORTF &= ~(1<<3)
-#define MODE_TP3 DDRF |= (1<<4)	//pinA4
+#define MODE_TP3 DDRF |= (1<<4) //pinA4
 #define SET_TP3 PORTF |= (1<<4)
 #define CLR_TP3 PORTF &= ~(1<<4)
-#define MODE_TP4 DDRF |= (1<<5)	//pinA5
+#define MODE_TP4 DDRF |= (1<<5) //pinA5
 #define SET_TP4 PORTF |= (1<<5)
 #define CLR_TP4 PORTF &= ~(1<<5)
 #elif defined(__AVR_ATmega32U4__)
-#define MODE_TP1 DDRF |= (1<<4)	//A3
+#define MODE_TP1 DDRF |= (1<<4) //A3
 #define SET_TP1 PORTF |= (1<<4)
 #define CLR_TP1 PORTF &= ~(1<<4)
-#define MODE_TP2 DDRF |= (1<<5)	//A2
+#define MODE_TP2 DDRF |= (1<<5) //A2
 #define SET_TP2 PORTF |= (1<<5)
 #define CLR_TP2 PORTF &= ~(1<<5)
 #define MODE_TP3
@@ -141,70 +141,70 @@
 #define SET_TP4
 #define CLR_TP4
 #elif defined(__AVR_ATmega328P__)
-#define MODE_TP1 DDRC |= (1<<1)	//A1
+#define MODE_TP1 DDRC |= (1<<1) //A1
 #define SET_TP1 PORTC |= (1<<1)
 #define CLR_TP1 PORTC &= ~(1<<1)
-#define MODE_TP2 DDRC |= (1<<2)	// A2
+#define MODE_TP2 DDRC |= (1<<2) // A2
 #define SET_TP2 PORTC |= (1<<2)
 #define CLR_TP2 PORTC &= ~(1<<2)
-#define MODE_TP3 DDRC |= (1<<3)	//A3
+#define MODE_TP3 DDRC |= (1<<3) //A3
 #define SET_TP3 PORTC |= (1<<3)
 #define CLR_TP3 PORTC &= ~(1<<3)
-#define MODE_TP4 DDRC |= (1<<4)	//A4
+#define MODE_TP4 DDRC |= (1<<4) //A4
 #define SET_TP4 PORTC |= (1<<4)
 #define CLR_TP4 PORTC &= ~(1<<4)
 #elif defined(__arm__) && (defined(__MK20DX128__) || defined(__MK20DX256__))
-	// Teensys 3.x
-#define MODE_TP1 pinMode( A1,OUTPUT )	// A1= PortC, Bit0
+        // Teensys 3.x
+#define MODE_TP1 pinMode( A1,OUTPUT )   // A1= PortC, Bit0
 #define SET_TP1  GPIOC_PSOR = 0x01
 #define CLR_TP1  GPIOC_PCOR = 0x01
-#define MODE_TP2 pinMode( A2,OUTPUT )	// A2= PortB Bit0
+#define MODE_TP2 pinMode( A2,OUTPUT )   // A2= PortB Bit0
 #define SET_TP2  GPIOB_PSOR = 0x01
 #define CLR_TP2  GPIOB_PCOR = 0x01
-#define MODE_TP3 pinMode( A3,OUTPUT )	// A3 = PortB Bit1
+#define MODE_TP3 pinMode( A3,OUTPUT )   // A3 = PortB Bit1
 #define SET_TP3  GPIOB_PSOR = 0x02
 #define CLR_TP3  GPIOB_PCOR = 0x02
-#define MODE_TP4 pinMode( A4,OUTPUT )	// A4 = PortB Bit3
+#define MODE_TP4 pinMode( A4,OUTPUT )   // A4 = PortB Bit3
 #define SET_TP4  GPIOB_PSOR = 0x08
 #define CLR_TP4  GPIOB_PCOR = 0x08
 #elif defined (__STM32F1__)
-	// STM32F103...
-#define MODE_TP1 pinMode( PB12,OUTPUT )	// TP1= PB12
+        // STM32F103...
+#define MODE_TP1 pinMode( PB12,OUTPUT ) // TP1= PB12
 #define SET_TP1  gpio_write_bit( GPIOB,12, HIGH );
 #define CLR_TP1  gpio_write_bit( GPIOB,12, LOW );
-#define MODE_TP2 pinMode( PB13,OUTPUT )	// TP2= PB13
+#define MODE_TP2 pinMode( PB13,OUTPUT ) // TP2= PB13
 #define SET_TP2  gpio_write_bit( GPIOB,13, HIGH );
 #define CLR_TP2  gpio_write_bit( GPIOB,13, LOW );
-#define MODE_TP3 pinMode( PB14,OUTPUT )	// TP3 = PB14
+#define MODE_TP3 pinMode( PB14,OUTPUT ) // TP3 = PB14
 #define SET_TP3  gpio_write_bit( GPIOB,14, HIGH );
 #define CLR_TP3  gpio_write_bit( GPIOB,14, LOW );
-#define MODE_TP4 pinMode( PB15,OUTPUT )	// TP4 = PB15
+#define MODE_TP4 pinMode( PB15,OUTPUT ) // TP4 = PB15
 #define SET_TP4  gpio_write_bit( GPIOB,15, HIGH );
 #define CLR_TP4  gpio_write_bit( GPIOB,15, LOW );
 #elif defined(ESP8266)
-#define MODE_TP1 pinMode( D5,OUTPUT ) ;	// GPIO 14
+#define MODE_TP1 pinMode( D5,OUTPUT ) ; // GPIO 14
 #define SET_TP1  GPOS = (1 << D5);
 #define CLR_TP1  GPOC = (1 << D5);
-#define MODE_TP2 pinMode( D6,OUTPUT ) ;	// GPIO 12
+#define MODE_TP2 pinMode( D6,OUTPUT ) ; // GPIO 12
 #define SET_TP2  GPOS = (1 << D6);
 #define CLR_TP2  GPOC = (1 << D6);
-#define MODE_TP3 pinMode( D7,OUTPUT ) ;	// GPIO 13
+#define MODE_TP3 pinMode( D7,OUTPUT ) ; // GPIO 13
 #define SET_TP3  GPOS = (1 << D7);
 #define CLR_TP3  GPOC = (1 << D7);
-#define MODE_TP4 pinMode( D8,OUTPUT ) ;	// GPIO 15
+#define MODE_TP4 pinMode( D8,OUTPUT ) ; // GPIO 15
 #define SET_TP4  GPOS = (1 << D8);
 #define CLR_TP4  GPOC = (1 << D8);
 #elif defined(ESP32)
-#define MODE_TP1 pinMode( 33,OUTPUT ) ;	// GPIO 33
+#define MODE_TP1 pinMode( 33,OUTPUT ) ; // GPIO 33
 #define SET_TP1  GPOS = (1 << 33);
 #define CLR_TP1  GPOC = (1 << 33);
-#define MODE_TP2 pinMode( 25,OUTPUT ) ;	// GPIO 25
+#define MODE_TP2 pinMode( 25,OUTPUT ) ; // GPIO 25
 #define SET_TP2  GPOS = (1 << 25);
 #define CLR_TP2  GPOC = (1 << 25);
-#define MODE_TP3 pinMode( 26,OUTPUT ) ;	// GPIO 26
+#define MODE_TP3 pinMode( 26,OUTPUT ) ; // GPIO 26
 #define SET_TP3  GPOS = (1 << 26);
 #define CLR_TP3  GPOC = (1 << 26);
-#define MODE_TP4 pinMode( 27,OUTPUT ) ;	// GPIO 27
+#define MODE_TP4 pinMode( 27,OUTPUT ) ; // GPIO 27
 #define SET_TP4  GPOS = (1 << 27);
 #define CLR_TP4  GPOC = (1 << 27);
 
@@ -255,14 +255,14 @@ struct countOf_t countOf;
 #if defined ( __STM32F1__ )
 static ExtIntTriggerMode ISREdge;
 #elif defined ( ESP32 )
-static byte ISREdge;		// Holder of the Next Edge we're looking for: RISING or FALLING
-static byte ISRWatch;		// Interrupt Handler Edge Filter 
+static byte ISREdge;            // Holder of the Next Edge we're looking for: RISING or FALLING
+static byte ISRWatch;           // Interrupt Handler Edge Filter
 #else
-static byte ISREdge;		// Holder of the Next Edge we're looking for: RISING or FALLING
-static byte ISRWatch;		// Interrupt Handler Edge Filter 
+static byte ISREdge;            // Holder of the Next Edge we're looking for: RISING or FALLING
+static byte ISRWatch;           // Interrupt Handler Edge Filter
 #endif
-byte ISRLevel;			// expected Level at DCC input during ISR ( to detect glitches )
-byte ISRChkMask;		// Flag if Level must be checked
+byte ISRLevel;                  // expected Level at DCC input during ISR ( to detect glitches )
+byte ISRChkMask;                // Flag if Level must be checked
 static word bitMax, bitMin;
 
 typedef enum {
@@ -297,14 +297,14 @@ typedef struct {
     uint8_t OpsModeAddressBaseCV;
     uint8_t inServiceMode;
     long LastServiceModeMillis;
-    uint8_t PageRegister;	// Used for Paged Operations in Service Mode Programming
+    uint8_t PageRegister;       // Used for Paged Operations in Service Mode Programming
     uint8_t DuplicateCount;
     DCC_MSG LastMsg;
     uint8_t ExtIntNum;
     uint8_t ExtIntPinNum;
-    volatile uint8_t *ExtIntPort;	// use port and bitmask to read input at AVR in ISR
-    uint8_t ExtIntMask;		// digitalRead is too slow on AVR
-    int16_t myDccAddress;	// Cached value of DCC Address from CVs
+    volatile uint8_t *ExtIntPort;       // use port and bitmask to read input at AVR in ISR
+    uint8_t ExtIntMask;         // digitalRead is too slow on AVR
+    int16_t myDccAddress;       // Cached value of DCC Address from CVs
     uint8_t inAccDecDCCAddrNextReceivedMode;
     uint8_t cv29Value;
 #ifdef DCC_DEBUG
@@ -331,23 +331,23 @@ void ExternalInterruptHandler(void)
 #ifdef ESP32
 //   switch (ISRWatch)
 //   {
-//     case RISING: if (digitalRead(DccProcState.ExtIntPinNum)) break; 
-//     case FALLING: if (digitalRead(DccProcState.ExtIntPinNum)) return; break; 
+//     case RISING: if (digitalRead(DccProcState.ExtIntPinNum)) break;
+//     case FALLING: if (digitalRead(DccProcState.ExtIntPinNum)) return; break;
 //   }
-    // First compare the edge we're looking for to the pin state 
+    // First compare the edge we're looking for to the pin state
     switch (ISRWatch) {
     case CHANGE:
-	break;
+        break;
 
     case RISING:
-	if (digitalRead(DccProcState.ExtIntPinNum) != HIGH)
-	    return;
-	break;
+        if (digitalRead(DccProcState.ExtIntPinNum) != HIGH)
+            return;
+        break;
 
     case FALLING:
-	if (digitalRead(DccProcState.ExtIntPinNum) != LOW)
-	    return;
-	break;
+        if (digitalRead(DccProcState.ExtIntPinNum) != LOW)
+            return;
+        break;
     }
 #endif
 // Bit evaluation without Timer 0 ------------------------------
@@ -358,14 +358,14 @@ void ExternalInterruptHandler(void)
     unsigned int actMicros, bitMicros;
 #ifdef ALLOW_NESTED_IRQ
     if (DCC_IrqRunning) {
-	// nested DCC IRQ - obviously there are glitches
-	// ignore this interrupt and increment glitchcounter
-	CLR_TP3;
+        // nested DCC IRQ - obviously there are glitches
+        // ignore this interrupt and increment glitchcounter
+        CLR_TP3;
 #ifdef DCC_DEBUG
-	DccProcState.NestedIrqCount++;
+        DccProcState.NestedIrqCount++;
 #endif
-	SET_TP3;
-	return;			//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> abort IRQ
+        SET_TP3;
+        return;                 //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> abort IRQ
     }
 #endif
     actMicros = micros();
@@ -375,18 +375,18 @@ void ExternalInterruptHandler(void)
     SET_TP3;
 #ifdef __AVR_MEGA__
     if (bitMicros < bitMin
-	|| (DccRx.State != WAIT_START_BIT
-	    && (*DccProcState.ExtIntPort & DccProcState.ExtIntMask) != (ISRLevel))) {
+        || (DccRx.State != WAIT_START_BIT
+            && (*DccProcState.ExtIntPort & DccProcState.ExtIntMask) != (ISRLevel))) {
 #else
     if (bitMicros < bitMin
-	|| (DccRx.State != WAIT_START_BIT
-	    && digitalRead(DccProcState.ExtIntPinNum) != (ISRLevel))) {
+        || (DccRx.State != WAIT_START_BIT
+            && digitalRead(DccProcState.ExtIntPinNum) != (ISRLevel))) {
 #endif
-	// too short - my be false interrupt due to glitch or false protocol  or level does not match RISING / FALLING edge -> ignore this IRQ
-	CLR_TP3;
-	SET_TP4;		/*delayMicroseconds(1); */
-	CLR_TP4;
-	return;			//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> abort IRQ
+        // too short - my be false interrupt due to glitch or false protocol  or level does not match RISING / FALLING edge -> ignore this IRQ
+        CLR_TP3;
+        SET_TP4;                /*delayMicroseconds(1); */
+        CLR_TP4;
+        return;                 //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> abort IRQ
     }
     CLR_TP3;
     SET_TP3;
@@ -395,27 +395,27 @@ void ExternalInterruptHandler(void)
 #ifndef SUPPORT_ZERO_BIT_STRETCHING
     //if ( bitMicros > MAX_ZEROBITFULL ) {
     if (bitMicros > (bitMax * 2)) {
-	// too long - my be false protocol -> start over
-	DccRx.State = WAIT_PREAMBLE;
-	DccRx.BitCount = 0;
-	preambleBitCount = 0;
-	// SET_TP2; CLR_TP2;
-	bitMax = MAX_PRAEAMBEL;
-	bitMin = MIN_ONEBITFULL;
+        // too long - my be false protocol -> start over
+        DccRx.State = WAIT_PREAMBLE;
+        DccRx.BitCount = 0;
+        preambleBitCount = 0;
+        // SET_TP2; CLR_TP2;
+        bitMax = MAX_PRAEAMBEL;
+        bitMin = MIN_ONEBITFULL;
 #if defined ( __STM32F1__ )
-	detachInterrupt(DccProcState.ExtIntNum);
+        detachInterrupt(DccProcState.ExtIntNum);
 #endif
 #ifdef ESP32
-	ISRWatch = ISREdge;
+        ISRWatch = ISREdge;
 #else
-	attachInterrupt(DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge);
+        attachInterrupt(DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge);
 #endif
-	// enable level-checking
-	ISRChkMask = DccProcState.ExtIntMask;
-	ISRLevel = (ISREdge == RISING) ? DccProcState.ExtIntMask : 0;
-	CLR_TP3;
-	//CLR_TP3;
-	return;			//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> abort IRQ
+        // enable level-checking
+        ISRChkMask = DccProcState.ExtIntMask;
+        ISRLevel = (ISREdge == RISING) ? DccProcState.ExtIntMask : 0;
+        CLR_TP3;
+        //CLR_TP3;
+        return;                 //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> abort IRQ
     }
     CLR_TP3;
     SET_TP3;
@@ -425,7 +425,7 @@ void ExternalInterruptHandler(void)
 
 #ifdef ALLOW_NESTED_IRQ
     DCC_IrqRunning = true;
-    interrupts();		// time critical is only the micros() command,so allow nested irq's
+    interrupts();               // time critical is only the micros() command,so allow nested irq's
 #endif
 
 #ifdef DCC_DEBUG
@@ -433,293 +433,293 @@ void ExternalInterruptHandler(void)
 #endif
     switch (DccRx.State) {
     case WAIT_PREAMBLE:
-	// We don't have to do anything special - looking for a preamble condition is done always
-	SET_TP2;
-	break;
+        // We don't have to do anything special - looking for a preamble condition is done always
+        SET_TP2;
+        break;
 
 #ifndef SYNC_ALWAYS
     case WAIT_START_BIT_FULL:
-	// wait for startbit without level checking
-	if (!DccBitVal) {
-	    // we got the startbit
-	    CLR_TP2;
-	    CLR_TP1;
-	    DccRx.State = WAIT_DATA;
-	    CLR_TP1;
-	    // initialize packet buffer
-	    DccRx.PacketBuf.Size = 0;
-	    /*for(uint8_t i = 0; i< MAX_DCC_MESSAGE_LEN; i++ )
-	       DccRx.PacketBuf.Data[i] = 0; */
-	    DccRx.PacketBuf.PreambleBits = preambleBitCount;
-	    DccRx.BitCount = 0;
-	    DccRx.chkSum = 0;
-	    DccRx.TempByte = 0;
-	    //SET_TP1;
-	}
-	break;
+        // wait for startbit without level checking
+        if (!DccBitVal) {
+            // we got the startbit
+            CLR_TP2;
+            CLR_TP1;
+            DccRx.State = WAIT_DATA;
+            CLR_TP1;
+            // initialize packet buffer
+            DccRx.PacketBuf.Size = 0;
+            /*for(uint8_t i = 0; i< MAX_DCC_MESSAGE_LEN; i++ )
+               DccRx.PacketBuf.Data[i] = 0; */
+            DccRx.PacketBuf.PreambleBits = preambleBitCount;
+            DccRx.BitCount = 0;
+            DccRx.chkSum = 0;
+            DccRx.TempByte = 0;
+            //SET_TP1;
+        }
+        break;
 #endif
     case WAIT_START_BIT:
-	// we are looking for first half "0" bit after preamble
-	switch (halfBit) {
-	case 0:
-	    // check first part
-	    if (DccBitVal) {
-		// is still 1-bit (Preamble)
-		halfBit = 1;
-		bit1 = bitMicros;
-	    } else {
-		// was "0" half bit, maybe the startbit
-		halfBit = 4;
-	    }
-	    break;
-	case 1:		// previous halfbit was '1'
-	    if (DccBitVal) {
-		// its a '1' halfBit -> we are still in the preamble
-		halfBit = 0;
-		bit2 = bitMicros;
-		preambleBitCount++;
-		if (abs(bit2 - bit1) > MAX_BITDIFF) {
-		    // the length of the 2 halfbits differ too much -> wrong protokoll
-		    DccRx.State = WAIT_PREAMBLE;
-		    bitMax = MAX_PRAEAMBEL;
-		    bitMin = MIN_ONEBITFULL;
-		    preambleBitCount = 0;
-		    // SET_TP2; CLR_TP2;
+        // we are looking for first half "0" bit after preamble
+        switch (halfBit) {
+        case 0:
+            // check first part
+            if (DccBitVal) {
+                // is still 1-bit (Preamble)
+                halfBit = 1;
+                bit1 = bitMicros;
+            } else {
+                // was "0" half bit, maybe the startbit
+                halfBit = 4;
+            }
+            break;
+        case 1:         // previous halfbit was '1'
+            if (DccBitVal) {
+                // its a '1' halfBit -> we are still in the preamble
+                halfBit = 0;
+                bit2 = bitMicros;
+                preambleBitCount++;
+                if (abs(bit2 - bit1) > MAX_BITDIFF) {
+                    // the length of the 2 halfbits differ too much -> wrong protokoll
+                    DccRx.State = WAIT_PREAMBLE;
+                    bitMax = MAX_PRAEAMBEL;
+                    bitMin = MIN_ONEBITFULL;
+                    preambleBitCount = 0;
+                    // SET_TP2; CLR_TP2;
 #if defined ( __STM32F1__ )
-		    detachInterrupt(DccProcState.ExtIntNum);
+                    detachInterrupt(DccProcState.ExtIntNum);
 #endif
 #ifdef ESP32
-		    ISRWatch = ISREdge;
+                    ISRWatch = ISREdge;
 #else
-		    attachInterrupt(DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge);
-		    // enable level checking ( with direct port reading @ AVR )
-		    ISRChkMask = DccProcState.ExtIntMask;
-		    ISRLevel = (ISREdge == RISING) ? DccProcState.ExtIntMask : 0;
+                    attachInterrupt(DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge);
+                    // enable level checking ( with direct port reading @ AVR )
+                    ISRChkMask = DccProcState.ExtIntMask;
+                    ISRLevel = (ISREdge == RISING) ? DccProcState.ExtIntMask : 0;
 #endif
-		    SET_TP3;
-		    CLR_TP4;
-		}
-	    } else {
-		// first '0' half detected in second halfBit
-		// wrong sync or not a DCC protokoll
-		CLR_TP3;
-		halfBit = 3;
-		SET_TP3;
-	    }
-	    break;
-	case 3:		// previous halfbit was '0'  in second halfbit  
-	    if (DccBitVal) {
-		// its a '1' halfbit -> we got only a half '0' bit -> cannot be DCC
-		DccRx.State = WAIT_PREAMBLE;
-		bitMax = MAX_PRAEAMBEL;
-		bitMin = MIN_ONEBITFULL;
-		preambleBitCount = 0;
-		// SET_TP2; CLR_TP2;
-	    } else {
-		// we got two '0' halfbits -> it's the startbit
-		// but sync is NOT ok, change IRQ edge.
-		CLR_TP2;
-		CLR_TP1;
-		if (ISREdge == RISING)
-		    ISREdge = FALLING;
-		else
-		    ISREdge = RISING;
-		DccRx.State = WAIT_DATA;
-		CLR_TP1;
-		bitMax = MAX_ONEBITFULL;
-		bitMin = MIN_ONEBITFULL;
-		DccRx.PacketBuf.Size = 0;
-		/*for(uint8_t i = 0; i< MAX_DCC_MESSAGE_LEN; i++ )
-		   DccRx.PacketBuf.Data[i] = 0; */
-		DccRx.PacketBuf.PreambleBits = preambleBitCount;
-		DccRx.BitCount = 0;
-		DccRx.chkSum = 0;
-		DccRx.TempByte = 0;
-		//SET_TP1;
-	    }
-	    //SET_TP4;
+                    SET_TP3;
+                    CLR_TP4;
+                }
+            } else {
+                // first '0' half detected in second halfBit
+                // wrong sync or not a DCC protokoll
+                CLR_TP3;
+                halfBit = 3;
+                SET_TP3;
+            }
+            break;
+        case 3:         // previous halfbit was '0'  in second halfbit
+            if (DccBitVal) {
+                // its a '1' halfbit -> we got only a half '0' bit -> cannot be DCC
+                DccRx.State = WAIT_PREAMBLE;
+                bitMax = MAX_PRAEAMBEL;
+                bitMin = MIN_ONEBITFULL;
+                preambleBitCount = 0;
+                // SET_TP2; CLR_TP2;
+            } else {
+                // we got two '0' halfbits -> it's the startbit
+                // but sync is NOT ok, change IRQ edge.
+                CLR_TP2;
+                CLR_TP1;
+                if (ISREdge == RISING)
+                    ISREdge = FALLING;
+                else
+                    ISREdge = RISING;
+                DccRx.State = WAIT_DATA;
+                CLR_TP1;
+                bitMax = MAX_ONEBITFULL;
+                bitMin = MIN_ONEBITFULL;
+                DccRx.PacketBuf.Size = 0;
+                /*for(uint8_t i = 0; i< MAX_DCC_MESSAGE_LEN; i++ )
+                   DccRx.PacketBuf.Data[i] = 0; */
+                DccRx.PacketBuf.PreambleBits = preambleBitCount;
+                DccRx.BitCount = 0;
+                DccRx.chkSum = 0;
+                DccRx.TempByte = 0;
+                //SET_TP1;
+            }
+            //SET_TP4;
 
 #if defined ( __STM32F1__ )
-	    detachInterrupt(DccProcState.ExtIntNum);
+            detachInterrupt(DccProcState.ExtIntNum);
 #endif
 #ifdef ESP32
-	    ISRWatch = ISREdge;
+            ISRWatch = ISREdge;
 #else
-	    attachInterrupt(DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge);
+            attachInterrupt(DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge);
 #endif
-	    // enable level-checking
-	    ISRChkMask = DccProcState.ExtIntMask;
-	    ISRLevel = (ISREdge == RISING) ? DccProcState.ExtIntMask : 0;
-	    //CLR_TP4;
-	    break;
-	case 4:		// previous (first) halfbit was 0
-	    // if this halfbit is 0 too, we got the startbit
-	    if (DccBitVal) {
-		// second halfbit is 1 -> unknown protokoll
-		DccRx.State = WAIT_PREAMBLE;
-		bitMax = MAX_PRAEAMBEL;
-		bitMin = MIN_ONEBITFULL;
-		preambleBitCount = 0;
-		CLR_TP2;
-		CLR_TP1;
-		DccRx.BitCount = 0;
-	    } else {
-		// we got the startbit
-		CLR_TP2;
-		CLR_TP1;
-		DccRx.State = WAIT_DATA;
-		CLR_TP1;
-		bitMax = MAX_ONEBITFULL;
-		bitMin = MIN_ONEBITFULL;
-		// initialize packet buffer
-		DccRx.PacketBuf.Size = 0;
-		/*for(uint8_t i = 0; i< MAX_DCC_MESSAGE_LEN; i++ )
-		   DccRx.PacketBuf.Data[i] = 0; */
-		DccRx.PacketBuf.PreambleBits = preambleBitCount;
-		DccRx.BitCount = 0;
-		DccRx.chkSum = 0;
-		DccRx.TempByte = 0;
-		//SET_TP1;
-	    }
+            // enable level-checking
+            ISRChkMask = DccProcState.ExtIntMask;
+            ISRLevel = (ISREdge == RISING) ? DccProcState.ExtIntMask : 0;
+            //CLR_TP4;
+            break;
+        case 4:         // previous (first) halfbit was 0
+            // if this halfbit is 0 too, we got the startbit
+            if (DccBitVal) {
+                // second halfbit is 1 -> unknown protokoll
+                DccRx.State = WAIT_PREAMBLE;
+                bitMax = MAX_PRAEAMBEL;
+                bitMin = MIN_ONEBITFULL;
+                preambleBitCount = 0;
+                CLR_TP2;
+                CLR_TP1;
+                DccRx.BitCount = 0;
+            } else {
+                // we got the startbit
+                CLR_TP2;
+                CLR_TP1;
+                DccRx.State = WAIT_DATA;
+                CLR_TP1;
+                bitMax = MAX_ONEBITFULL;
+                bitMin = MIN_ONEBITFULL;
+                // initialize packet buffer
+                DccRx.PacketBuf.Size = 0;
+                /*for(uint8_t i = 0; i< MAX_DCC_MESSAGE_LEN; i++ )
+                   DccRx.PacketBuf.Data[i] = 0; */
+                DccRx.PacketBuf.PreambleBits = preambleBitCount;
+                DccRx.BitCount = 0;
+                DccRx.chkSum = 0;
+                DccRx.TempByte = 0;
+                //SET_TP1;
+            }
 
-	    //SET_TP4;
+            //SET_TP4;
 
 #if defined ( __STM32F1__ )
-	    detachInterrupt(DccProcState.ExtIntNum);
+            detachInterrupt(DccProcState.ExtIntNum);
 #endif
 #ifdef ESP32
-	    ISRWatch = ISREdge;
+            ISRWatch = ISREdge;
 #else
-	    attachInterrupt(DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge);
+            attachInterrupt(DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge);
 #endif
-	    // enable level-checking
-	    ISRChkMask = DccProcState.ExtIntMask;
-	    ISRLevel = (ISREdge == RISING) ? DccProcState.ExtIntMask : 0;
+            // enable level-checking
+            ISRChkMask = DccProcState.ExtIntMask;
+            ISRLevel = (ISREdge == RISING) ? DccProcState.ExtIntMask : 0;
 
-	    //CLR_TP4;
-	    break;
+            //CLR_TP4;
+            break;
 
-	}
-	break;
+        }
+        break;
 
     case WAIT_DATA:
-	CLR_TP2;
-	DccRx.BitCount++;
-	DccRx.TempByte = (DccRx.TempByte << 1);
-	if (DccBitVal)
-	    DccRx.TempByte |= 1;
+        CLR_TP2;
+        DccRx.BitCount++;
+        DccRx.TempByte = (DccRx.TempByte << 1);
+        if (DccBitVal)
+            DccRx.TempByte |= 1;
 
-	if (DccRx.BitCount == 8) {
-	    if (DccRx.PacketBuf.Size == MAX_DCC_MESSAGE_LEN)	// Packet is too long - abort
-	    {
-		DccRx.State = WAIT_PREAMBLE;
-		bitMax = MAX_PRAEAMBEL;
-		bitMin = MIN_ONEBITFULL;
-		DccRx.BitCount = 0;
-	    } else {
-		DccRx.State = WAIT_END_BIT;
-		DccRx.PacketBuf.Data[DccRx.PacketBuf.Size++] = DccRx.TempByte;
-		DccRx.chkSum ^= DccRx.TempByte;
-	    }
-	}
-	break;
+        if (DccRx.BitCount == 8) {
+            if (DccRx.PacketBuf.Size == MAX_DCC_MESSAGE_LEN)    // Packet is too long - abort
+            {
+                DccRx.State = WAIT_PREAMBLE;
+                bitMax = MAX_PRAEAMBEL;
+                bitMin = MIN_ONEBITFULL;
+                DccRx.BitCount = 0;
+            } else {
+                DccRx.State = WAIT_END_BIT;
+                DccRx.PacketBuf.Data[DccRx.PacketBuf.Size++] = DccRx.TempByte;
+                DccRx.chkSum ^= DccRx.TempByte;
+            }
+        }
+        break;
 
     case WAIT_END_BIT:
-	SET_TP2;
-	CLR_TP2;
-	DccRx.BitCount++;
-	if (DccBitVal) {	// End of packet?
-	    CLR_TP3;
-	    SET_TP4;
-	    DccRx.State = WAIT_PREAMBLE;
-	    DccRx.BitCount = 0;
-	    bitMax = MAX_PRAEAMBEL;
-	    bitMin = MIN_ONEBITFULL;
-	    SET_TP1;
-	    if (DccRx.chkSum == 0) {
-		// Packet is valid
+        SET_TP2;
+        CLR_TP2;
+        DccRx.BitCount++;
+        if (DccBitVal) {        // End of packet?
+            CLR_TP3;
+            SET_TP4;
+            DccRx.State = WAIT_PREAMBLE;
+            DccRx.BitCount = 0;
+            bitMax = MAX_PRAEAMBEL;
+            bitMin = MIN_ONEBITFULL;
+            SET_TP1;
+            if (DccRx.chkSum == 0) {
+                // Packet is valid
 #ifdef ESP32
-		portENTER_CRITICAL_ISR(&mux);
+                portENTER_CRITICAL_ISR(&mux);
 #endif
-		DccRx.PacketCopy = DccRx.PacketBuf;
-		DccRx.DataReady = 1;
+                DccRx.PacketCopy = DccRx.PacketBuf;
+                DccRx.DataReady = 1;
 #ifdef ESP32
-		portEXIT_CRITICAL_ISR(&mux);
+                portEXIT_CRITICAL_ISR(&mux);
 #endif
-		// SET_TP2; CLR_TP2;
-		preambleBitCount = 0;
-	    } else {
-		// Wrong checksum
-		CLR_TP1;
+                // SET_TP2; CLR_TP2;
+                preambleBitCount = 0;
+            } else {
+                // Wrong checksum
+                CLR_TP1;
 #ifdef DCC_DBGVAR
-		DB_PRINT("Cerr");
-		countOf.Err++;
+                DB_PRINT("Cerr");
+                countOf.Err++;
 #endif
-	    }
+            }
 
-	    SET_TP3;
-	    CLR_TP4;
-	} else {		// Get next Byte
-	    // KGW - Abort immediately if packet is too long.
-	    if (DccRx.PacketBuf.Size == MAX_DCC_MESSAGE_LEN)	// Packet is too long - abort
-	    {
-		DccRx.State = WAIT_PREAMBLE;
-		bitMax = MAX_PRAEAMBEL;
-		bitMin = MIN_ONEBITFULL;
-		DccRx.BitCount = 0;
-	    } else {
-		DccRx.State = WAIT_DATA;
+            SET_TP3;
+            CLR_TP4;
+        } else {                // Get next Byte
+            // KGW - Abort immediately if packet is too long.
+            if (DccRx.PacketBuf.Size == MAX_DCC_MESSAGE_LEN)    // Packet is too long - abort
+            {
+                DccRx.State = WAIT_PREAMBLE;
+                bitMax = MAX_PRAEAMBEL;
+                bitMin = MIN_ONEBITFULL;
+                DccRx.BitCount = 0;
+            } else {
+                DccRx.State = WAIT_DATA;
 
-		DccRx.BitCount = 0;
-		DccRx.TempByte = 0;
-	    }
-	}
+                DccRx.BitCount = 0;
+                DccRx.TempByte = 0;
+            }
+        }
     }
 
-    // unless we're already looking for the start bit 
+    // unless we're already looking for the start bit
     // we always search for a preamble ( ( 10 or more consecutive 1 bits )
     // if we found it within a packet, the packet decoding is aborted because
     // that much one bits cannot be valid in a packet.
     if (DccRx.State != WAIT_START_BIT) {
-	if (DccBitVal) {
-	    preambleBitCount++;
-	    //SET_TP2;
-	    if (preambleBitCount > 10) {
-		CLR_TP2;
+        if (DccBitVal) {
+            preambleBitCount++;
+            //SET_TP2;
+            if (preambleBitCount > 10) {
+                CLR_TP2;
 #ifndef SYNC_ALWAYS
-		if (DccRx.chkSum == 0) {
-		    // sync must be correct if chksum was ok, no need to check sync
-		    DccRx.State = WAIT_START_BIT_FULL;
-		} else {
+                if (DccRx.chkSum == 0) {
+                    // sync must be correct if chksum was ok, no need to check sync
+                    DccRx.State = WAIT_START_BIT_FULL;
+                } else {
 #endif
-		    DccRx.State = WAIT_START_BIT;
-		    SET_TP2;
-		    // While waiting for the start bit, detect halfbit lengths. We will detect the correct
-		    // sync and detect whether we see a false (e.g. motorola) protocol
+                    DccRx.State = WAIT_START_BIT;
+                    SET_TP2;
+                    // While waiting for the start bit, detect halfbit lengths. We will detect the correct
+                    // sync and detect whether we see a false (e.g. motorola) protocol
 
 #if defined ( __STM32F1__ )
-		    detachInterrupt(DccProcState.ExtIntNum);
+                    detachInterrupt(DccProcState.ExtIntNum);
 #endif
 #ifdef ESP32
-		    ISRWatch = CHANGE;
+                    ISRWatch = CHANGE;
 #else
-		    attachInterrupt(DccProcState.ExtIntNum, ExternalInterruptHandler, CHANGE);
+                    attachInterrupt(DccProcState.ExtIntNum, ExternalInterruptHandler, CHANGE);
 #endif
-		    ISRChkMask = 0;	// AVR level check is always true with this settings
-		    ISRLevel = 0;	// ( there cannot be false edge IRQ's with CHANGE )
-		    halfBit = 0;
-		    bitMax = MAX_ONEBITHALF;
-		    bitMin = MIN_ONEBITHALF;
-		    //CLR_TP1;
+                    ISRChkMask = 0;     // AVR level check is always true with this settings
+                    ISRLevel = 0;       // ( there cannot be false edge IRQ's with CHANGE )
+                    halfBit = 0;
+                    bitMax = MAX_ONEBITHALF;
+                    bitMin = MIN_ONEBITHALF;
+                    //CLR_TP1;
 #ifndef SYNC_ALWAYS
-		}
+                }
 #endif
-	    }
-	} else {
-	    CLR_TP1;
-	    preambleBitCount = 0;
-	    // SET_TP2; CLR_TP2;
-	}
+            }
+        } else {
+            CLR_TP1;
+            preambleBitCount = 0;
+            // SET_TP2; CLR_TP2;
+        }
     }
 #ifdef ALLOW_NESTED_IRQ
     DCC_IrqRunning = false;
@@ -731,16 +731,16 @@ void ExternalInterruptHandler(void)
 void ackCV(void)
 {
     if (notifyCVAck) {
-	DB_PRINT("ackCV: Send Basic ACK");
-	notifyCVAck();
+        DB_PRINT("ackCV: Send Basic ACK");
+        notifyCVAck();
     }
 }
 
 void ackAdvancedCV(void)
 {
     if (notifyAdvancedCVAck && (DccProcState.cv29Value & CV29_RAILCOM_ENABLE)) {
-	DB_PRINT("ackAdvancedCV: Send RailCom ACK");
-	notifyAdvancedCVAck();
+        DB_PRINT("ackAdvancedCV: Send RailCom ACK");
+        notifyAdvancedCVAck();
     }
 }
 
@@ -775,19 +775,19 @@ bool readyEEPROM()
 uint8_t validCV(uint16_t CV, uint8_t Writable)
 {
     if (notifyCVResetFactoryDefault && (CV == CV_MANUFACTURER_ID)
-	&& Writable)
-	notifyCVResetFactoryDefault();
+        && Writable)
+        notifyCVResetFactoryDefault();
 
     if (notifyCVValid)
-	return notifyCVValid(CV, Writable);
+        return notifyCVValid(CV, Writable);
 
     uint8_t Valid = 1;
 
     if (CV > MAXCV)
-	Valid = 0;
+        Valid = 0;
 
     if (Writable && ((CV == CV_VERSION_ID) || (CV == CV_MANUFACTURER_ID)))
-	Valid = 0;
+        Valid = 0;
 
     return Valid;
 }
@@ -797,7 +797,7 @@ uint8_t readCV(unsigned int CV)
     uint8_t Value;
 
     if (notifyCVRead)
-	return notifyCVRead(CV);
+        return notifyCVRead(CV);
 
     Value = readEEPROM(CV);
     return Value;
@@ -807,30 +807,30 @@ uint8_t writeCV(unsigned int CV, uint8_t Value)
 {
     switch (CV) {
     case CV_29_CONFIG:
-	// copy addressmode Bit to Flags
-	Value = Value & ~CV29_RAILCOM_ENABLE;	// Bidi (RailCom) Bit must not be enabled, 
-	// because you cannot build a Bidi decoder with this lib.
-	DccProcState.cv29Value = Value;
-	DccProcState.Flags = (DccProcState.Flags & ~FLAGS_CV29_BITS) | (Value & FLAGS_CV29_BITS);
-	// no break, because myDccAdress must also be reset
-    case CV_ACCESSORY_DECODER_ADDRESS_LSB:	// Also same CV for CV_MULTIFUNCTION_PRIMARY_ADDRESS
+        // copy addressmode Bit to Flags
+        Value = Value & ~CV29_RAILCOM_ENABLE;   // Bidi (RailCom) Bit must not be enabled,
+        // because you cannot build a Bidi decoder with this lib.
+        DccProcState.cv29Value = Value;
+        DccProcState.Flags = (DccProcState.Flags & ~FLAGS_CV29_BITS) | (Value & FLAGS_CV29_BITS);
+        // no break, because myDccAdress must also be reset
+    case CV_ACCESSORY_DECODER_ADDRESS_LSB:      // Also same CV for CV_MULTIFUNCTION_PRIMARY_ADDRESS
     case CV_ACCESSORY_DECODER_ADDRESS_MSB:
     case CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB:
     case CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB:
-	DccProcState.myDccAddress = -1;	// Assume any CV Write Operation might change the Address
+        DccProcState.myDccAddress = -1; // Assume any CV Write Operation might change the Address
     }
 
     if (notifyCVWrite)
-	return notifyCVWrite(CV, Value);
+        return notifyCVWrite(CV, Value);
 
     if (readEEPROM(CV) != Value) {
-	writeEEPROM(CV, Value);
+        writeEEPROM(CV, Value);
 
-	if (notifyCVChange)
-	    notifyCVChange(CV, Value);
+        if (notifyCVChange)
+            notifyCVChange(CV, Value);
 
-	if (notifyDccCVChange && !(DccProcState.Flags & FLAGS_SETCV_CALLED))
-	    notifyDccCVChange(CV, Value);
+        if (notifyDccCVChange && !(DccProcState.Flags & FLAGS_SETCV_CALLED))
+            notifyDccCVChange(CV, Value);
     }
 
     return readEEPROM(CV);
@@ -838,28 +838,28 @@ uint8_t writeCV(unsigned int CV, uint8_t Value)
 
 uint16_t getMyAddr(void)
 {
-    if (DccProcState.myDccAddress != -1)	// See if we can return the cached value 
-	return (DccProcState.myDccAddress);
+    if (DccProcState.myDccAddress != -1)        // See if we can return the cached value
+        return (DccProcState.myDccAddress);
 
-    if (DccProcState.cv29Value & CV29_ACCESSORY_DECODER)	// Accessory Decoder?
+    if (DccProcState.cv29Value & CV29_ACCESSORY_DECODER)        // Accessory Decoder?
     {
-	if (DccProcState.cv29Value & CV29_OUTPUT_ADDRESS_MODE)
-	    DccProcState.myDccAddress =
-		(readCV(CV_ACCESSORY_DECODER_ADDRESS_MSB) << 8) |
-		readCV(CV_ACCESSORY_DECODER_ADDRESS_LSB);
-	else
-	    DccProcState.myDccAddress = ((readCV(CV_ACCESSORY_DECODER_ADDRESS_MSB) & 0 b00000111)
-					 << 6) | (readCV(CV_ACCESSORY_DECODER_ADDRESS_LSB) & 0
-						  b00111111);
-    } else			// Multi-Function Decoder?
+        if (DccProcState.cv29Value & CV29_OUTPUT_ADDRESS_MODE)
+            DccProcState.myDccAddress =
+                (readCV(CV_ACCESSORY_DECODER_ADDRESS_MSB) << 8) |
+                readCV(CV_ACCESSORY_DECODER_ADDRESS_LSB);
+        else
+            DccProcState.myDccAddress = ((readCV(CV_ACCESSORY_DECODER_ADDRESS_MSB) & 0 b00000111)
+                                         << 6) | (readCV(CV_ACCESSORY_DECODER_ADDRESS_LSB) & 0
+                                                  b00111111);
+    } else                      // Multi-Function Decoder?
     {
-	if (DccProcState.cv29Value & CV29_EXT_ADDRESSING)	// Two Byte Address?
-	    DccProcState.myDccAddress =
-		((readCV(CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB) -
-		  192) << 8) | readCV(CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB);
+        if (DccProcState.cv29Value & CV29_EXT_ADDRESSING)       // Two Byte Address?
+            DccProcState.myDccAddress =
+                ((readCV(CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB) -
+                  192) << 8) | readCV(CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB);
 
-	else
-	    DccProcState.myDccAddress = readCV(1);
+        else
+            DccProcState.myDccAddress = readCV(1);
     }
 
     return DccProcState.myDccAddress;
@@ -869,68 +869,68 @@ void processDirectCVOperation(uint8_t Cmd, uint16_t CVAddr, uint8_t Value, void 
 {
     // is it a Byte Operation
     if (Cmd & 0x04) {
-	// Perform the Write Operation
-	if (Cmd & 0x08) {
-	    if (validCV(CVAddr, 1)) {
-		DB_PRINT("CV: %d Byte Write: %02X", CVAddr, Value)
-		    if (writeCV(CVAddr, Value) == Value)
-		    ackFunction();
-	    }
-	}
+        // Perform the Write Operation
+        if (Cmd & 0x08) {
+            if (validCV(CVAddr, 1)) {
+                DB_PRINT("CV: %d Byte Write: %02X", CVAddr, Value)
+                    if (writeCV(CVAddr, Value) == Value)
+                    ackFunction();
+            }
+        }
 
-	else			// Perform the Verify Operation
-	{
-	    if (validCV(CVAddr, 0)) {
-		DB_PRINT("CV: %d Byte Read: %02X", CVAddr, Value)
-		    if (readCV(CVAddr) == Value)
-		    ackFunction();
-	    }
-	}
+        else                    // Perform the Verify Operation
+        {
+            if (validCV(CVAddr, 0)) {
+                DB_PRINT("CV: %d Byte Read: %02X", CVAddr, Value)
+                    if (readCV(CVAddr) == Value)
+                    ackFunction();
+            }
+        }
     }
     // Perform the Bit-Wise Operation
     else {
-	uint8_t BitMask = (1 << (Value & 0x07));
-	uint8_t BitValue = Value & 0x08;
-	uint8_t BitWrite = Value & 0x10;
+        uint8_t BitMask = (1 << (Value & 0x07));
+        uint8_t BitValue = Value & 0x08;
+        uint8_t BitWrite = Value & 0x10;
 
-	uint8_t tempValue = readCV(CVAddr);	// Read the Current CV Value
+        uint8_t tempValue = readCV(CVAddr);     // Read the Current CV Value
 
-	DB_PRINT
-	    ("CV: %d Current Value: %02X  Bit-Wise Mode: %s  Mask: %02X  Value: %02X",
-	     CVAddr, tempValue, BitWrite ? "Write" : "Read", BitMask, BitValue);
+        DB_PRINT
+            ("CV: %d Current Value: %02X  Bit-Wise Mode: %s  Mask: %02X  Value: %02X",
+             CVAddr, tempValue, BitWrite ? "Write" : "Read", BitMask, BitValue);
 
-	// Perform the Bit Write Operation
-	if (BitWrite) {
-	    if (validCV(CVAddr, 1)) {
-		if (BitValue)
-		    tempValue |= BitMask;	// Turn the Bit On
+        // Perform the Bit Write Operation
+        if (BitWrite) {
+            if (validCV(CVAddr, 1)) {
+                if (BitValue)
+                    tempValue |= BitMask;       // Turn the Bit On
 
-		else
-		    tempValue &= ~BitMask;	// Turn the Bit Off
+                else
+                    tempValue &= ~BitMask;      // Turn the Bit Off
 
-		if (writeCV(CVAddr, tempValue) == tempValue)
-		    ackFunction();
-	    }
-	}
-	// Perform the Bit Verify Operation
-	else {
-	    if (validCV(CVAddr, 0)) {
-		if (BitValue) {
-		    if (tempValue & BitMask)
-			ackFunction();
-		} else {
-		    if (!(tempValue & BitMask))
-			ackFunction();
-		}
-	    }
-	}
+                if (writeCV(CVAddr, tempValue) == tempValue)
+                    ackFunction();
+            }
+        }
+        // Perform the Bit Verify Operation
+        else {
+            if (validCV(CVAddr, 0)) {
+                if (BitValue) {
+                    if (tempValue & BitMask)
+                        ackFunction();
+                } else {
+                    if (!(tempValue & BitMask))
+                        ackFunction();
+                }
+            }
+        }
     }
 }
 
 /////////////////////////////////////////////////////////////////////////
 #ifdef NMRA_DCC_PROCESS_MULTIFUNCTION
 void processMultiFunctionMessage(uint16_t Addr, DCC_ADDR_TYPE AddrType,
-				 uint8_t Cmd, uint8_t Data1, uint8_t Data2)
+                                 uint8_t Cmd, uint8_t Data1, uint8_t Data2)
 {
     uint8_t speed;
     uint16_t CVAddr;
@@ -941,153 +941,153 @@ void processMultiFunctionMessage(uint16_t Addr, DCC_ADDR_TYPE AddrType,
 
     // If we are an Accessory Decoder
     if (DccProcState.Flags & FLAGS_DCC_ACCESSORY_DECODER) {
-	// and this isn't an Ops Mode Write or we are NOT faking the Multifunction Ops mode address in CV 33+34 or
-	// it's not our fake address, then return
-	if ((CmdMasked != 0 b11100000)
-	    || (DccProcState.OpsModeAddressBaseCV == 0))
-	    return;
+        // and this isn't an Ops Mode Write or we are NOT faking the Multifunction Ops mode address in CV 33+34 or
+        // it's not our fake address, then return
+        if ((CmdMasked != 0 b11100000)
+            || (DccProcState.OpsModeAddressBaseCV == 0))
+            return;
 
-	uint16_t FakeOpsAddr =
-	    readCV(DccProcState.OpsModeAddressBaseCV) | (readCV(DccProcState.OpsModeAddressBaseCV +
-								1) << 8);
-	uint16_t OpsAddr = Addr & 0x3FFF;
+        uint16_t FakeOpsAddr =
+            readCV(DccProcState.OpsModeAddressBaseCV) | (readCV(DccProcState.OpsModeAddressBaseCV +
+                                                                1) << 8);
+        uint16_t OpsAddr = Addr & 0x3FFF;
 
-	if (OpsAddr != FakeOpsAddr)
-	    return;
+        if (OpsAddr != FakeOpsAddr)
+            return;
     }
     // We are looking for FLAGS_MY_ADDRESS_ONLY but it does not match and it is not a Broadcast Address then return
     else if ((DccProcState.Flags & FLAGS_MY_ADDRESS_ONLY)
-	     && (Addr != getMyAddr()) && (Addr != 0))
-	return;
+             && (Addr != getMyAddr()) && (Addr != 0))
+        return;
 
     switch (CmdMasked) {
-    case 0 b00000000:		// Decoder Control
-	switch (Cmd & 0 b00001110) {
-	case 0 b00000000:
-	    if (notifyDccReset)
-		notifyDccReset(Cmd & 0 b00000001);
-	    break;
+    case 0 b00000000:           // Decoder Control
+        switch (Cmd & 0 b00001110) {
+        case 0 b00000000:
+            if (notifyDccReset)
+                notifyDccReset(Cmd & 0 b00000001);
+            break;
 
-	case 0 b00000010:	// Factory Test
-	    break;
+        case 0 b00000010:       // Factory Test
+            break;
 
-	case 0 b00000110:	// Set Decoder Flags
-	    break;
+        case 0 b00000110:       // Set Decoder Flags
+            break;
 
-	case 0 b00001010:	// Set Advanced Addressing
-	    break;
+        case 0 b00001010:       // Set Advanced Addressing
+            break;
 
-	case 0 b00001110:	// Decoder Acknowledgment
-	    break;
+        case 0 b00001110:       // Decoder Acknowledgment
+            break;
 
-	default:		// Reserved
-	    ;
-	}
-	break;
+        default:                // Reserved
+            ;
+        }
+        break;
 
-    case 0 b00100000:		// Advanced Operations
-	switch (Cmd & 0 b00011111) {
-	case 0 b00011111:
-	    if (notifyDccSpeed) {
-		switch (Data1 & 0 b01111111) {
-		case 0 b00000000:	// 0=STOP
-		    speed = 1;	// => 1
-		    break;
+    case 0 b00100000:           // Advanced Operations
+        switch (Cmd & 0 b00011111) {
+        case 0 b00011111:
+            if (notifyDccSpeed) {
+                switch (Data1 & 0 b01111111) {
+                case 0 b00000000:       // 0=STOP
+                    speed = 1;  // => 1
+                    break;
 
-		case 0 b00000001:	// 1=EMERGENCY_STOP
-		    speed = 0;	// => 0
-		    break;
+                case 0 b00000001:       // 1=EMERGENCY_STOP
+                    speed = 0;  // => 0
+                    break;
 
-		default:	// 2..127
-		    speed = (Data1 & 0 b01111111);
-		}
-		dir = (DCC_DIRECTION) ((Data1 & 0 b10000000) >> 7);
-		notifyDccSpeed(Addr, AddrType, speed, dir, SPEED_STEP_128);
-	    }
-	}
-	break;
+                default:        // 2..127
+                    speed = (Data1 & 0 b01111111);
+                }
+                dir = (DCC_DIRECTION) ((Data1 & 0 b10000000) >> 7);
+                notifyDccSpeed(Addr, AddrType, speed, dir, SPEED_STEP_128);
+            }
+        }
+        break;
 
     case 0 b01000000:
     case 0 b01100000:
-	//TODO should we cache this info in DCC_PROCESSOR_STATE.Flags ?
+        //TODO should we cache this info in DCC_PROCESSOR_STATE.Flags ?
 #ifdef NMRA_DCC_ENABLE_14_SPEED_STEP_MODE
-	speedSteps = (DccProcState.cv29Value & CV29_F0_LOCATION) ? SPEED_STEP_28 : SPEED_STEP_14;
+        speedSteps = (DccProcState.cv29Value & CV29_F0_LOCATION) ? SPEED_STEP_28 : SPEED_STEP_14;
 #else
-	speedSteps = SPEED_STEP_28;
+        speedSteps = SPEED_STEP_28;
 #endif
-	if (notifyDccSpeed) {
-	    switch (Cmd & 0 b00011111) {
-	    case 0 b00000000:	// 0 0000 = STOP   
-	    case 0 b00010000:	// 1 0000 = STOP
-		speed = 1;	// => 1
-		break;
+        if (notifyDccSpeed) {
+            switch (Cmd & 0 b00011111) {
+            case 0 b00000000:   // 0 0000 = STOP
+            case 0 b00010000:   // 1 0000 = STOP
+                speed = 1;      // => 1
+                break;
 
-	    case 0 b00000001:	// 0 0001 = EMERGENCY STOP
-	    case 0 b00010001:	// 1 0001 = EMERGENCY STOP
-		speed = 0;	// => 0
-		break;
+            case 0 b00000001:   // 0 0001 = EMERGENCY STOP
+            case 0 b00010001:   // 1 0001 = EMERGENCY STOP
+                speed = 0;      // => 0
+                break;
 
-	    default:
+            default:
 #ifdef NMRA_DCC_ENABLE_14_SPEED_STEP_MODE
-		if (speedSteps == SPEED_STEP_14) {
-		    speed = (Cmd & 0 b00001111);	// => 2..15
-		} else {
+                if (speedSteps == SPEED_STEP_14) {
+                    speed = (Cmd & 0 b00001111);        // => 2..15
+                } else {
 #endif
-		    speed = (((Cmd & 0 b00001111) << 1) | ((Cmd & 0 b00010000) >> 4)) - 2;	// => 2..29
+                    speed = (((Cmd & 0 b00001111) << 1) | ((Cmd & 0 b00010000) >> 4)) - 2;      // => 2..29
 #ifdef NMRA_DCC_ENABLE_14_SPEED_STEP_MODE
-		}
+                }
 #endif
-	    }
-	    dir = (DCC_DIRECTION) ((Cmd & 0 b00100000) >> 5);
-	    notifyDccSpeed(Addr, AddrType, speed, dir, speedSteps);
-	}
-	if (notifyDccSpeedRaw)
-	    notifyDccSpeedRaw(Addr, AddrType, Cmd);
+            }
+            dir = (DCC_DIRECTION) ((Cmd & 0 b00100000) >> 5);
+            notifyDccSpeed(Addr, AddrType, speed, dir, speedSteps);
+        }
+        if (notifyDccSpeedRaw)
+            notifyDccSpeedRaw(Addr, AddrType, Cmd);
 
 #ifdef NMRA_DCC_ENABLE_14_SPEED_STEP_MODE
-	if (notifyDccFunc && (speedSteps == SPEED_STEP_14)) {
-	    // function light is controlled by this package
-	    uint8_t fn0 = (Cmd & 0 b00010000);
-	    notifyDccFunc(Addr, AddrType, FN_0, fn0);
-	}
+        if (notifyDccFunc && (speedSteps == SPEED_STEP_14)) {
+            // function light is controlled by this package
+            uint8_t fn0 = (Cmd & 0 b00010000);
+            notifyDccFunc(Addr, AddrType, FN_0, fn0);
+        }
 #endif
-	break;
+        break;
 
-    case 0 b10000000:		// Function Group 0..4
-	if (notifyDccFunc) {
-	    // function light is controlled by this package (28 or 128 speed steps)
-	    notifyDccFunc(Addr, AddrType, FN_0_4, Cmd & 0 b00011111);
-	}
-	break;
+    case 0 b10000000:           // Function Group 0..4
+        if (notifyDccFunc) {
+            // function light is controlled by this package (28 or 128 speed steps)
+            notifyDccFunc(Addr, AddrType, FN_0_4, Cmd & 0 b00011111);
+        }
+        break;
 
-    case 0 b10100000:		// Function Group 5..8
-	if (notifyDccFunc) {
-	    if (Cmd & 0 b00010000)
-		notifyDccFunc(Addr, AddrType, FN_5_8, Cmd & 0 b00001111);
-	    else
-		notifyDccFunc(Addr, AddrType, FN_9_12, Cmd & 0 b00001111);
-	}
-	break;
+    case 0 b10100000:           // Function Group 5..8
+        if (notifyDccFunc) {
+            if (Cmd & 0 b00010000)
+                notifyDccFunc(Addr, AddrType, FN_5_8, Cmd & 0 b00001111);
+            else
+                notifyDccFunc(Addr, AddrType, FN_9_12, Cmd & 0 b00001111);
+        }
+        break;
 
-    case 0 b11000000:		// Feature Expansion Instruction
-	switch (Cmd & 0 b00011111) {
-	case 0 b00011110:
-	    if (notifyDccFunc)
-		notifyDccFunc(Addr, AddrType, FN_13_20, Data1);
-	    break;
+    case 0 b11000000:           // Feature Expansion Instruction
+        switch (Cmd & 0 b00011111) {
+        case 0 b00011110:
+            if (notifyDccFunc)
+                notifyDccFunc(Addr, AddrType, FN_13_20, Data1);
+            break;
 
-	case 0 b00011111:
-	    if (notifyDccFunc)
-		notifyDccFunc(Addr, AddrType, FN_21_28, Data1);
-	    break;
-	}
-	break;
+        case 0 b00011111:
+            if (notifyDccFunc)
+                notifyDccFunc(Addr, AddrType, FN_21_28, Data1);
+            break;
+        }
+        break;
 
-    case 0 b11100000:		// CV Access
-	CVAddr = (((Cmd & 0x03) << 8) | Data1) + 1;
+    case 0 b11100000:           // CV Access
+        CVAddr = (((Cmd & 0x03) << 8) | Data1) + 1;
 
-	processDirectCVOperation(Cmd, CVAddr, Data2, ackAdvancedCV);
-	break;
+        processDirectCVOperation(Cmd, CVAddr, Data2, ackAdvancedCV);
+        break;
     }
 }
 #endif
@@ -1098,54 +1098,54 @@ void processServiceModeOperation(DCC_MSG * pDccMsg)
 {
     uint16_t CVAddr;
     uint8_t Value;
-    if (pDccMsg->Size == 3)	// 3 Byte Packets are for Address Only, Register and Paged Mode
+    if (pDccMsg->Size == 3)     // 3 Byte Packets are for Address Only, Register and Paged Mode
     {
-	uint8_t RegisterAddr;
-	DB_PRINT("CV Address, Register & Paged Mode Operation");
-	RegisterAddr = pDccMsg->Data[0] & 0x07;
-	Value = pDccMsg->Data[1];
+        uint8_t RegisterAddr;
+        DB_PRINT("CV Address, Register & Paged Mode Operation");
+        RegisterAddr = pDccMsg->Data[0] & 0x07;
+        Value = pDccMsg->Data[1];
 
-	if (RegisterAddr == 5) {
-	    DccProcState.PageRegister = Value;
-	    ackCV();
-	}
+        if (RegisterAddr == 5) {
+            DccProcState.PageRegister = Value;
+            ackCV();
+        }
 
-	else {
-	    if (RegisterAddr == 4)
-		CVAddr = CV_29_CONFIG;
+        else {
+            if (RegisterAddr == 4)
+                CVAddr = CV_29_CONFIG;
 
-	    else if ((RegisterAddr <= 3)
-		     && (DccProcState.PageRegister > 0))
-		CVAddr = ((DccProcState.PageRegister - 1) * 4) + RegisterAddr + 1;
+            else if ((RegisterAddr <= 3)
+                     && (DccProcState.PageRegister > 0))
+                CVAddr = ((DccProcState.PageRegister - 1) * 4) + RegisterAddr + 1;
 
-	    else
-		CVAddr = RegisterAddr + 1;
+            else
+                CVAddr = RegisterAddr + 1;
 
-	    if (pDccMsg->Data[0] & 0x08)	// Perform the Write Operation
-	    {
-		if (validCV(CVAddr, 1)) {
-		    if (writeCV(CVAddr, Value) == Value)
-			ackCV();
-		}
-	    }
+            if (pDccMsg->Data[0] & 0x08)        // Perform the Write Operation
+            {
+                if (validCV(CVAddr, 1)) {
+                    if (writeCV(CVAddr, Value) == Value)
+                        ackCV();
+                }
+            }
 
-	    else		// Perform the Verify Operation
-	    {
-		if (validCV(CVAddr, 0)) {
-		    if (readCV(CVAddr) == Value)
-			ackCV();
-		}
-	    }
-	}
+            else                // Perform the Verify Operation
+            {
+                if (validCV(CVAddr, 0)) {
+                    if (readCV(CVAddr) == Value)
+                        ackCV();
+                }
+            }
+        }
     }
 
-    else if (pDccMsg->Size == 4)	// 4 Byte Packets are for Direct Byte & Bit Mode
+    else if (pDccMsg->Size == 4)        // 4 Byte Packets are for Direct Byte & Bit Mode
     {
-	DB_PRINT("CV Direct Byte and Bit Mode Mode Operation");
-	CVAddr = (((pDccMsg->Data[0] & 0x03) << 8) | pDccMsg->Data[1]) + 1;
-	Value = pDccMsg->Data[2];
+        DB_PRINT("CV Direct Byte and Bit Mode Mode Operation");
+        CVAddr = (((pDccMsg->Data[0] & 0x03) << 8) | pDccMsg->Data[1]) + 1;
+        Value = pDccMsg->Data[2];
 
-	processDirectCVOperation(pDccMsg->Data[0] & 0 b00001100, CVAddr, Value, ackCV);
+        processDirectCVOperation(pDccMsg->Data[0] & 0 b00001100, CVAddr, Value, ackCV);
     }
 }
 #endif
@@ -1154,14 +1154,14 @@ void processServiceModeOperation(DCC_MSG * pDccMsg)
 void resetServiceModeTimer(uint8_t inServiceMode)
 {
     if (notifyServiceMode && inServiceMode != DccProcState.inServiceMode) {
-	notifyServiceMode(inServiceMode);
+        notifyServiceMode(inServiceMode);
     }
     // Set the Service Mode
     DccProcState.inServiceMode = inServiceMode;
 
     DccProcState.LastServiceModeMillis = inServiceMode ? millis() : 0;
     if (notifyServiceMode && inServiceMode != DccProcState.inServiceMode) {
-	notifyServiceMode(inServiceMode);
+        notifyServiceMode(inServiceMode);
     }
 }
 
@@ -1185,11 +1185,11 @@ void SerialPrintPacketHex(const __FlashStringHelper * strLabel, DCC_MSG * pDccMs
     Serial.print(strLabel);
 
     for (uint8_t i = 0; i < pDccMsg->Size; i++) {
-	if (pDccMsg->Data[i] <= 9)
-	    Serial.print('0');
+        if (pDccMsg->Data[i] <= 9)
+            Serial.print('0');
 
-	Serial.print(pDccMsg->Data[i], HEX);
-	Serial.write(' ');
+        Serial.print(pDccMsg->Data[i], HEX);
+        Serial.write(' ');
     }
     Serial.println();
 }
@@ -1199,272 +1199,272 @@ void SerialPrintPacketHex(const __FlashStringHelper * strLabel, DCC_MSG * pDccMs
 void execDccProcessor(DCC_MSG * pDccMsg)
 {
     if ((pDccMsg->Data[0] == 0) && (pDccMsg->Data[1] == 0)) {
-	if (notifyDccReset)
-	    notifyDccReset(0);
+        if (notifyDccReset)
+            notifyDccReset(0);
 
 #ifdef NMRA_DCC_PROCESS_SERVICEMODE
-	// If this is the first Reset then perform some one-shot actions as we maybe about to enter service mode
-	if (DccProcState.inServiceMode)
-	    resetServiceModeTimer(1);
-	else
-	    clearDccProcState(1);
+        // If this is the first Reset then perform some one-shot actions as we maybe about to enter service mode
+        if (DccProcState.inServiceMode)
+            resetServiceModeTimer(1);
+        else
+            clearDccProcState(1);
 #endif
     }
 
     else {
 #ifdef NMRA_DCC_PROCESS_SERVICEMODE
-	if (DccProcState.inServiceMode && (pDccMsg->Data[0] >= 112)
-	    && (pDccMsg->Data[0] < 128)) {
-	    resetServiceModeTimer(1);
+        if (DccProcState.inServiceMode && (pDccMsg->Data[0] >= 112)
+            && (pDccMsg->Data[0] < 128)) {
+            resetServiceModeTimer(1);
 
-	    //Only check the DCC Packet "Size" and "Data" fields and ignore the "PreambleBits" as they can be different to the previous packet
-	    if (pDccMsg->Size != DccProcState.LastMsg.Size
-		|| memcmp(pDccMsg->Data, &DccProcState.LastMsg.Data, pDccMsg->Size) != 0) {
-		DccProcState.DuplicateCount = 0;
-		memcpy(&DccProcState.LastMsg, pDccMsg, sizeof(DCC_MSG));
-	    }
-	    // Wait until you see 2 identical packets before acting on a Service Mode Packet 
-	    else {
-		DccProcState.DuplicateCount++;
-		processServiceModeOperation(pDccMsg);
-	    }
-	}
+            //Only check the DCC Packet "Size" and "Data" fields and ignore the "PreambleBits" as they can be different to the previous packet
+            if (pDccMsg->Size != DccProcState.LastMsg.Size
+                || memcmp(pDccMsg->Data, &DccProcState.LastMsg.Data, pDccMsg->Size) != 0) {
+                DccProcState.DuplicateCount = 0;
+                memcpy(&DccProcState.LastMsg, pDccMsg, sizeof(DCC_MSG));
+            }
+            // Wait until you see 2 identical packets before acting on a Service Mode Packet
+            else {
+                DccProcState.DuplicateCount++;
+                processServiceModeOperation(pDccMsg);
+            }
+        }
 
-	else {
-	    if (DccProcState.inServiceMode)
-		clearDccProcState(0);
+        else {
+            if (DccProcState.inServiceMode)
+                clearDccProcState(0);
 #endif
 
-	    // Idle Packet
-	    if ((pDccMsg->Data[0] == 0 b11111111)
-		&& (pDccMsg->Data[1] == 0)) {
-		if (notifyDccIdle)
-		    notifyDccIdle();
-	    }
+            // Idle Packet
+            if ((pDccMsg->Data[0] == 0 b11111111)
+                && (pDccMsg->Data[1] == 0)) {
+                if (notifyDccIdle)
+                    notifyDccIdle();
+            }
 #ifdef NMRA_DCC_PROCESS_MULTIFUNCTION
-	    // Multi Function Decoders (7-bit address)
-	    else if (pDccMsg->Data[0] < 128)
-		processMultiFunctionMessage(pDccMsg->Data[0],
-					    DCC_ADDR_SHORT,
-					    pDccMsg->Data[1], pDccMsg->Data[2], pDccMsg->Data[3]);
+            // Multi Function Decoders (7-bit address)
+            else if (pDccMsg->Data[0] < 128)
+                processMultiFunctionMessage(pDccMsg->Data[0],
+                                            DCC_ADDR_SHORT,
+                                            pDccMsg->Data[1], pDccMsg->Data[2], pDccMsg->Data[3]);
 
-	    // Basic Accessory Decoders (9-bit) & Extended Accessory Decoders (11-bit)
-	    else if (pDccMsg->Data[0] < 192)
+            // Basic Accessory Decoders (9-bit) & Extended Accessory Decoders (11-bit)
+            else if (pDccMsg->Data[0] < 192)
 #else
-	    else if ((pDccMsg->Data[0] >= 128) && (pDccMsg->Data[0] < 192))
+            else if ((pDccMsg->Data[0] >= 128) && (pDccMsg->Data[0] < 192))
 #endif
-	    {
-		if (DccProcState.Flags & FLAGS_DCC_ACCESSORY_DECODER) {
-		    int16_t BoardAddress;
-		    int16_t OutputAddress;
-		    uint8_t TurnoutPairIndex;
+            {
+                if (DccProcState.Flags & FLAGS_DCC_ACCESSORY_DECODER) {
+                    int16_t BoardAddress;
+                    int16_t OutputAddress;
+                    uint8_t TurnoutPairIndex;
 
 #ifdef DEBUG_PRINT
-		    SerialPrintPacketHex(F("eDP: AccCmd: "), pDccMsg);
+                    SerialPrintPacketHex(F("eDP: AccCmd: "), pDccMsg);
 #endif
 
-		    BoardAddress =
-			(((~pDccMsg->Data[1]) & 0 b01110000) << 2) | (pDccMsg->Data[0] & 0
-								      b00111111);
-		    TurnoutPairIndex = (pDccMsg->Data[1] & 0 b00000110) >> 1;
-		    DB_PRINT("eDP: BAddr:%d, Index:%d", BoardAddress, TurnoutPairIndex);
+                    BoardAddress =
+                        (((~pDccMsg->Data[1]) & 0 b01110000) << 2) | (pDccMsg->Data[0] & 0
+                                                                      b00111111);
+                    TurnoutPairIndex = (pDccMsg->Data[1] & 0 b00000110) >> 1;
+                    DB_PRINT("eDP: BAddr:%d, Index:%d", BoardAddress, TurnoutPairIndex);
 
-		    // First check for Legacy Accessory Decoder Configuration Variable Access Instruction
-		    // as it's got a different format to the others 
-		    if ((pDccMsg->Size == 5)
-			&& ((pDccMsg->Data[1] & 0 b10001100) == 0 b00001100)) {
-			DB_PRINT("eDP: Legacy Accessory Decoder CV Access Command");
-			// Check if this command is for our address or the broadcast address
-			if ((BoardAddress != getMyAddr())
-			    && (BoardAddress < 511)) {
-			    DB_PRINT("eDP: Board Address Not Matched");
-			    return;
-			}
+                    // First check for Legacy Accessory Decoder Configuration Variable Access Instruction
+                    // as it's got a different format to the others
+                    if ((pDccMsg->Size == 5)
+                        && ((pDccMsg->Data[1] & 0 b10001100) == 0 b00001100)) {
+                        DB_PRINT("eDP: Legacy Accessory Decoder CV Access Command");
+                        // Check if this command is for our address or the broadcast address
+                        if ((BoardAddress != getMyAddr())
+                            && (BoardAddress < 511)) {
+                            DB_PRINT("eDP: Board Address Not Matched");
+                            return;
+                        }
 
-			uint16_t cvAddress =
-			    ((pDccMsg->Data[1] & 0 b00000011) << 8) + pDccMsg->Data[2] + 1;
-			uint8_t cvValue = pDccMsg->Data[3];
-			DB_PRINT("eDP: CV:%d Value:%d", cvAddress, cvValue);
-			if (validCV(cvAddress, 1))
-			    writeCV(cvAddress, cvValue);
-			return;
-		    }
-
-
-		    OutputAddress = (((BoardAddress - 1) << 2) | TurnoutPairIndex) + 1;	//decoder output addresses start with 1, packet address range starts with 0
-		    // ( according to NMRA 9.2.2 )
-		    DB_PRINT("eDP: OAddr:%d", OutputAddress);
-
-		    if (DccProcState.inAccDecDCCAddrNextReceivedMode) {
-			if (DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE) {
-			    DB_PRINT("eDP: Set OAddr:%d", OutputAddress);
-			    //uint16_t storedOutputAddress = OutputAddress + 1; // The value stored in CV1 & 9 for Output Addressing Mode is + 1
-			    writeCV(CV_ACCESSORY_DECODER_ADDRESS_LSB,
-				    (uint8_t) (OutputAddress % 256));
-			    writeCV(CV_ACCESSORY_DECODER_ADDRESS_MSB,
-				    (uint8_t) (OutputAddress / 256));
-
-			    if (notifyDccAccOutputAddrSet)
-				notifyDccAccOutputAddrSet(OutputAddress);
-			} else {
-			    DB_PRINT("eDP: Set BAddr:%d", BoardAddress);
-			    writeCV(CV_ACCESSORY_DECODER_ADDRESS_LSB,
-				    (uint8_t) (BoardAddress % 64));
-			    writeCV(CV_ACCESSORY_DECODER_ADDRESS_MSB,
-				    (uint8_t) (BoardAddress / 64));
-
-			    if (notifyDccAccBoardAddrSet)
-				notifyDccAccBoardAddrSet(BoardAddress);
-			}
-
-			DccProcState.inAccDecDCCAddrNextReceivedMode = 0;	// Reset the mode now that we have set the address 
-		    }
-		    // If we're filtering addresses, does the address match our address or is it a broadcast address? If NOT then return
-		    if (DccProcState.Flags & FLAGS_MY_ADDRESS_ONLY) {
-			if (DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE) {
-			    DB_PRINT
-				(" AddrChk: OAddr:%d, BAddr:%d, myAddr:%d Chk=%d",
-				 OutputAddress, BoardAddress, getMyAddr(),
-				 OutputAddress != getMyAddr());
-			    if (OutputAddress != getMyAddr()
-				&& OutputAddress < 2045) {
-				DB_PRINT
-				    (" eDP: OAddr:%d, myAddr:%d - no match",
-				     OutputAddress, getMyAddr());
-				return;
-			    }
-			} else {
-			    if ((BoardAddress != getMyAddr())
-				&& (BoardAddress < 511)) {
-				DB_PRINT
-				    (" eDP: BAddr:%d, myAddr:%d - no match",
-				     BoardAddress, getMyAddr());
-				return;
-			    }
-			}
-			DB_PRINT("eDP: Address Matched");
-		    }
+                        uint16_t cvAddress =
+                            ((pDccMsg->Data[1] & 0 b00000011) << 8) + pDccMsg->Data[2] + 1;
+                        uint8_t cvValue = pDccMsg->Data[3];
+                        DB_PRINT("eDP: CV:%d Value:%d", cvAddress, cvValue);
+                        if (validCV(cvAddress, 1))
+                            writeCV(cvAddress, cvValue);
+                        return;
+                    }
 
 
-		    if ((pDccMsg->Size == 4) && ((pDccMsg->Data[1] & 0 b10001001) == 1))	// Extended Accessory Decoder Control Packet Format
-		    {
-			// According to the NMRA Dcc Spec the Signal State should only use the lower 5 Bits,  
-			// however some manufacturers seem to allow/use all 8 bits, so we'll relax that constraint for now
-			uint8_t state = pDccMsg->Data[2];
-			DB_PRINT("eDP: OAddr:%d  Extended State:%0X", OutputAddress, state);
-			if (notifyDccSigOutputState)
-			    notifyDccSigOutputState(OutputAddress, state);
+                    OutputAddress = (((BoardAddress - 1) << 2) | TurnoutPairIndex) + 1; //decoder output addresses start with 1, packet address range starts with 0
+                    // ( according to NMRA 9.2.2 )
+                    DB_PRINT("eDP: OAddr:%d", OutputAddress);
 
-			// old callback ( for compatibility with 1.4.2, not to be used in new designs )
-			if (notifyDccSigState)
-			    notifyDccSigState(OutputAddress, TurnoutPairIndex, pDccMsg->Data[2]);
-		    }
+                    if (DccProcState.inAccDecDCCAddrNextReceivedMode) {
+                        if (DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE) {
+                            DB_PRINT("eDP: Set OAddr:%d", OutputAddress);
+                            //uint16_t storedOutputAddress = OutputAddress + 1; // The value stored in CV1 & 9 for Output Addressing Mode is + 1
+                            writeCV(CV_ACCESSORY_DECODER_ADDRESS_LSB,
+                                    (uint8_t) (OutputAddress % 256));
+                            writeCV(CV_ACCESSORY_DECODER_ADDRESS_MSB,
+                                    (uint8_t) (OutputAddress / 256));
 
-		    else if (pDccMsg->Size == 3)	// Basic Accessory Decoder Packet Format
-		    {
-			uint8_t direction = pDccMsg->Data[1] & 0 b00000001;
-			uint8_t outputPower = (pDccMsg->Data[1] & 0 b00001000) >> 3;
+                            if (notifyDccAccOutputAddrSet)
+                                notifyDccAccOutputAddrSet(OutputAddress);
+                        } else {
+                            DB_PRINT("eDP: Set BAddr:%d", BoardAddress);
+                            writeCV(CV_ACCESSORY_DECODER_ADDRESS_LSB,
+                                    (uint8_t) (BoardAddress % 64));
+                            writeCV(CV_ACCESSORY_DECODER_ADDRESS_MSB,
+                                    (uint8_t) (BoardAddress / 64));
 
-			// old callback ( for compatibility with 1.4.2, not to be used in new designs )
-			if (notifyDccAccState)
-			    notifyDccAccState(OutputAddress, BoardAddress,
-					      pDccMsg->Data[1] & 0 b00000111, outputPower);
+                            if (notifyDccAccBoardAddrSet)
+                                notifyDccAccBoardAddrSet(BoardAddress);
+                        }
 
-			if (DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE) {
-			    DB_PRINT
-				("eDP: OAddr:%d  Turnout Dir:%d  Output Power:%d",
-				 OutputAddress, direction, outputPower);
-			    if (notifyDccAccTurnoutOutput)
-				notifyDccAccTurnoutOutput(OutputAddress, direction, outputPower);
-			} else {
-			    DB_PRINT
-				("eDP: Turnout Pair Index:%d Dir:%d Output Power: ",
-				 TurnoutPairIndex, direction, outputPower);
-			    if (notifyDccAccTurnoutBoard)
-				notifyDccAccTurnoutBoard(BoardAddress,
-							 TurnoutPairIndex, direction, outputPower);
-			}
-		    } else if (pDccMsg->Size == 6)	// Accessory Decoder OPS Mode Programming
-		    {
-			DB_PRINT("eDP: OPS Mode CV Programming Command");
-			// Check for unsupported OPS Mode Addressing mode
-			if (((pDccMsg->Data[1] & 0 b10001001) != 1)
-			    && ((pDccMsg->Data[1] & 0 b10001111) != 0x80)) {
-			    DB_PRINT("eDP: Unsupported OPS Mode CV Addressing Mode");
-			    return;
-			}
-			// Check if this command is for our address or the broadcast address
-			if (DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE) {
-			    DB_PRINT("eDP: Check Output Address:%d", OutputAddress);
-			    if ((OutputAddress != getMyAddr())
-				&& (OutputAddress < 2045)) {
-				DB_PRINT("eDP: Output Address Not Matched");
-				return;
-			    }
-			} else {
-			    DB_PRINT("eDP: Check Board Address:%d", BoardAddress);
-			    if ((BoardAddress != getMyAddr())
-				&& (BoardAddress < 511)) {
-				DB_PRINT("eDP: Board Address Not Matched");
-				return;
-			    }
-			}
+                        DccProcState.inAccDecDCCAddrNextReceivedMode = 0;       // Reset the mode now that we have set the address
+                    }
+                    // If we're filtering addresses, does the address match our address or is it a broadcast address? If NOT then return
+                    if (DccProcState.Flags & FLAGS_MY_ADDRESS_ONLY) {
+                        if (DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE) {
+                            DB_PRINT
+                                (" AddrChk: OAddr:%d, BAddr:%d, myAddr:%d Chk=%d",
+                                 OutputAddress, BoardAddress, getMyAddr(),
+                                 OutputAddress != getMyAddr());
+                            if (OutputAddress != getMyAddr()
+                                && OutputAddress < 2045) {
+                                DB_PRINT
+                                    (" eDP: OAddr:%d, myAddr:%d - no match",
+                                     OutputAddress, getMyAddr());
+                                return;
+                            }
+                        } else {
+                            if ((BoardAddress != getMyAddr())
+                                && (BoardAddress < 511)) {
+                                DB_PRINT
+                                    (" eDP: BAddr:%d, myAddr:%d - no match",
+                                     BoardAddress, getMyAddr());
+                                return;
+                            }
+                        }
+                        DB_PRINT("eDP: Address Matched");
+                    }
 
-			uint16_t cvAddress =
-			    ((pDccMsg->Data[2] & 0 b00000011) << 8) + pDccMsg->Data[3] + 1;
-			uint8_t cvValue = pDccMsg->Data[4];
 
-			OpsInstructionType insType =
-			    (OpsInstructionType) ((pDccMsg->Data[2] & 0 b00001100)
-						  >> 2);
+                    if ((pDccMsg->Size == 4) && ((pDccMsg->Data[1] & 0 b10001001) == 1))        // Extended Accessory Decoder Control Packet Format
+                    {
+                        // According to the NMRA Dcc Spec the Signal State should only use the lower 5 Bits,
+                        // however some manufacturers seem to allow/use all 8 bits, so we'll relax that constraint for now
+                        uint8_t state = pDccMsg->Data[2];
+                        DB_PRINT("eDP: OAddr:%d  Extended State:%0X", OutputAddress, state);
+                        if (notifyDccSigOutputState)
+                            notifyDccSigOutputState(OutputAddress, state);
 
-			DB_PRINT("eDP: OPS Mode Instruction:%d", insType);
-			switch (insType) {
-			case OPS_INS_RESERVED:
-			case OPS_INS_VERIFY_BYTE:
-			    DB_PRINT("eDP: Unsupported OPS Mode Instruction:%d", insType);
-			    break;	// We only support Write Byte or Bit Manipulation
+                        // old callback ( for compatibility with 1.4.2, not to be used in new designs )
+                        if (notifyDccSigState)
+                            notifyDccSigState(OutputAddress, TurnoutPairIndex, pDccMsg->Data[2]);
+                    }
 
-			case OPS_INS_WRITE_BYTE:
-			    DB_PRINT("eDP: CV:%d Value:%d", cvAddress, cvValue);
-			    if (validCV(cvAddress, 1))
-				writeCV(cvAddress, cvValue);
-			    break;
+                    else if (pDccMsg->Size == 3)        // Basic Accessory Decoder Packet Format
+                    {
+                        uint8_t direction = pDccMsg->Data[1] & 0 b00000001;
+                        uint8_t outputPower = (pDccMsg->Data[1] & 0 b00001000) >> 3;
 
-			    // 111CDBBB
-			    // Where BBB represents the bit position within the CV,
-			    // D contains the value of the bit to be verified or written,
-			    // and C describes whether the operation is a verify bit or a write bit operation.
-			    // C = "1" WRITE BIT
-			    // C = "0" VERIFY BIT
-			case OPS_INS_BIT_MANIPULATION:
-			    // Make sure its a Write Bit Manipulation
-			    if ((cvValue & 0 b00010000)
-				&& validCV(cvAddress, 1)) {
-				uint8_t currentValue = readCV(cvAddress);
-				uint8_t newValueMask = 1 << (cvValue & 0 b00000111);
-				if (cvValue & 0 b00001000)
-				    writeCV(cvAddress, currentValue | newValueMask);
-				else
-				    writeCV(cvAddress, currentValue & ~newValueMask);
-			    }
-			    break;
-			}
-		    }
-		}
-	    }
+                        // old callback ( for compatibility with 1.4.2, not to be used in new designs )
+                        if (notifyDccAccState)
+                            notifyDccAccState(OutputAddress, BoardAddress,
+                                              pDccMsg->Data[1] & 0 b00000111, outputPower);
+
+                        if (DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE) {
+                            DB_PRINT
+                                ("eDP: OAddr:%d  Turnout Dir:%d  Output Power:%d",
+                                 OutputAddress, direction, outputPower);
+                            if (notifyDccAccTurnoutOutput)
+                                notifyDccAccTurnoutOutput(OutputAddress, direction, outputPower);
+                        } else {
+                            DB_PRINT
+                                ("eDP: Turnout Pair Index:%d Dir:%d Output Power: ",
+                                 TurnoutPairIndex, direction, outputPower);
+                            if (notifyDccAccTurnoutBoard)
+                                notifyDccAccTurnoutBoard(BoardAddress,
+                                                         TurnoutPairIndex, direction, outputPower);
+                        }
+                    } else if (pDccMsg->Size == 6)      // Accessory Decoder OPS Mode Programming
+                    {
+                        DB_PRINT("eDP: OPS Mode CV Programming Command");
+                        // Check for unsupported OPS Mode Addressing mode
+                        if (((pDccMsg->Data[1] & 0 b10001001) != 1)
+                            && ((pDccMsg->Data[1] & 0 b10001111) != 0x80)) {
+                            DB_PRINT("eDP: Unsupported OPS Mode CV Addressing Mode");
+                            return;
+                        }
+                        // Check if this command is for our address or the broadcast address
+                        if (DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE) {
+                            DB_PRINT("eDP: Check Output Address:%d", OutputAddress);
+                            if ((OutputAddress != getMyAddr())
+                                && (OutputAddress < 2045)) {
+                                DB_PRINT("eDP: Output Address Not Matched");
+                                return;
+                            }
+                        } else {
+                            DB_PRINT("eDP: Check Board Address:%d", BoardAddress);
+                            if ((BoardAddress != getMyAddr())
+                                && (BoardAddress < 511)) {
+                                DB_PRINT("eDP: Board Address Not Matched");
+                                return;
+                            }
+                        }
+
+                        uint16_t cvAddress =
+                            ((pDccMsg->Data[2] & 0 b00000011) << 8) + pDccMsg->Data[3] + 1;
+                        uint8_t cvValue = pDccMsg->Data[4];
+
+                        OpsInstructionType insType =
+                            (OpsInstructionType) ((pDccMsg->Data[2] & 0 b00001100)
+                                                  >> 2);
+
+                        DB_PRINT("eDP: OPS Mode Instruction:%d", insType);
+                        switch (insType) {
+                        case OPS_INS_RESERVED:
+                        case OPS_INS_VERIFY_BYTE:
+                            DB_PRINT("eDP: Unsupported OPS Mode Instruction:%d", insType);
+                            break;      // We only support Write Byte or Bit Manipulation
+
+                        case OPS_INS_WRITE_BYTE:
+                            DB_PRINT("eDP: CV:%d Value:%d", cvAddress, cvValue);
+                            if (validCV(cvAddress, 1))
+                                writeCV(cvAddress, cvValue);
+                            break;
+
+                            // 111CDBBB
+                            // Where BBB represents the bit position within the CV,
+                            // D contains the value of the bit to be verified or written,
+                            // and C describes whether the operation is a verify bit or a write bit operation.
+                            // C = "1" WRITE BIT
+                            // C = "0" VERIFY BIT
+                        case OPS_INS_BIT_MANIPULATION:
+                            // Make sure its a Write Bit Manipulation
+                            if ((cvValue & 0 b00010000)
+                                && validCV(cvAddress, 1)) {
+                                uint8_t currentValue = readCV(cvAddress);
+                                uint8_t newValueMask = 1 << (cvValue & 0 b00000111);
+                                if (cvValue & 0 b00001000)
+                                    writeCV(cvAddress, currentValue | newValueMask);
+                                else
+                                    writeCV(cvAddress, currentValue & ~newValueMask);
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
 #ifdef NMRA_DCC_PROCESS_MULTIFUNCTION
-	    // Multi Function Decoders (14-bit address)
-	    else if (pDccMsg->Data[0] < 232) {
-		uint16_t Address;
-		Address = ((pDccMsg->Data[0] - 192) << 8) | pDccMsg->Data[1];
-		//TODO should we convert Address to 1 .. 10239 ?
-		processMultiFunctionMessage(Address, DCC_ADDR_LONG,
-					    pDccMsg->Data[2], pDccMsg->Data[3], pDccMsg->Data[4]);
-	    }
+            // Multi Function Decoders (14-bit address)
+            else if (pDccMsg->Data[0] < 232) {
+                uint16_t Address;
+                Address = ((pDccMsg->Data[0] - 192) << 8) | pDccMsg->Data[1];
+                //TODO should we convert Address to 1 .. 10239 ?
+                processMultiFunctionMessage(Address, DCC_ADDR_LONG,
+                                            pDccMsg->Data[2], pDccMsg->Data[3], pDccMsg->Data[4]);
+            }
 #endif
 #ifdef NMRA_DCC_PROCESS_SERVICEMODE
-	}
+        }
 #endif
     }
 }
@@ -1488,17 +1488,17 @@ void NmraDcc::pin(uint8_t ExtIntNum, uint8_t ExtIntPinNum, uint8_t EnablePullup)
     DccProcState.ExtIntNum = ExtIntPinNum;
     // because STM32F1 has a NVIC we must set interuptpriorities
     const nvic_irq_num irqNum2nvic[] = { NVIC_EXTI0, NVIC_EXTI1, NVIC_EXTI2, NVIC_EXTI3, NVIC_EXTI4,
-	NVIC_EXTI_9_5, NVIC_EXTI_9_5, NVIC_EXTI_9_5, NVIC_EXTI_9_5,
-	NVIC_EXTI_9_5,
-	NVIC_EXTI_15_10, NVIC_EXTI_15_10, NVIC_EXTI_15_10, NVIC_EXTI_15_10,
-	NVIC_EXTI_15_10, NVIC_EXTI_15_10
+        NVIC_EXTI_9_5, NVIC_EXTI_9_5, NVIC_EXTI_9_5, NVIC_EXTI_9_5,
+        NVIC_EXTI_9_5,
+        NVIC_EXTI_15_10, NVIC_EXTI_15_10, NVIC_EXTI_15_10, NVIC_EXTI_15_10,
+        NVIC_EXTI_15_10, NVIC_EXTI_15_10
     };
     exti_num irqNum = (exti_num) (PIN_MAP[ExtIntPinNum].gpio_bit);
 
-// DCC-Input IRQ must be able to interrupt other long low priority ( level15 ) IRQ's  
+// DCC-Input IRQ must be able to interrupt other long low priority ( level15 ) IRQ's
     nvic_irq_set_priority(irqNum2nvic[irqNum], PRIO_DCC_IRQ);
 
-// Systic must be able to interrupt DCC-IRQ to always get correct micros() values  
+// Systic must be able to interrupt DCC-IRQ to always get correct micros() values
     nvic_irq_set_priority(NVIC_SYSTICK, PRIO_SYSTIC);
 #else
     DccProcState.ExtIntNum = ExtIntNum;
@@ -1514,19 +1514,19 @@ void NmraDcc::pin(uint8_t ExtIntNum, uint8_t ExtIntPinNum, uint8_t EnablePullup)
 #endif
     pinMode(ExtIntPinNum, INPUT);
     if (EnablePullup)
-	digitalWrite(ExtIntPinNum, HIGH);
+        digitalWrite(ExtIntPinNum, HIGH);
 }
 
 ////////////////////////////////////////////////////////////////////////
 void NmraDcc::initAccessoryDecoder(uint8_t ManufacturerId,
-				   uint8_t VersionId, uint8_t Flags, uint8_t OpsModeAddressBaseCV)
+                                   uint8_t VersionId, uint8_t Flags, uint8_t OpsModeAddressBaseCV)
 {
     init(ManufacturerId, VersionId, Flags | FLAGS_DCC_ACCESSORY_DECODER, OpsModeAddressBaseCV);
 }
 
 ////////////////////////////////////////////////////////////////////////
 void NmraDcc::init(uint8_t ManufacturerId, uint8_t VersionId,
-		   uint8_t Flags, uint8_t OpsModeAddressBaseCV)
+                   uint8_t Flags, uint8_t OpsModeAddressBaseCV)
 {
 #if defined(ESP8266)
     EEPROM.begin(MAXCV);
@@ -1537,7 +1537,7 @@ void NmraDcc::init(uint8_t ManufacturerId, uint8_t VersionId,
     // Clear all the static member variables
     memset(&DccRx, 0, sizeof(DccRx));
 
-    MODE_TP1;			// only for debugging and timing measurement
+    MODE_TP1;                   // only for debugging and timing measurement
     MODE_TP2;
     MODE_TP3;
     MODE_TP4;
@@ -1562,17 +1562,17 @@ void NmraDcc::init(uint8_t ManufacturerId, uint8_t VersionId,
 #endif
 
     // Set the Bits that control Multifunction or Accessory behaviour
-    // and if the Accessory decoder optionally handles Output Addressing 
+    // and if the Accessory decoder optionally handles Output Addressing
     // we need to peal off the top two bits
     DccProcState.cv29Value =
-	writeCV(CV_29_CONFIG,
-		(readCV(CV_29_CONFIG) & ~FLAGS_CV29_BITS) | (Flags & FLAGS_CV29_BITS));
+        writeCV(CV_29_CONFIG,
+                (readCV(CV_29_CONFIG) & ~FLAGS_CV29_BITS) | (Flags & FLAGS_CV29_BITS));
 
     uint8_t doAutoFactoryDefault = 0;
     if ((Flags & FLAGS_AUTO_FACTORY_DEFAULT)
-	&& (readCV(CV_VERSION_ID) == 255)
-	&& (readCV(CV_MANUFACTURER_ID) == 255))
-	doAutoFactoryDefault = 1;
+        && (readCV(CV_VERSION_ID) == 255)
+        && (readCV(CV_MANUFACTURER_ID) == 255))
+        doAutoFactoryDefault = 1;
 
     writeCV(CV_VERSION_ID, VersionId);
     writeCV(CV_MANUFACTURER_ID, ManufacturerId);
@@ -1580,7 +1580,7 @@ void NmraDcc::init(uint8_t ManufacturerId, uint8_t VersionId,
     clearDccProcState(0);
 
     if (notifyCVResetFactoryDefault && doAutoFactoryDefault)
-	notifyCVResetFactoryDefault();
+        notifyCVResetFactoryDefault();
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1611,7 +1611,7 @@ uint16_t NmraDcc::getAddr(void)
 uint8_t NmraDcc::isSetCVReady(void)
 {
     if (notifyIsSetCVReady)
-	return notifyIsSetCVReady();
+        return notifyIsSetCVReady();
     return readyEEPROM();
 }
 
@@ -1657,39 +1657,39 @@ void NmraDcc::setAccDecDCCAddrNextReceived(uint8_t enable)
 uint8_t NmraDcc::process()
 {
     if (DccProcState.inServiceMode) {
-	if ((millis() - DccProcState.LastServiceModeMillis) > 20L) {
-	    clearDccProcState(0);
-	}
+        if ((millis() - DccProcState.LastServiceModeMillis) > 20L) {
+            clearDccProcState(0);
+        }
     }
 
     if (DccRx.DataReady) {
-	// We need to do this check with interrupts disabled
+        // We need to do this check with interrupts disabled
 #ifdef ESP32
-	portENTER_CRITICAL(&mux);
+        portENTER_CRITICAL(&mux);
 #else
-	noInterrupts();
+        noInterrupts();
 #endif
-	Msg = DccRx.PacketCopy;
-	DccRx.DataReady = 0;
+        Msg = DccRx.PacketCopy;
+        DccRx.DataReady = 0;
 
 #ifdef ESP32
-	portEXIT_CRITICAL(&mux);
+        portEXIT_CRITICAL(&mux);
 #else
-	interrupts();
+        interrupts();
 #endif
-	// Checking of the XOR-byte is now done in the ISR already
+        // Checking of the XOR-byte is now done in the ISR already
 #ifdef DCC_DBGVAR
-	countOf.Tel++;
+        countOf.Tel++;
 #endif
-	// Clear trailing bytes
-	for (byte i = Msg.Size; i < MAX_DCC_MESSAGE_LEN; i++)
-	    Msg.Data[i] = 0;
+        // Clear trailing bytes
+        for (byte i = Msg.Size; i < MAX_DCC_MESSAGE_LEN; i++)
+            Msg.Data[i] = 0;
 
-	if (notifyDccMsg)
-	    notifyDccMsg(&Msg);
+        if (notifyDccMsg)
+            notifyDccMsg(&Msg);
 
-	execDccProcessor(&Msg);
-	return 1;
+        execDccProcessor(&Msg);
+        return 1;
     }
 
     return 0;

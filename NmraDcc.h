@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------
 //
-// Model Railroading with Arduino - NmraDcc.h 
+// Model Railroading with Arduino - NmraDcc.h
 //
 // Copyright (c) 2008 - 2020 Alex Shepherd
 //
@@ -8,16 +8,16 @@
 //      modify it under the terms of the GNU Lesser General Public
 //      License as published by the Free Software Foundation; either
 //      version 2.1 of the License, or (at your option) any later version.
-// 
+//
 //      This library is distributed in the hope that it will be useful,
 //      but WITHOUT ANY WARRANTY; without even the implied warranty of
 //      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 //      Lesser General Public License for more details.
-// 
+//
 //      You should have received a copy of the GNU Lesser General Public
 //      License along with this library; if not, write to the Free Software
 //      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-// 
+//
 //------------------------------------------------------------------------
 //
 // file:      NmraDcc.h
@@ -57,9 +57,9 @@
 #ifndef NMRADCC_IS_IN
 #define NMRADCC_IS_IN
 
-#define NMRADCC_VERSION     205	// Version 2.0.5
+#define NMRADCC_VERSION     205 // Version 2.0.5
 
-#define MAX_DCC_MESSAGE_LEN 6	// including XOR-Byte
+#define MAX_DCC_MESSAGE_LEN 6   // including XOR-Byte
 
 //#define ALLOW_NESTED_IRQ      // uncomment to enable nested IRQ's ( only for AVR! )
 
@@ -73,7 +73,7 @@ typedef struct {
 //  This section contains the NMRA Assigned DCC Manufacturer Id Codes that
 //  are used in projects
 //
-//  This value is to be used for CV8 
+//  This value is to be used for CV8
 //--------------------------------------------------------------------------
 
 #define MAN_ID_JMRI             0x12
@@ -83,7 +83,7 @@ typedef struct {
 //--------------------------------------------------------------------------
 //  This section contains the Product/Version Id Codes for projects
 //
-//  This value is to be used for CV7 
+//  This value is to be used for CV7
 //
 //  NOTE: Each Product/Version Id Code needs to be UNIQUE for that particular
 //  the DCC Manufacturer Id Code
@@ -112,42 +112,42 @@ typedef struct {
 #include <spi_flash.h>
 #define MAXCV     SPI_FLASH_SEC_SIZE
 #elif defined( __STM32F1__)
-#define MAXCV	(EEPROM_PAGE_SIZE/4 - 1)	// number of storage places (CV address could be larger
-											// because STM32 uses virtual adresses)
-#undef ALLOW_NESTED_IRQ		// This is done with NVIC on STM32
+#define MAXCV   (EEPROM_PAGE_SIZE/4 - 1)        // number of storage places (CV address could be larger
+                                                                                        // because STM32 uses virtual adresses)
+#undef ALLOW_NESTED_IRQ         // This is done with NVIC on STM32
 #define PRIO_DCC_IRQ    9
-#define PRIO_SYSTIC     8	// MUST be higher priority than DCC Irq
+#define PRIO_SYSTIC     8       // MUST be higher priority than DCC Irq
 #else
-#define MAXCV    E2END		// the upper limit of the CV value currently defined to max memory.
+#define MAXCV    E2END          // the upper limit of the CV value currently defined to max memory.
 #endif
 
 typedef enum {
-    CV29_LOCO_DIR = 0 b00000001,		/** bit 0: Locomotive Direction: "0" = normal, "1" = reversed */
-    CV29_F0_LOCATION = 0 b00000010,		/** bit 1: F0 location: "0" = bit 4 in Speed and Direction instructions, "1" = bit 4 in function group one instruction */
-    CV29_APS = 0 b00000100,			/** bit 2: Alternate Power Source (APS) "0" = NMRA Digital only, "1" = Alternate power source set by CV12 */
-    CV29_RAILCOM_ENABLE = 0 b00001000,		/** bit 3: BiDi ( RailCom ) is active */
-    CV29_SPEED_TABLE_ENABLE = 0 b00010000,	/** bit 4: STE, Speed Table Enable, "0" = values in CVs 2, 4 and 6, "1" = Custom table selected by CV 25 */
-    CV29_EXT_ADDRESSING = 0 b00100000,		/** bit 5: "0" = one byte addressing, "1" = two byte addressing */
-    CV29_OUTPUT_ADDRESS_MODE = 0 b01000000,	/** bit 6: "0" = Decoder Address Mode "1" = Output Address Mode */
-    CV29_ACCESSORY_DECODER = 0 b10000000,	/** bit 7: "0" = Multi-Function Decoder Mode "1" = Accessory Decoder Mode */
+    CV29_LOCO_DIR = 0 b00000001,                /** bit 0: Locomotive Direction: "0" = normal, "1" = reversed */
+    CV29_F0_LOCATION = 0 b00000010,             /** bit 1: F0 location: "0" = bit 4 in Speed and Direction instructions, "1" = bit 4 in function group one instruction */
+    CV29_APS = 0 b00000100,                     /** bit 2: Alternate Power Source (APS) "0" = NMRA Digital only, "1" = Alternate power source set by CV12 */
+    CV29_RAILCOM_ENABLE = 0 b00001000,          /** bit 3: BiDi ( RailCom ) is active */
+    CV29_SPEED_TABLE_ENABLE = 0 b00010000,      /** bit 4: STE, Speed Table Enable, "0" = values in CVs 2, 4 and 6, "1" = Custom table selected by CV 25 */
+    CV29_EXT_ADDRESSING = 0 b00100000,          /** bit 5: "0" = one byte addressing, "1" = two byte addressing */
+    CV29_OUTPUT_ADDRESS_MODE = 0 b01000000,     /** bit 6: "0" = Decoder Address Mode "1" = Output Address Mode */
+    CV29_ACCESSORY_DECODER = 0 b10000000,       /** bit 7: "0" = Multi-Function Decoder Mode "1" = Accessory Decoder Mode */
 } CV_29_BITS;
 
 typedef enum {
 #ifdef NMRA_DCC_ENABLE_14_SPEED_STEP_MODE
-    SPEED_STEP_14 = 15,			/**< ESTOP=0, 1 to 15 */
+    SPEED_STEP_14 = 15,                 /**< ESTOP=0, 1 to 15 */
 #endif
-    SPEED_STEP_28 = 29,			/**< ESTOP=0, 1 to 29 */
-    SPEED_STEP_128 = 127		/**< ESTOP=0, 1 to 127 */
+    SPEED_STEP_28 = 29,                 /**< ESTOP=0, 1 to 29 */
+    SPEED_STEP_128 = 127                /**< ESTOP=0, 1 to 127 */
 } DCC_SPEED_STEPS;
 
 typedef enum {
-    DCC_DIR_REV = 0,	 /** The locomotive to go in the reverse direction */
-    DCC_DIR_FWD = 1,	 /** The locomotive should move in the forward direction */
+    DCC_DIR_REV = 0,     /** The locomotive to go in the reverse direction */
+    DCC_DIR_FWD = 1,     /** The locomotive should move in the forward direction */
 } DCC_DIRECTION;
 
 typedef enum {
-    DCC_ADDR_SHORT,	 /** Short address is used. The range is 0 to 127. */
-    DCC_ADDR_LONG,	 /** Long Address is used. The range is 1 to 10239 */
+    DCC_ADDR_SHORT,      /** Short address is used. The range is 0 to 127. */
+    DCC_ADDR_LONG,       /** Long Address is used. The range is 1 to 10239 */
 } DCC_ADDR_TYPE;
 
 typedef enum {
@@ -157,43 +157,43 @@ typedef enum {
     FN_13_20,
     FN_21_28,
 #ifdef NMRA_DCC_ENABLE_14_SPEED_STEP_MODE
-    FN_0			 /** function light is controlled by base line package (14 speed steps) */
+    FN_0                         /** function light is controlled by base line package (14 speed steps) */
 #endif
 } FN_GROUP;
 
-#define FN_BIT_00	0x10
-#define FN_BIT_01	0x01
-#define FN_BIT_02	0x02
-#define FN_BIT_03	0x04
-#define FN_BIT_04	0x08
+#define FN_BIT_00       0x10
+#define FN_BIT_01       0x01
+#define FN_BIT_02       0x02
+#define FN_BIT_03       0x04
+#define FN_BIT_04       0x08
 
-#define FN_BIT_05	0x01
-#define FN_BIT_06	0x02
-#define FN_BIT_07	0x04
-#define FN_BIT_08	0x08
+#define FN_BIT_05       0x01
+#define FN_BIT_06       0x02
+#define FN_BIT_07       0x04
+#define FN_BIT_08       0x08
 
-#define FN_BIT_09	0x01
-#define FN_BIT_10	0x02
-#define FN_BIT_11	0x04
-#define FN_BIT_12	0x08
+#define FN_BIT_09       0x01
+#define FN_BIT_10       0x02
+#define FN_BIT_11       0x04
+#define FN_BIT_12       0x08
 
-#define FN_BIT_13	0x01
-#define FN_BIT_14	0x02
-#define FN_BIT_15	0x04
-#define FN_BIT_16	0x08
-#define FN_BIT_17	0x10
-#define FN_BIT_18	0x20
-#define FN_BIT_19	0x40
-#define FN_BIT_20	0x80
+#define FN_BIT_13       0x01
+#define FN_BIT_14       0x02
+#define FN_BIT_15       0x04
+#define FN_BIT_16       0x08
+#define FN_BIT_17       0x10
+#define FN_BIT_18       0x20
+#define FN_BIT_19       0x40
+#define FN_BIT_20       0x80
 
-#define FN_BIT_21	0x01
-#define FN_BIT_22	0x02
-#define FN_BIT_23	0x04
-#define FN_BIT_24	0x08
-#define FN_BIT_25	0x10
-#define FN_BIT_26	0x20
-#define FN_BIT_27	0x40
-#define FN_BIT_28	0x80
+#define FN_BIT_21       0x01
+#define FN_BIT_22       0x02
+#define FN_BIT_23       0x04
+#define FN_BIT_24       0x08
+#define FN_BIT_25       0x10
+#define FN_BIT_26       0x20
+#define FN_BIT_27       0x40
+#define FN_BIT_28       0x80
 
 //#define DCC_DBGVAR
 #ifdef DCC_DBGVAR
@@ -213,14 +213,14 @@ class NmraDcc {
     NmraDcc();
 
 // Flag values to be logically ORed together and passed into the init() method
-#define FLAGS_MY_ADDRESS_ONLY        0x01	// Only process DCC Packets with My Address
-#define FLAGS_AUTO_FACTORY_DEFAULT   0x02	// Call notifyCVResetFactoryDefault() if CV 7 & 8 == 255
-#define FLAGS_SETCV_CALLED           0x10	// only used internally !!
-#define FLAGS_OUTPUT_ADDRESS_MODE    0x40	// CV 29/541 bit 6
-#define FLAGS_DCC_ACCESSORY_DECODER  0x80	// CV 29/541 bit 7
+#define FLAGS_MY_ADDRESS_ONLY        0x01       // Only process DCC Packets with My Address
+#define FLAGS_AUTO_FACTORY_DEFAULT   0x02       // Call notifyCVResetFactoryDefault() if CV 7 & 8 == 255
+#define FLAGS_SETCV_CALLED           0x10       // only used internally !!
+#define FLAGS_OUTPUT_ADDRESS_MODE    0x40       // CV 29/541 bit 6
+#define FLAGS_DCC_ACCESSORY_DECODER  0x80       // CV 29/541 bit 7
 
-// Flag Bits that are cloned from CV29 relating the DCC Accessory Decoder 
-#define FLAGS_CV29_BITS		(FLAGS_OUTPUT_ADDRESS_MODE | FLAGS_DCC_ACCESSORY_DECODER)
+// Flag Bits that are cloned from CV29 relating the DCC Accessory Decoder
+#define FLAGS_CV29_BITS         (FLAGS_OUTPUT_ADDRESS_MODE | FLAGS_DCC_ACCESSORY_DECODER)
 
 
     /*+
@@ -273,7 +273,7 @@ class NmraDcc {
      *    None.
      */
     void init(uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags,
-	      uint8_t OpsModeAddressBaseCV);
+              uint8_t OpsModeAddressBaseCV);
 
     /*+
      *  initAccessoryDecoder() is called from setup() for accessory decoders.
@@ -291,7 +291,7 @@ class NmraDcc {
      *    None.
      */
     void initAccessoryDecoder(uint8_t ManufacturerId, uint8_t VersionId,
-			      uint8_t Flags, uint8_t OpsModeAddressBaseCV);
+                              uint8_t Flags, uint8_t OpsModeAddressBaseCV);
 
     /*+
      *  process() is called from loop() to process DCC packets.
@@ -453,8 +453,8 @@ extern "C" {
  *    None
  */
     extern void notifyDccSpeed(uint16_t Addr, DCC_ADDR_TYPE AddrType,
-			       uint8_t Speed, DCC_DIRECTION Dir, DCC_SPEED_STEPS SpeedSteps)
-	__attribute__ ((weak));
+                               uint8_t Speed, DCC_DIRECTION Dir, DCC_SPEED_STEPS SpeedSteps)
+        __attribute__ ((weak));
 
 /*+
  *  notifyDccSpeedRaw() Callback for a multifunction decoder speed command.
@@ -469,7 +469,7 @@ extern "C" {
  *    None
  */
     extern void notifyDccSpeedRaw(uint16_t Addr, DCC_ADDR_TYPE AddrType,
-				  uint8_t Raw) __attribute__ ((weak));
+                                  uint8_t Raw) __attribute__ ((weak));
 
 /*+
  *  notifyDccFunc() Callback for a multifunction decoder function command.
@@ -482,7 +482,7 @@ extern "C" {
  *                                  FN_0_4    - Functions  0 to  4. Mask FN_BIT_00 - FN_BIT_04
  *                                  FN_5_8    - Functions  5 to  8. Mask FN_BIT_05 - FN_BIT_08
  *                                  FN_9_12   - Functions  9 to 12. Mask FN_BIT_09 - FN_BIT_12
- *                                  FN_13_20  - Functions 13 to 20. Mask FN_BIT_13 - FN_BIT_20 
+ *                                  FN_13_20  - Functions 13 to 20. Mask FN_BIT_13 - FN_BIT_20
  *                                  FN_21_28  - Functions 21 to 28. Mask FN_BIT_21 - FN_BIT_28
  *    FuncState   - Function state. Bitmask where active functions have a 1 at that bit.
  *                                  You must & FuncState with the appropriate
@@ -492,8 +492,8 @@ extern "C" {
  *    None
  */
     extern void notifyDccFunc(uint16_t Addr, DCC_ADDR_TYPE AddrType,
-			      FN_GROUP FuncGrp, uint8_t FuncState)
-	__attribute__ ((weak));
+                              FN_GROUP FuncGrp, uint8_t FuncState)
+        __attribute__ ((weak));
 
 /*+
  *  notifyDccAccTurnoutBoard() Board oriented callback for a turnout accessory decoder.
@@ -516,8 +516,8 @@ extern "C" {
  */
 
     extern void notifyDccAccTurnoutBoard(uint16_t BoardAddr,
-					 uint8_t OutputPair, uint8_t Direction, uint8_t OutputPower)
-	__attribute__ ((weak));
+                                         uint8_t OutputPair, uint8_t Direction, uint8_t OutputPower)
+        __attribute__ ((weak));
 /*+
  *  notifyDccAccTurnoutOutput() Output oriented callback for a turnout accessory decoder.
  *                              Most useful when CV29_OUTPUT_ADDRESS_MODE is not set.
@@ -537,7 +537,7 @@ extern "C" {
  *    None
  */
     extern void notifyDccAccTurnoutOutput(uint16_t Addr, uint8_t Direction, uint8_t OutputPower)
-	__attribute__ ((weak));
+        __attribute__ ((weak));
 
 /*+
  *  notifyDccAccBoardAddrSet() Board oriented callback for a turnout accessory decoder.
@@ -554,7 +554,7 @@ extern "C" {
  *    None
  */
     extern void notifyDccAccBoardAddrSet(uint16_t BoardAddr)
-	__attribute__ ((weak));
+        __attribute__ ((weak));
 
 /*+
  *  notifyDccAccOutputAddrSet() Output oriented callback for a turnout accessory decoder.
@@ -571,7 +571,7 @@ extern "C" {
  *    None
  */
     extern void notifyDccAccOutputAddrSet(uint16_t Addr)
-	__attribute__ ((weak));
+        __attribute__ ((weak));
 
 /*+
  *  notifyDccSigOutputState() Callback for a signal aspect accessory decoder.
@@ -585,7 +585,7 @@ extern "C" {
  *    None
  */
     extern void notifyDccSigOutputState(uint16_t Addr, uint8_t State)
-	__attribute__ ((weak));
+        __attribute__ ((weak));
 
 /*+
  *  notifyDccMsg() Raw DCC packet callback.
@@ -619,7 +619,7 @@ extern "C" {
  *    0         - CV is not valid.
  */
     extern uint8_t notifyCVValid(uint16_t CV, uint8_t Writable)
-	__attribute__ ((weak));
+        __attribute__ ((weak));
 
 /*+
  *  notifyCVRead()  Callback to read a CV.
@@ -653,7 +653,7 @@ extern "C" {
  *    Value     - Value of the CV.
  */
     extern uint8_t notifyCVWrite(uint16_t CV, uint8_t Value)
-	__attribute__ ((weak));
+        __attribute__ ((weak));
 
 /*+
  *  notifyIsSetCVReady()  Callback to to determine if CVs can be written.
@@ -682,7 +682,7 @@ extern "C" {
  *                    it is NOT called if the CV is changed by means of the setCV() method.
  *                    Note: It is not called if notifyCVWrite() is defined
  *                    or if the value in the EEPROM is the same as the value
- *                    in the write command. 
+ *                    in the write command.
  *
  *  Inputs:
  *    CV        - CV number.
@@ -692,9 +692,9 @@ extern "C" {
  *    None
  */
     extern void notifyCVChange(uint16_t CV, uint8_t Value)
-	__attribute__ ((weak));
+        __attribute__ ((weak));
     extern void notifyDccCVChange(uint16_t CV, uint8_t Value)
-	__attribute__ ((weak));
+        __attribute__ ((weak));
 
 /*+
  *  notifyCVResetFactoryDefault() Called when CVs must be reset.
@@ -747,13 +747,13 @@ extern "C" {
  */
     extern void notifyServiceMode(bool) __attribute__ ((weak));
 
-// Deprecated, only for backward compatibility with version 1.4.2. 
+// Deprecated, only for backward compatibility with version 1.4.2.
 // Don't use in new designs. These functions may be dropped in future versions
     extern void notifyDccAccState(uint16_t Addr, uint16_t BoardAddr,
-				  uint8_t OutputAddr, uint8_t State)
-	__attribute__ ((weak));
+                                  uint8_t OutputAddr, uint8_t State)
+        __attribute__ ((weak));
     extern void notifyDccSigState(uint16_t Addr, uint8_t OutputIndex,
-				  uint8_t State) __attribute__ ((weak));
+                                  uint8_t State) __attribute__ ((weak));
 
 #if defined (__cplusplus)
 }

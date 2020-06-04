@@ -400,6 +400,28 @@ class NmraDcc {
     uint8_t getNestedIrqCount(void);
 #endif
 
+
+  private:
+    uint8_t readEEPROM(unsigned int CV);
+    void writeEEPROM(unsigned int CV, uint8_t Value);
+    bool readyEEPROM();
+    uint8_t validCV(uint16_t CV, uint8_t Writable);
+    uint8_t readCV(unsigned int CV);
+    uint8_t writeCV(unsigned int CV, uint8_t Value);
+    uint16_t getMyAddr(void);
+    void processDirectCVOperation(uint8_t Cmd, uint16_t CVAddr, uint8_t Value, void (*ackFunction) ());
+#ifdef NMRA_DCC_PROCESS_MULTIFUNCTION
+    void processMultiFunctionMessage(uint16_t Addr, DCC_ADDR_TYPE AddrType,
+                                     uint8_t Cmd, uint8_t Data1, uint8_t Data2);
+#endif
+#ifdef NMRA_DCC_PROCESS_SERVICEMODE
+    void processServiceModeOperation(DCC_MSG * pDccMsg);
+#endif
+    void resetServiceModeTimer(uint8_t inServiceMode);
+    void clearDccProcState(uint8_t inServiceMode);
+    void execDccProcessor(DCC_MSG * pDccMsg);
+
+
 };
 
 /************************************************************************************

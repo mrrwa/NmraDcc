@@ -38,6 +38,7 @@
 //            2018-12-17 added ESP32 support by Trusty (thierry@lapajaparis.net)
 //            2019-02-17 added ESP32 specific changes by Hans Tanner
 //            2020-05-15 changes to pass NMRA Tests ( always search for preamble )
+//            2020-06-03 moved C functions into the NmraDcc class
 //------------------------------------------------------------------------
 //
 // purpose:   Provide a simplified interface to decode NMRA DCC packets
@@ -319,11 +320,11 @@ DCC_PROCESSOR_STATE DccProcState;
 #ifdef ESP32
 portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 
-void IRAM_ATTR ExternalInterruptHandler(void)
+static void IRAM_ATTR ExternalInterruptHandler(void)
 #elif defined(ESP8266)
-void ICACHE_RAM_ATTR ExternalInterruptHandler(void)
+static void ICACHE_RAM_ATTR ExternalInterruptHandler(void)
 #else
-void ExternalInterruptHandler(void)
+static void ExternalInterruptHandler(void)
 #endif
 {
     SET_TP3;
@@ -384,7 +385,7 @@ void ExternalInterruptHandler(void)
         || (DccRx.State != WAIT_START_BIT
             && digitalRead(DccProcState.ExtIntPinNum) != (ISRLevel))) {
 #endif
-        // too short - my be false interrupt due to glitch or false protocol  or level does not match RISING / FALLING edge -> ignore this IRQ
+        // too short - may be false interrupt due to glitch or false protocol  or level does not match RISING / FALLING edge -> ignore this IRQ
         CLR_TP3;
         SET_TP4;                /*delayMicroseconds(1); */
         CLR_TP4;
@@ -397,7 +398,7 @@ void ExternalInterruptHandler(void)
 #ifndef SUPPORT_ZERO_BIT_STRETCHING
     //if ( bitMicros > MAX_ZEROBITFULL ) {
     if (bitMicros > (bitMax * 2)) {
-        // too long - my be false protocol -> start over
+        // too long - may be false protocol -> start over
         DccRx.State = WAIT_PREAMBLE;
         DccRx.BitCount = 0;
         preambleBitCount = 0;
@@ -748,12 +749,12 @@ void ackAdvancedCV(void)
 }
 
 
-uint8_t readEEPROM(unsigned int CV)
+uint8_t NmraDcc::readEEPROM(unsigned int CV)
 {
     return EEPROM.read(CV);
 }
 
-void writeEEPROM(unsigned int CV, uint8_t Value)
+void NmraDcc::writeEEPROM(unsigned int CV, uint8_t Value)
 {
     EEPROM.write(CV, Value);
 #if defined(ESP8266)
@@ -764,7 +765,7 @@ void writeEEPROM(unsigned int CV, uint8_t Value)
 #endif
 }
 
-bool readyEEPROM()
+bool NmraDcc::readyEEPROM()
 {
 #if defined ARDUINO_ARCH_MEGAAVR
     return bit_is_clear(NVMCTRL.STATUS, NVMCTRL_EEBUSY_bp);
@@ -775,7 +776,7 @@ bool readyEEPROM()
 #endif
 }
 
-uint8_t validCV(uint16_t CV, uint8_t Writable)
+uint8_t NmraDcc::validCV(uint16_t CV, uint8_t Writable)
 {
     if (notifyCVResetFactoryDefault && (CV == CV_MANUFACTURER_ID) && Writable) {
         notifyCVResetFactoryDefault();
@@ -798,7 +799,7 @@ uint8_t validCV(uint16_t CV, uint8_t Writable)
     return Valid;
 }
 
-uint8_t readCV(unsigned int CV)
+uint8_t NmraDcc::readCV(unsigned int CV)
 {
     uint8_t Value;
 
@@ -810,7 +811,7 @@ uint8_t readCV(unsigned int CV)
     return Value;
 }
 
-uint8_t writeCV(unsigned int CV, uint8_t Value)
+uint8_t NmraDcc::writeCV(unsigned int CV, uint8_t Value)
 {
     switch (CV) {
     case CV_29_CONFIG:
@@ -846,7 +847,7 @@ uint8_t writeCV(unsigned int CV, uint8_t Value)
     return readEEPROM(CV);
 }
 
-uint16_t getMyAddr(void)
+uint16_t NmraDcc::getMyAddr(void)
 {
     if (DccProcState.myDccAddress != -1) {       // See if we can return the cached value
         return (DccProcState.myDccAddress);
@@ -873,7 +874,7 @@ uint16_t getMyAddr(void)
     return DccProcState.myDccAddress;
 }
 
-void processDirectCVOperation(uint8_t Cmd, uint16_t CVAddr, uint8_t Value, void (*ackFunction) ())
+void NmraDcc::processDirectCVOperation(uint8_t Cmd, uint16_t CVAddr, uint8_t Value, void (*ackFunction) ())
 {
     // is it a Byte Operation
     if (Cmd & 0x04) {
@@ -939,8 +940,8 @@ void processDirectCVOperation(uint8_t Cmd, uint16_t CVAddr, uint8_t Value, void 
 
 /////////////////////////////////////////////////////////////////////////
 #ifdef NMRA_DCC_PROCESS_MULTIFUNCTION
-void processMultiFunctionMessage(uint16_t Addr, DCC_ADDR_TYPE AddrType,
-                                 uint8_t Cmd, uint8_t Data1, uint8_t Data2)
+void NmraDcc::processMultiFunctionMessage(uint16_t Addr, DCC_ADDR_TYPE AddrType,
+                                          uint8_t Cmd, uint8_t Data1, uint8_t Data2)
 {
     uint8_t speed;
     uint16_t CVAddr;
@@ -1108,7 +1109,7 @@ void processMultiFunctionMessage(uint16_t Addr, DCC_ADDR_TYPE AddrType,
 
 /////////////////////////////////////////////////////////////////////////
 #ifdef NMRA_DCC_PROCESS_SERVICEMODE
-void processServiceModeOperation(DCC_MSG * pDccMsg)
+void NmraDcc::processServiceModeOperation(DCC_MSG * pDccMsg)
 {
     uint16_t CVAddr;
     uint8_t Value;
@@ -1159,7 +1160,7 @@ void processServiceModeOperation(DCC_MSG * pDccMsg)
 #endif
 
 /////////////////////////////////////////////////////////////////////////
-void resetServiceModeTimer(uint8_t inServiceMode)
+void NmraDcc::resetServiceModeTimer(uint8_t inServiceMode)
 {
     if (notifyServiceMode && inServiceMode != DccProcState.inServiceMode) {
         notifyServiceMode(inServiceMode);
@@ -1174,7 +1175,7 @@ void resetServiceModeTimer(uint8_t inServiceMode)
 }
 
 /////////////////////////////////////////////////////////////////////////
-void clearDccProcState(uint8_t inServiceMode)
+void NmraDcc::clearDccProcState(uint8_t inServiceMode)
 {
     resetServiceModeTimer(inServiceMode);
 
@@ -1205,7 +1206,7 @@ void SerialPrintPacketHex(const __FlashStringHelper * strLabel, DCC_MSG * pDccMs
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
-void execDccProcessor(DCC_MSG * pDccMsg)
+void NmraDcc::execDccProcessor(DCC_MSG * pDccMsg)
 {
     if ((pDccMsg->Data[0] == 0) && (pDccMsg->Data[1] == 0)) {
         if (notifyDccReset) {

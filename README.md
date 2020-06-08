@@ -10,3 +10,14 @@ The library currently supports the AVR ATTiny84/85 & ATMega88/168/328/32u4 and T
 	extern void notifyDccAccState( uint16_t Addr, uint16_t BoardAddr, uint8_t OutputAddr, uint8_t State )
 	extern void notifyDccSigState( uint16_t Addr, uint8_t OutputIndex, uint8_t State) 
 
+
+
+Developers:
+   Use of the supplied git pre-commit hook is encouraged.  This will require installation of the 'astyle' package for formatting source file.
+   See http://astyle.sourceforge.net for details on this package.
+
+   On Linux or Mac development machines, run the following command after you clone the repository:
+
+       ln -s support/pre-commit .git/hooks/pre-commit
+
+   Reformatting the source code to the preferred style is easy using astyle.  Just run 'astyle --options=.astylerc NmraDcc.h NmraDcc.cpp'

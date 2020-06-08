@@ -1,0 +1,19 @@
+# use the allman style for braces
+--style=allman
+
+# newlines for all line endings
+--lineend=linux
+
+# 4 space indents
+--indent=spaces=4
+
+# don't leave any unbraced one-line blocks
+--add-braces
+
+
+--indent-preproc-block
+--indent-preproc-cond
+
+--unpad-paren
+--pad-paren-out
+--max-code-length=140

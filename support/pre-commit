@@ -14,6 +14,7 @@ do
     diff -u $file $output
     error=1
   fi
+  [ -f $output ] && rm $output
 done
 
 exit $error

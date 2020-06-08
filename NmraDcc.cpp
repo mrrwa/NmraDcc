@@ -4,19 +4,19 @@
 //
 // Copyright (c) 2008 - 2020 Alex Shepherd
 //
-// 	This library is free software; you can redistribute it and/or
-// 	modify it under the terms of the GNU Lesser General Public
-// 	License as published by the Free Software Foundation; either
-// 	version 2.1 of the License, or (at your option) any later version.
+//      This library is free software; you can redistribute it and/or
+//      modify it under the terms of the GNU Lesser General Public
+//      License as published by the Free Software Foundation; either
+//      version 2.1 of the License, or (at your option) any later version.
 //
-// 	This library is distributed in the hope that it will be useful,
-// 	but WITHOUT ANY WARRANTY; without even the implied warranty of
-// 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// 	Lesser General Public License for more details.
+//      This library is distributed in the hope that it will be useful,
+//      but WITHOUT ANY WARRANTY; without even the implied warranty of
+//      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//      Lesser General Public License for more details.
 //
-// 	You should have received a copy of the GNU Lesser General Public
-// 	License along with this library; if not, write to the Free Software
-// 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+//      You should have received a copy of the GNU Lesser General Public
+//      License along with this library; if not, write to the Free Software
+//      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 //------------------------------------------------------------------------
 //
@@ -31,8 +31,8 @@
 //                       and new signature of notifyDccSpeed and notifyDccFunc
 //            2015-12-16 Version without use of Timer0 by Franz-Peter Müller
 //            2016-07-16 handle glitches on DCC line
-//			  2016-08-20 added ESP8266 support by Sven (littleyoda)
-//			  2017-01-19 added STM32F1 support by Franz-Peter
+//                        2016-08-20 added ESP8266 support by Sven (littleyoda)
+//                        2017-01-19 added STM32F1 support by Franz-Peter
 //            2017-11-29 Ken West (kgw4449@gmail.com):
 //                       Minor fixes to pass NMRA Baseline Conformance Tests.
 //            2018-12-17 added ESP32 support by Trusty (thierry@lapajaparis.net)
@@ -41,7 +41,7 @@
 //------------------------------------------------------------------------
 //
 // purpose:   Provide a simplified interface to decode NMRA DCC packets
-//			  and build DCC Mobile and Stationary Decoders
+//                        and build DCC Mobile and Stationary Decoders
 //
 //------------------------------------------------------------------------
 
@@ -304,19 +304,19 @@ typedef struct
     uint8_t   OpsModeAddressBaseCV ;
     uint8_t   inServiceMode ;
     long      LastServiceModeMillis ;
-    uint8_t   PageRegister ;  // Used for Paged Operations in Service Mode Programming
+    uint8_t   PageRegister ;         // Used for Paged Operations in Service Mode Programming
     uint8_t   DuplicateCount ;
     DCC_MSG   LastMsg ;
-    uint8_t	ExtIntNum;
-    uint8_t	ExtIntPinNum;
-    volatile uint8_t   *ExtIntPort;     // use port and bitmask to read input at AVR in ISR
-    uint8_t   ExtIntMask;     // digitalRead is too slow on AVR
-    int16_t   myDccAddress;	// Cached value of DCC Address from CVs
+    uint8_t   ExtIntNum;
+    uint8_t   ExtIntPinNum;
+    volatile uint8_t   *ExtIntPort;  // use port and bitmask to read input at AVR in ISR
+    uint8_t   ExtIntMask;            // digitalRead is too slow on AVR
+    int16_t   myDccAddress;          // Cached value of DCC Address from CVs
     uint8_t   inAccDecDCCAddrNextReceivedMode;
-    uint8_t	cv29Value;
+    uint8_t   cv29Value;
     #ifdef DCC_DEBUG
-    uint8_t	IntCount;
-    uint8_t	TickCount;
+    uint8_t   IntCount;
+    uint8_t   TickCount;
     uint8_t   NestedIrqCount;
     #endif
 }
@@ -879,11 +879,11 @@ uint8_t writeCV (unsigned int CV, uint8_t Value)
         DccProcState.cv29Value = Value;
         DccProcState.Flags = (DccProcState.Flags & ~FLAGS_CV29_BITS) | (Value & FLAGS_CV29_BITS);
     // no break, because myDccAdress must also be reset
-    case CV_ACCESSORY_DECODER_ADDRESS_LSB:	// Also same CV for CV_MULTIFUNCTION_PRIMARY_ADDRESS
+    case CV_ACCESSORY_DECODER_ADDRESS_LSB:      // Also same CV for CV_MULTIFUNCTION_PRIMARY_ADDRESS
     case CV_ACCESSORY_DECODER_ADDRESS_MSB:
     case CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB:
     case CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB:
-        DccProcState.myDccAddress = -1;	// Assume any CV Write Operation might change the Address
+        DccProcState.myDccAddress = -1; // Assume any CV Write Operation might change the Address
     }
 
     if (notifyCVWrite)
@@ -911,7 +911,7 @@ uint8_t writeCV (unsigned int CV, uint8_t Value)
 
 uint16_t getMyAddr (void)
 {
-    if (DccProcState.myDccAddress != -1)	// See if we can return the cached value
+    if (DccProcState.myDccAddress != -1)        // See if we can return the cached value
     {
         return (DccProcState.myDccAddress);
     }
@@ -1517,7 +1517,7 @@ void execDccProcessor (DCC_MSG * pDccMsg)
                     }
 
 
-                    if ( (pDccMsg->Size == 4) && ( (pDccMsg->Data[1] & 0b10001001) == 1))	// Extended Accessory Decoder Control Packet Format
+                    if ( (pDccMsg->Size == 4) && ( (pDccMsg->Data[1] & 0b10001001) == 1))       // Extended Accessory Decoder Control Packet Format
                     {
                         // According to the NMRA Dcc Spec the Signal State should only use the lower 5 Bits,
                         // however some manufacturers seem to allow/use all 8 bits, so we'll relax that constraint for now

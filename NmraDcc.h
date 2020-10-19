@@ -57,7 +57,7 @@
 #ifndef NMRADCC_IS_IN
 #define NMRADCC_IS_IN
 
-#define NMRADCC_VERSION     205     // Version 2.0.5
+#define NMRADCC_VERSION     206     // Version 2.0.6
 
 #define MAX_DCC_MESSAGE_LEN 6    // including XOR-Byte
 

@@ -1530,9 +1530,7 @@ void NmraDcc::pin( uint8_t ExtIntNum, uint8_t ExtIntPinNum, uint8_t EnablePullup
 #else
     DccProcState.ExtIntMask = 1;
 #endif	
-  pinMode( ExtIntPinNum, INPUT );
-  if( EnablePullup )
-    digitalWrite(ExtIntPinNum, HIGH);
+  pinMode( ExtIntPinNum, EnablePullup ? INPUT_PULLUP : INPUT );
 }
 
 ////////////////////////////////////////////////////////////////////////

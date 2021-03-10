@@ -38,6 +38,7 @@
 //            2018-12-17 added ESP32 support by Trusty (thierry@lapajaparis.net)
 //            2019-02-17 added ESP32 specific changes by Hans Tanner
 //            2020-05-15 changes to pass NMRA Tests ( always search for preamble )
+//            2021-03-11 fix ESP32 bug on interrupt reinitialisation
 //------------------------------------------------------------------------
 //
 // purpose:   Provide a simplified interface to decode NMRA DCC packets
@@ -488,17 +489,17 @@ void ExternalInterruptHandler(void)
                 preambleBitCount = 0;
                 // SET_TP2; CLR_TP2;
                 #if defined ( __STM32F1__ )
-				detachInterrupt( DccProcState.ExtIntNum );
-				#endif
+								detachInterrupt( DccProcState.ExtIntNum );
+								#endif
                 #ifdef ESP32
-				ISRWatch = ISREdge;
+								ISRWatch = ISREdge;
                 #else
                 attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+                #endif
                 // enable level checking ( with direct port reading @ AVR )
                 ISRChkMask = DccProcState.ExtIntMask;       
                 ISRLevel = (ISREdge==RISING)? DccProcState.ExtIntMask : 0 ;
-                #endif
-				SET_TP3;
+								SET_TP3;
                 CLR_TP4;
             }
         } else {
@@ -580,14 +581,14 @@ void ExternalInterruptHandler(void)
 		
         //SET_TP4;
 
-		#if defined ( __STM32F1__ )
-		detachInterrupt( DccProcState.ExtIntNum );
-		#endif
-        #ifdef ESP32
-        ISRWatch = ISREdge;
-        #else
-		attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
-        #endif
+				#if defined ( __STM32F1__ )
+				detachInterrupt( DccProcState.ExtIntNum );
+				#endif
+				#ifdef ESP32
+				ISRWatch = ISREdge;
+				#else
+				attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+				#endif
         // enable level-checking
         ISRChkMask = DccProcState.ExtIntMask;
         ISRLevel = (ISREdge==RISING)? DccProcState.ExtIntMask : 0 ;
@@ -691,7 +692,7 @@ void ExternalInterruptHandler(void)
             DccRx.State = WAIT_START_BIT_FULL;
         } else {
 #endif
-        DccRx.State = WAIT_START_BIT ;
+						DccRx.State = WAIT_START_BIT ;
             SET_TP2;
             // While waiting for the start bit, detect halfbit lengths. We will detect the correct
             // sync and detect whether we see a false (e.g. motorola) protocol

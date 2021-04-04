@@ -494,10 +494,10 @@ void ExternalInterruptHandler(void)
 				ISRWatch = ISREdge;
                 #else
                 attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+                #endif
                 // enable level checking ( with direct port reading @ AVR )
                 ISRChkMask = DccProcState.ExtIntMask;       
                 ISRLevel = (ISREdge==RISING)? DccProcState.ExtIntMask : 0 ;
-                #endif
 				SET_TP3;
                 CLR_TP4;
             }

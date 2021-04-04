@@ -94,6 +94,10 @@ typedef struct
  
 // Product/Version Id Codes allocated under: MAN_ID_DIY
 
+#define DEFAULT_MULTIFUNCTION_DECODER_ADDRESS 3
+#define DEFAULT_ACCESSORY_DECODER_ADDRESS 1
+
+
 // Standard CV Addresses
 #define CV_ACCESSORY_DECODER_ADDRESS_LSB       1
 #define CV_ACCESSORY_DECODER_ADDRESS_MSB       9
@@ -101,6 +105,9 @@ typedef struct
 #define CV_MULTIFUNCTION_PRIMARY_ADDRESS       1
 #define CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB 17
 #define CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB 18
+
+#define CALC_MULTIFUNCTION_EXTENDED_ADDRESS_LSB(x) (x & 0xFF)
+#define CALC_MULTIFUNCTION_EXTENDED_ADDRESS_MSB(x) (((x>>8) & 0x7F) + 192)
 
 #define CV_VERSION_ID                          7
 #define CV_MANUFACTURER_ID                     8

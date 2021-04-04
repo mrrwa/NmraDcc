@@ -1,7 +1,5 @@
 #include <NmraDcc.h>
 
-#define This_Decoder_Address 3
-
 struct CVPair
 {
   uint16_t  CV;
@@ -11,11 +9,11 @@ struct CVPair
 CVPair FactoryDefaultCVs [] =
 {
 	// The CV Below defines the Short DCC Address
-  {CV_MULTIFUNCTION_PRIMARY_ADDRESS, This_Decoder_Address},
+  {CV_MULTIFUNCTION_PRIMARY_ADDRESS, DEFAULT_MULTIFUNCTION_DECODER_ADDRESS},
 
   // These two CVs define the Long DCC Address
-  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB, 0},
-  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB, This_Decoder_Address},
+  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB, CALC_MULTIFUNCTION_EXTENDED_ADDRESS_MSB(DEFAULT_MULTIFUNCTION_DECODER_ADDRESS)},
+  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB, CALC_MULTIFUNCTION_EXTENDED_ADDRESS_LSB(DEFAULT_MULTIFUNCTION_DECODER_ADDRESS)},
 
 // ONLY uncomment 1 CV_29_CONFIG line below as approprate
 //  {CV_29_CONFIG,                                      0}, // Short Address 14 Speed Steps

@@ -94,6 +94,10 @@ typedef struct
  
 // Product/Version Id Codes allocated under: MAN_ID_DIY
 
+#define DEFAULT_MULTIFUNCTION_DECODER_ADDRESS 3
+#define DEFAULT_ACCESSORY_DECODER_ADDRESS 1
+
+
 // Standard CV Addresses
 #define CV_ACCESSORY_DECODER_ADDRESS_LSB       1
 #define CV_ACCESSORY_DECODER_ADDRESS_MSB       9
@@ -101,6 +105,9 @@ typedef struct
 #define CV_MULTIFUNCTION_PRIMARY_ADDRESS       1
 #define CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB 17
 #define CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB 18
+
+#define CALC_MULTIFUNCTION_EXTENDED_ADDRESS_LSB(x) (x & 0xFF)
+#define CALC_MULTIFUNCTION_EXTENDED_ADDRESS_MSB(x) (((x>>8) & 0x7F) + 192)
 
 #define CV_VERSION_ID                          7
 #define CV_MANUFACTURER_ID                     8
@@ -118,6 +125,9 @@ typedef struct
     #undef ALLOW_NESTED_IRQ                 // This is done with NVIC on STM32
     #define PRIO_DCC_IRQ    9
     #define PRIO_SYSTIC     8               // MUST be higher priority than DCC Irq
+#elif defined(ARDUINO_ARCH_RP2040)
+#define MAXCV    256	     				    // todo: maybe somebody knows a good define for it
+
 #else
 	#define MAXCV    E2END     					// the upper limit of the CV value currently defined to max memory.
 #endif

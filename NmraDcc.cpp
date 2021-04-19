@@ -489,17 +489,17 @@ void ExternalInterruptHandler(void)
                 preambleBitCount = 0;
                 // SET_TP2; CLR_TP2;
                 #if defined ( __STM32F1__ )
-								detachInterrupt( DccProcState.ExtIntNum );
-								#endif
+				detachInterrupt( DccProcState.ExtIntNum );
+				#endif
                 #ifdef ESP32
-								ISRWatch = ISREdge;
+				ISRWatch = ISREdge;
                 #else
-                attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+                attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, (PinStatus)ISREdge );
                 #endif
                 // enable level checking ( with direct port reading @ AVR )
                 ISRChkMask = DccProcState.ExtIntMask;       
                 ISRLevel = (ISREdge==RISING)? DccProcState.ExtIntMask : 0 ;
-								SET_TP3;
+				SET_TP3;
                 CLR_TP4;
             }
         } else {
@@ -544,7 +544,7 @@ void ExternalInterruptHandler(void)
         #ifdef ESP32
         ISRWatch = ISREdge;
         #else
-        attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+        attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, (PinStatus)ISREdge );
         #endif
         // enable level-checking
         ISRChkMask = DccProcState.ExtIntMask;
@@ -581,14 +581,14 @@ void ExternalInterruptHandler(void)
 		
         //SET_TP4;
 
-				#if defined ( __STM32F1__ )
-				detachInterrupt( DccProcState.ExtIntNum );
-				#endif
-				#ifdef ESP32
-				ISRWatch = ISREdge;
-				#else
-				attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
-				#endif
+		#if defined ( __STM32F1__ )
+		detachInterrupt( DccProcState.ExtIntNum );
+		#endif
+        #ifdef ESP32
+        ISRWatch = ISREdge;
+        #else
+		attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, (PinStatus)ISREdge );
+        #endif
         // enable level-checking
         ISRChkMask = DccProcState.ExtIntMask;
         ISRLevel = (ISREdge==RISING)? DccProcState.ExtIntMask : 0 ;
@@ -692,7 +692,7 @@ void ExternalInterruptHandler(void)
             DccRx.State = WAIT_START_BIT_FULL;
         } else {
 #endif
-						DccRx.State = WAIT_START_BIT ;
+        DccRx.State = WAIT_START_BIT ;
             SET_TP2;
             // While waiting for the start bit, detect halfbit lengths. We will detect the correct
             // sync and detect whether we see a false (e.g. motorola) protocol
@@ -756,10 +756,7 @@ uint8_t readEEPROM( unsigned int CV )
 void writeEEPROM( unsigned int CV, uint8_t Value )
 {
     EEPROM.write(CV, Value) ;
-  #if defined(ESP8266)
-    EEPROM.commit();
-  #endif
-  #if defined(ESP32)
+  #if defined(ESP8266) ||  defined(ESP32) || defined(ARDUINO_ARCH_RP2040)
     EEPROM.commit();
   #endif
 }
@@ -1543,10 +1540,7 @@ void NmraDcc::initAccessoryDecoder( uint8_t ManufacturerId, uint8_t VersionId, u
 ////////////////////////////////////////////////////////////////////////
 void NmraDcc::init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, uint8_t OpsModeAddressBaseCV )
 {
-  #if defined(ESP8266)
-    EEPROM.begin(MAXCV);
-  #endif
-  #if defined(ESP32)
+  #if defined(ESP8266) ||  defined(ESP32) || defined(ARDUINO_ARCH_RP2040)
     EEPROM.begin(MAXCV);
   #endif
   // Clear all the static member variables

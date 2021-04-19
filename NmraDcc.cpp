@@ -494,7 +494,7 @@ void ExternalInterruptHandler(void)
                 #ifdef ESP32
 								ISRWatch = ISREdge;
                 #else
-                attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+                attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, (PinStatus)ISREdge );
                 #endif
                 // enable level checking ( with direct port reading @ AVR )
                 ISRChkMask = DccProcState.ExtIntMask;       
@@ -544,7 +544,7 @@ void ExternalInterruptHandler(void)
         #ifdef ESP32
         ISRWatch = ISREdge;
         #else
-        attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+        attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, (PinStatus)ISREdge );
         #endif
         // enable level-checking
         ISRChkMask = DccProcState.ExtIntMask;
@@ -587,7 +587,7 @@ void ExternalInterruptHandler(void)
 				#ifdef ESP32
 				ISRWatch = ISREdge;
 				#else
-				attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+				attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, (PinStatus)ISREdge );
 				#endif
         // enable level-checking
         ISRChkMask = DccProcState.ExtIntMask;
@@ -756,10 +756,7 @@ uint8_t readEEPROM( unsigned int CV )
 void writeEEPROM( unsigned int CV, uint8_t Value )
 {
     EEPROM.write(CV, Value) ;
-  #if defined(ESP8266)
-    EEPROM.commit();
-  #endif
-  #if defined(ESP32)
+  #if defined(ESP8266) ||  defined(ESP32) || defined(ARDUINO_ARCH_RP2040)
     EEPROM.commit();
   #endif
 }
@@ -1543,10 +1540,7 @@ void NmraDcc::initAccessoryDecoder( uint8_t ManufacturerId, uint8_t VersionId, u
 ////////////////////////////////////////////////////////////////////////
 void NmraDcc::init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, uint8_t OpsModeAddressBaseCV )
 {
-  #if defined(ESP8266)
-    EEPROM.begin(MAXCV);
-  #endif
-  #if defined(ESP32)
+  #if defined(ESP8266) ||  defined(ESP32) || defined(ARDUINO_ARCH_RP2040)
     EEPROM.begin(MAXCV);
   #endif
   // Clear all the static member variables

@@ -106,9 +106,9 @@ CVPair FactoryDefaultCVs [] =
   {CV_MANUF,   MANUF_ID },                                  // Manufacturer ID.
 
   // These two CVs define the Long DCC Address
-  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB, 0},               // Extended address MSB.
-  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB, DECODER_ADDR},    // Extended address LSB.
-
+  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_MSB, CALC_MULTIFUNCTION_EXTENDED_ADDRESS_MSB(DECODER_ADDR)},
+  {CV_MULTIFUNCTION_EXTENDED_ADDRESS_LSB, CALC_MULTIFUNCTION_EXTENDED_ADDRESS_LSB(DECODER_ADDR)},
+  
   {CV_29_CONFIG,                         CV29_F0_LOCATION}, // Short Address 28/128 Speed Steps
   {CV_MANUF_01,                          VER_MINOR},        // Minor decoder version.
 };

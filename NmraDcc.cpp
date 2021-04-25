@@ -491,10 +491,12 @@ void ExternalInterruptHandler(void)
                 #if defined ( __STM32F1__ )
 				detachInterrupt( DccProcState.ExtIntNum );
 				#endif
-                #ifdef ESP32
-				ISRWatch = ISREdge;
-                #else
+                #if defined(ESP32)
+                ISRWatch = ISREdge;
+                #elif defined(ARDUINO_ARCH_RP2040)
                 attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, (PinStatus)ISREdge );
+                #else
+                attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
                 #endif
                 // enable level checking ( with direct port reading @ AVR )
                 ISRChkMask = DccProcState.ExtIntMask;       
@@ -541,10 +543,12 @@ void ExternalInterruptHandler(void)
         #if defined ( __STM32F1__ )
         detachInterrupt( DccProcState.ExtIntNum );
         #endif
-        #ifdef ESP32
+        #if defined(ESP32)
         ISRWatch = ISREdge;
-        #else
+        #elif defined(ARDUINO_ARCH_RP2040)
         attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, (PinStatus)ISREdge );
+        #else
+        attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
         #endif
         // enable level-checking
         ISRChkMask = DccProcState.ExtIntMask;
@@ -584,14 +588,17 @@ void ExternalInterruptHandler(void)
 		#if defined ( __STM32F1__ )
 		detachInterrupt( DccProcState.ExtIntNum );
 		#endif
-        #ifdef ESP32
-        ISRWatch = ISREdge;
-        #else
-		attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, (PinStatus)ISREdge );
-        #endif
-        // enable level-checking
-        ISRChkMask = DccProcState.ExtIntMask;
-        ISRLevel = (ISREdge==RISING)? DccProcState.ExtIntMask : 0 ;
+    
+    #if defined(ESP32)
+    ISRWatch = ISREdge;
+    #elif defined(ARDUINO_ARCH_RP2040)
+    attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, (PinStatus)ISREdge );
+    #else
+    attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+    #endif
+    // enable level-checking
+    ISRChkMask = DccProcState.ExtIntMask;
+    ISRLevel = (ISREdge==RISING)? DccProcState.ExtIntMask : 0 ;
 
 		//CLR_TP4;
         break;

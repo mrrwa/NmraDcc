@@ -38,6 +38,7 @@
 //            2018-12-17 added ESP32 support by Trusty (thierry@lapajaparis.net)
 //            2019-02-17 added ESP32 specific changes by Hans Tanner
 //            2020-05-15 changes to pass NMRA Tests ( always search for preamble )
+//            2021-03-11 fix ESP32 bug on interrupt reinitialisation
 //------------------------------------------------------------------------
 //
 // purpose:   Provide a simplified interface to decode NMRA DCC packets
@@ -490,8 +491,10 @@ void ExternalInterruptHandler(void)
                 #if defined ( __STM32F1__ )
 				detachInterrupt( DccProcState.ExtIntNum );
 				#endif
-                #ifdef ESP32
-				ISRWatch = ISREdge;
+                #if defined(ESP32)
+                ISRWatch = ISREdge;
+                #elif defined(ARDUINO_ARCH_RP2040)
+                attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, (PinStatus)ISREdge );
                 #else
                 attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
                 #endif
@@ -540,8 +543,10 @@ void ExternalInterruptHandler(void)
         #if defined ( __STM32F1__ )
         detachInterrupt( DccProcState.ExtIntNum );
         #endif
-        #ifdef ESP32
+        #if defined(ESP32)
         ISRWatch = ISREdge;
+        #elif defined(ARDUINO_ARCH_RP2040)
+        attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, (PinStatus)ISREdge );
         #else
         attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
         #endif
@@ -583,14 +588,17 @@ void ExternalInterruptHandler(void)
 		#if defined ( __STM32F1__ )
 		detachInterrupt( DccProcState.ExtIntNum );
 		#endif
-        #ifdef ESP32
-        ISRWatch = ISREdge;
-        #else
-		attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
-        #endif
-        // enable level-checking
-        ISRChkMask = DccProcState.ExtIntMask;
-        ISRLevel = (ISREdge==RISING)? DccProcState.ExtIntMask : 0 ;
+    
+    #if defined(ESP32)
+    ISRWatch = ISREdge;
+    #elif defined(ARDUINO_ARCH_RP2040)
+    attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, (PinStatus)ISREdge );
+    #else
+    attachInterrupt( DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge );
+    #endif
+    // enable level-checking
+    ISRChkMask = DccProcState.ExtIntMask;
+    ISRLevel = (ISREdge==RISING)? DccProcState.ExtIntMask : 0 ;
 
 		//CLR_TP4;
         break;
@@ -755,10 +763,7 @@ uint8_t readEEPROM( unsigned int CV )
 void writeEEPROM( unsigned int CV, uint8_t Value )
 {
     EEPROM.write(CV, Value) ;
-  #if defined(ESP8266)
-    EEPROM.commit();
-  #endif
-  #if defined(ESP32)
+  #if defined(ESP8266) ||  defined(ESP32) || defined(ARDUINO_ARCH_RP2040)
     EEPROM.commit();
   #endif
 }
@@ -1542,10 +1547,7 @@ void NmraDcc::initAccessoryDecoder( uint8_t ManufacturerId, uint8_t VersionId, u
 ////////////////////////////////////////////////////////////////////////
 void NmraDcc::init( uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, uint8_t OpsModeAddressBaseCV )
 {
-  #if defined(ESP8266)
-    EEPROM.begin(MAXCV);
-  #endif
-  #if defined(ESP32)
+  #if defined(ESP8266) ||  defined(ESP32) || defined(ARDUINO_ARCH_RP2040)
     EEPROM.begin(MAXCV);
   #endif
   // Clear all the static member variables

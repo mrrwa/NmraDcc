@@ -125,6 +125,9 @@ typedef struct
     #undef ALLOW_NESTED_IRQ                 // This is done with NVIC on STM32
     #define PRIO_DCC_IRQ    9
     #define PRIO_SYSTIC     8               // MUST be higher priority than DCC Irq
+#elif defined(ARDUINO_ARCH_RP2040)
+#define MAXCV    256	     				    // todo: maybe somebody knows a good define for it
+
 #else
 	#define MAXCV    E2END     					// the upper limit of the CV value currently defined to max memory.
 #endif

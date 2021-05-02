@@ -525,7 +525,6 @@ extern void    notifyDccAccTurnoutBoard( uint16_t BoardAddr, uint8_t OutputPair,
 /*+
  *  notifyDccAccTurnoutOutput() Output oriented callback for a turnout accessory decoder.
  *                              Most useful when CV29_OUTPUT_ADDRESS_MODE IS set.
- *                              Decoders of this type have 4 paired turnout outputs per board.
  *                              OutputPower is 1 if the power is on, and 0 otherwise.
  *
  *  Inputs:

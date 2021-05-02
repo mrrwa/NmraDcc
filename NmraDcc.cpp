@@ -258,6 +258,8 @@ static ExtIntTriggerMode ISREdge;
 #elif defined ( ESP32 )
 static byte  ISREdge;   // Holder of the Next Edge we're looking for: RISING or FALLING
 static byte  ISRWatch;  // Interrupt Handler Edge Filter 
+#elif defined ( ARDUINO_AVR_NANO_EVERY )
+static PinStatus ISREdge;
 #else
 static byte  ISREdge;   // Holder of the Next Edge we're looking for: RISING or FALLING
 static byte  ISRWatch;  // Interrupt Handler Edge Filter 

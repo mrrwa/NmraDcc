@@ -1,0 +1,20 @@
+#!/bin/sh
+
+FORMAT_SOURCES="NmraDcc.h NmraDcc.cpp"
+
+error=0
+
+for file in ${FORMAT_SOURCES}
+do
+  output=$(mktemp -t stylecheckXXXXXXX)
+  astyle --options=.astylerc < $file > $output
+  if ! cmp -s $file $output
+  then
+    echo "Formatting on $file doesn't match expectations"
+    diff -u $file $output
+    error=1
+  fi
+  [ -f $output ] && rm $output
+done
+
+exit $error

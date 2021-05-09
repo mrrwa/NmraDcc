@@ -1,0 +1,55 @@
+# http://astyle.sourceforge.net/astyle.html#_style=allman
+# use the allman style for braces
+--style=allman
+
+# http://astyle.sourceforge.net/astyle.html#_lineend
+# newlines for all line endings
+--lineend=linux
+
+# http://astyle.sourceforge.net/astyle.html#_indent=spaces
+# 4 space indents
+--indent=spaces=4
+
+# http://astyle.sourceforge.net/astyle.html#_add-braces
+# don't leave any unbraced one-line blocks by changing:
+#   if (thing)
+#      statement;
+#
+# to
+#   if (thing)
+#   {
+#       statement;
+#   }
+#
+# --add-braces
+
+# http://astyle.sourceforge.net/astyle.html#_indent-preproc-cond
+# line up #if/#endif with the code
+#
+#    statement;
+#    #if SOMETHING
+#    statement;
+#    #endif
+#
+--indent-preproc-cond
+
+# http://astyle.sourceforge.net/astyle.html#_indent-preproc-block
+# indent top level preprocessor block contents
+#
+# #ifdef __ARDUINO__
+#     #include "Arduino.h"
+# #endif
+#
+--indent-preproc-block
+
+# normalize spacing around parenthese
+#   http://astyle.sourceforge.net/astyle.html#_unpad-paren
+#   first, remove all whitespace on either side of a paren
+--unpad-paren
+#   http://astyle.sourceforge.net/astyle.html#_pad-paren-out
+#   then add a space on the "outer" side of a paren
+--pad-paren-out
+
+# http://astyle.sourceforge.net/astyle.html#_max-code-length
+# we've got big monitors these days....
+--max-code-length=180

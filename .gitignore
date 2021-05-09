@@ -1,2 +1,4 @@
 .development
 *.zip
+*.orig
+*~

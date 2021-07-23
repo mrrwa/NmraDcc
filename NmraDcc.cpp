@@ -258,7 +258,7 @@
 #elif defined ( ESP32 )
     static byte  ISREdge;   // Holder of the Next Edge we're looking for: RISING or FALLING
     static byte  ISRWatch;  // Interrupt Handler Edge Filter
-#elif defined ( ARDUINO_AVR_NANO_EVERY )
+#elif defined ( ARDUINO_AVR_NANO_EVERY ) || defined(ARDUINO_ARCH_RP2040)
     static PinStatus ISREdge;
 #else
     static byte  ISREdge;   // Holder of the Next Edge we're looking for: RISING or FALLING
@@ -509,8 +509,6 @@ DCC_PROCESSOR_STATE DccProcState ;
                     #endif
                     #if defined(ESP32)
                     ISRWatch = ISREdge;
-                    #elif defined(ARDUINO_ARCH_RP2040)
-                    attachInterrupt (DccProcState.ExtIntNum, ExternalInterruptHandler, (PinStatus) ISREdge);
                     #else
                     attachInterrupt (DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge);
                     #endif
@@ -568,8 +566,6 @@ DCC_PROCESSOR_STATE DccProcState ;
             #endif
             #if defined(ESP32)
             ISRWatch = ISREdge;
-            #elif defined(ARDUINO_ARCH_RP2040)
-            attachInterrupt (DccProcState.ExtIntNum, ExternalInterruptHandler, (PinStatus) ISREdge);
             #else
             attachInterrupt (DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge);
             #endif
@@ -619,8 +615,6 @@ DCC_PROCESSOR_STATE DccProcState ;
 
             #if defined(ESP32)
             ISRWatch = ISREdge;
-            #elif defined(ARDUINO_ARCH_RP2040)
-            attachInterrupt (DccProcState.ExtIntNum, ExternalInterruptHandler, (PinStatus) ISREdge);
             #else
             attachInterrupt (DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge);
             #endif

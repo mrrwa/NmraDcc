@@ -18,6 +18,9 @@
 // Un-Comment the line below to Enable DCC ACK for Service Mode Programming Read CV Capablilty 
 //#define ENABLE_DCC_ACK  15  // This is A1 on the Iowa Scaled Engineering ARD-DCCSHIELD DCC Shield
 
+// Define the Arduino input Pin number for the DCC Signal 
+#define DCC_PIN     2
+
 #define NUM_TURNOUTS 8              // Set Number of Turnouts (Pairs of Pins)
 #define ACTIVE_OUTPUT_STATE LOW			// Set the ACTIVE State of the output to Drive the Turnout motor electronics HIGH or LOW 
 
@@ -118,8 +121,14 @@ void setup()
 {
   Serial.begin(115200);
 
-  // Setup which External Interrupt, the Pin it's associated with that we're using and enable the Pull-Up 
-  Dcc.pin(0, 2, 1);
+  // Setup which External Interrupt, the Pin it's associated with that we're using and enable the Pull-Up
+  // Many Arduino Cores now support the digitalPinToInterrupt() function that makes it easier to figure out the
+  // Interrupt Number for the Arduino Pin number, which reduces confusion. 
+#ifdef digitalPinToInterrupt
+  Dcc.pin(DCC_PIN, 0);
+#else
+  Dcc.pin(0, DCC_PIN, 1);
+#endif
   
   // Call the main DCC Init function to enable the DCC Receiver
   Dcc.init( MAN_ID_DIY, DCC_DECODER_VERSION_NUM, CV29_ACCESSORY_DECODER, 0 );

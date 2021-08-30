@@ -19,6 +19,9 @@
 #include <AccelStepper.h>
 #include <NmraDcc.h>
 
+// Define the Arduino input Pin number for the DCC Signal 
+#define DCC_PIN     2
+
 // The lines below define the pins used to connect to the A4988 driver module
 #define A4988_STEP_PIN      4
 #define A4988_DIRECTION_PIN 5
@@ -243,8 +246,14 @@ void setupDCCDecoder()
 {
   Serial.println(F("Setting up DCC Decorder..."));
 
-  // Setup which External Interrupt, the Pin it's associated with that we're using and enable the Pull-Up 
-  Dcc.pin(0, 2, 1);
+  // Setup which External Interrupt, the Pin it's associated with that we're using and enable the Pull-Up
+  // Many Arduino Cores now support the digitalPinToInterrupt() function that makes it easier to figure out the
+  // Interrupt Number for the Arduino Pin number, which reduces confusion. 
+#ifdef digitalPinToInterrupt
+  Dcc.pin(DCC_PIN, 0);
+#else
+  Dcc.pin(0, DCC_PIN, 1);
+#endif
   
   // Call the main DCC Init function to enable the DCC Receiver
   Dcc.init( MAN_ID_DIY, 10, CV29_ACCESSORY_DECODER | CV29_OUTPUT_ADDRESS_MODE, 0 );

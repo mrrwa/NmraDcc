@@ -32,6 +32,7 @@
 // This section defines the Arduino UNO Pins to use 
 #ifdef __AVR_ATmega328P__ 
 
+// Define the Arduino input Pin number for the DCC Signal 
 #define DCC_PIN     2
 
 #define LED_PIN_FWD 5
@@ -42,6 +43,7 @@
 // This section defines the Arduino ATTiny85 Pins to use 
 #elif ARDUINO_AVR_ATTINYX5 
 
+// Define the Arduino input Pin number for the DCC Signal 
 #define DCC_PIN     2
 
 #define LED_PIN_FWD 0
@@ -217,8 +219,14 @@ void setup()
   pinMode(MOTOR_PWM_PIN, OUTPUT);
 
   
-  // Setup which External Interrupt, the Pin it's associated with that we're using and enable the Pull-Up 
+  // Setup which External Interrupt, the Pin it's associated with that we're using and enable the Pull-Up
+  // Many Arduino Cores now support the digitalPinToInterrupt() function that makes it easier to figure out the
+  // Interrupt Number for the Arduino Pin number, which reduces confusion. 
+#ifdef digitalPinToInterrupt
   Dcc.pin(DCC_PIN, 0);
+#else
+  Dcc.pin(0, DCC_PIN, 1);
+#endif
   
   Dcc.init( MAN_ID_DIY, 10, FLAGS_MY_ADDRESS_ONLY | FLAGS_AUTO_FACTORY_DEFAULT, 0 );
 
@@ -292,8 +300,8 @@ void loop()
       #ifdef DEBUG_FUNCTIONS
       Serial.println("LED On");
       #endif
-      digitalWrite(LED_PIN_FWD, newDirection ? LOW : HIGH);
-      digitalWrite(LED_PIN_REV, newDirection ? HIGH : LOW);
+      digitalWrite(LED_PIN_FWD, newDirection ? HIGH : LOW);
+      digitalWrite(LED_PIN_REV, newDirection ? LOW : HIGH);
     }
     else
     {

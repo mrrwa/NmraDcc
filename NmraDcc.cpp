@@ -50,7 +50,7 @@
 #include "EEPROM.h"
 
 // Uncomment to print DEBUG messages
-// #define DEBUG_PRINT
+#define DEBUG_PRINT
 
 //------------------------------------------------------------------------
 // DCC Receive Routine
@@ -1337,8 +1337,8 @@ void execDccProcessor (DCC_MSG * pDccMsg)
                     #endif
 
                     BoardAddress = ( ( (~pDccMsg->Data[1]) & 0b01110000) << 2) | (pDccMsg->Data[0] & 0b00111111) ;
-                    TurnoutPairIndex = (pDccMsg->Data[1] & 0b00000110) >> 1;
-                    DB_PRINT ("eDP: BAddr:%d, Index:%d", BoardAddress, TurnoutPairIndex);
+                    TurnoutPairIndex = ( pDccMsg->Data[1]  & 0b00000110) >> 1;
+                    DB_PRINT ("eDP: Board Address: %d, Index: %d", BoardAddress, TurnoutPairIndex);
 
                     // First check for Legacy Accessory Decoder Configuration Variable Access Instruction
                     // as it's got a different format to the others
@@ -1354,22 +1354,21 @@ void execDccProcessor (DCC_MSG * pDccMsg)
 
                         uint16_t cvAddress = ( (pDccMsg->Data[1] & 0b00000011) << 8) + pDccMsg->Data[2] + 1;
                         uint8_t  cvValue   = pDccMsg->Data[3];
-                        DB_PRINT ("eDP: CV:%d Value:%d", cvAddress, cvValue);
+                        DB_PRINT ("eDP: CV: %d Value: %d", cvAddress, cvValue);
                         if (validCV (cvAddress, 1))
                             writeCV (cvAddress, cvValue);
                         return;
                     }
 
-
                     OutputAddress = ( ( (BoardAddress - 1) << 2) | TurnoutPairIndex) + 1 ; //decoder output addresses start with 1, packet address range starts with 0
                     // ( according to NMRA 9.2.2 )
-                    DB_PRINT ("eDP: OAddr:%d", OutputAddress);
+                    DB_PRINT ("eDP: Output Address: %d", OutputAddress);
 
                     if (DccProcState.inAccDecDCCAddrNextReceivedMode)
                     {
                         if (DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE)
                         {
-                            DB_PRINT ("eDP: Set OAddr:%d", OutputAddress);
+                            DB_PRINT ("eDP: Set Output Address: %d", OutputAddress);
                             //uint16_t storedOutputAddress = OutputAddress + 1; // The value stored in CV1 & 9 for Output Addressing Mode is + 1
                             writeCV (CV_ACCESSORY_DECODER_ADDRESS_LSB, (uint8_t) (OutputAddress % 256));
                             writeCV (CV_ACCESSORY_DECODER_ADDRESS_MSB, (uint8_t) (OutputAddress / 256));
@@ -1379,7 +1378,7 @@ void execDccProcessor (DCC_MSG * pDccMsg)
                         }
                         else
                         {
-                            DB_PRINT ("eDP: Set BAddr:%d", BoardAddress);
+                            DB_PRINT ("eDP: Set Board Address: %d", BoardAddress);
                             writeCV (CV_ACCESSORY_DECODER_ADDRESS_LSB, (uint8_t) (BoardAddress % 64));
                             writeCV (CV_ACCESSORY_DECODER_ADDRESS_MSB, (uint8_t) (BoardAddress / 64));
 
@@ -1393,12 +1392,12 @@ void execDccProcessor (DCC_MSG * pDccMsg)
                     // If we're filtering addresses, does the address match our address or is it a broadcast address? If NOT then return
                     if (DccProcState.Flags & FLAGS_MY_ADDRESS_ONLY)
                     {
+                    	DB_PRINT ("eDP: Check if the Address matches");
                         if (DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE)
                         {
-                            DB_PRINT (" AddrChk: OAddr:%d, BAddr:%d, myAddr:%d Chk=%d", OutputAddress, BoardAddress, getMyAddr(), OutputAddress != getMyAddr());
                             if (OutputAddress != getMyAddr()  &&  OutputAddress < 2045)
                             {
-                                DB_PRINT (" eDP: OAddr:%d, myAddr:%d - no match", OutputAddress, getMyAddr());
+                                DB_PRINT ("eDP: OAddr: %d, myAddr: %d - no match", OutputAddress, getMyAddr());
                                 return;
                             }
                         }
@@ -1406,10 +1405,11 @@ void execDccProcessor (DCC_MSG * pDccMsg)
                         {
                             if ( (BoardAddress != getMyAddr()) && (BoardAddress < 511))
                             {
-                                DB_PRINT (" eDP: BAddr:%d, myAddr:%d - no match", BoardAddress, getMyAddr());
+                                DB_PRINT ("eDP: BAddr: %d, myAddr: %d - no match", BoardAddress, getMyAddr());
                                 return;
                             }
                         }
+
                         DB_PRINT ("eDP: Address Matched");
                     }
 
@@ -1419,7 +1419,7 @@ void execDccProcessor (DCC_MSG * pDccMsg)
                         // According to the NMRA Dcc Spec the Signal State should only use the lower 5 Bits,
                         // however some manufacturers seem to allow/use all 8 bits, so we'll relax that constraint for now
                         uint8_t state = pDccMsg->Data[2] ;
-                        DB_PRINT ("eDP: OAddr:%d  Extended State:%0X", OutputAddress, state);
+                        DB_PRINT ("eDP: Output Address: %d  Extended State: %0X", OutputAddress, state);
                         if (notifyDccSigOutputState)
                             notifyDccSigOutputState (OutputAddress, state);
 
@@ -1439,13 +1439,13 @@ void execDccProcessor (DCC_MSG * pDccMsg)
 
                         if (DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE)
                         {
-                            DB_PRINT ("eDP: OAddr:%d  Turnout Dir:%d  Output Power:%d", OutputAddress, direction, outputPower);
+                            DB_PRINT ("eDP: Output Address: %d  Turnout Dir: %d  Output Power: %d", OutputAddress, direction, outputPower);
                             if (notifyDccAccTurnoutOutput)
                                 notifyDccAccTurnoutOutput (OutputAddress, direction, outputPower);
                         }
                         else
                         {
-                            DB_PRINT ("eDP: Turnout Pair Index:%d Dir:%d Output Power: ", TurnoutPairIndex, direction, outputPower);
+                            DB_PRINT ("eDP: Turnout Pair Index: %d Dir: %d Output Power: ", TurnoutPairIndex, direction, outputPower);
                             if (notifyDccAccTurnoutBoard)
                                 notifyDccAccTurnoutBoard (BoardAddress, TurnoutPairIndex, direction, outputPower);
                         }
@@ -1460,19 +1460,21 @@ void execDccProcessor (DCC_MSG * pDccMsg)
                             return;
                         }
 
-                        // Check if this command is for our address or the broadcast address
-                        if (DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE)
-                        {
-                            DB_PRINT ("eDP: Check Output Address:%d", OutputAddress);
-                            if ( (OutputAddress != getMyAddr()) && (OutputAddress < 2045))
-                            {
-                                DB_PRINT ("eDP: Output Address Not Matched");
-                                return;
-                            }
-                        }
-                        else
-                        {
-                            DB_PRINT ("eDP: Check Board Address:%d", BoardAddress);
+							// If its a "Basic Accessory Decoder Packet" OPS Command
+                        if ((pDccMsg->Data[1] & 0x80) == 0x80)
+						{
+							DB_PRINT ("eDP: Basic Accessory Decoder Packet OPS Command");
+							
+								// If we're in FLAGS_OUTPUT_ADDRESS_MODE then return as this isn't for us
+                            DB_PRINT ("eDP: Check if in Output Address Mode");
+							if(DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE)
+							{
+								DB_PRINT ("eDP: Ignore Basic Accessory Decoder Packet in Output Address Mode");
+								return;
+							}
+							
+								// Check if this command is for our Board Address or the broadcast address
+							DB_PRINT ("eDP: Check Board Address: %d", BoardAddress);
                             if ( (BoardAddress != getMyAddr()) && (BoardAddress < 511))
                             {
                                 DB_PRINT ("eDP: Board Address Not Matched");
@@ -1480,12 +1482,33 @@ void execDccProcessor (DCC_MSG * pDccMsg)
                             }
                         }
 
+							// If its a "Extended Decoder Control Packet"  OPS Command
+						else if ((pDccMsg->Data[1] & 0x81) == 0x01)
+						{
+							DB_PRINT ("eDP: Extended Decoder Control Packet OPS Command");
+							
+								// If we're not in FLAGS_OUTPUT_ADDRESS_MODE then return as this isn't for us
+                            DB_PRINT ("eDP: Check if in Board Address Mode");
+						 	if ((DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE) == 0)
+						 	{
+								DB_PRINT ("eDP: Ignore Extended Decoder Control Packet in Board Address Mode");
+								return;
+							}
+
+								// Check if this command is for our Output Address or the broadcast address
+			                DB_PRINT ("eDP: Check Output Address: %d", OutputAddress);
+                            if ( (OutputAddress != getMyAddr()) && (OutputAddress < 2045))
+                            {
+                                DB_PRINT ("eDP: Output Address Not Matched");
+                                return;
+                            }                        }
+
                         uint16_t cvAddress = ( (pDccMsg->Data[2] & 0b00000011) << 8) + pDccMsg->Data[3] + 1;
                         uint8_t  cvValue   = pDccMsg->Data[4];
 
                         OpsInstructionType insType = (OpsInstructionType) ( (pDccMsg->Data[2] & 0b00001100) >> 2) ;
 
-                        DB_PRINT ("eDP: OPS Mode Instruction:%d", insType);
+                        DB_PRINT ("eDP: OPS Mode Instruction: %d", insType);
                         switch (insType)
                         {
                         case OPS_INS_RESERVED:
@@ -1494,7 +1517,7 @@ void execDccProcessor (DCC_MSG * pDccMsg)
                             break; // We only support Write Byte or Bit Manipulation
 
                         case OPS_INS_WRITE_BYTE:
-                            DB_PRINT ("eDP: CV:%d Value:%d", cvAddress, cvValue);
+                            DB_PRINT ("eDP: CV:%d Value: %d", cvAddress, cvValue);
                             if (validCV (cvAddress, 1))
                                 writeCV (cvAddress, cvValue);
                             break;

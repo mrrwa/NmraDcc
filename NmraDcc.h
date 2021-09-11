@@ -211,7 +211,7 @@ typedef enum
 #define FN_BIT_27	0x40
 #define FN_BIT_28	0x80
 
-//#define DCC_DBGVAR
+// #define DCC_DBGVAR
 #ifdef DCC_DBGVAR
 typedef struct countOf_t
 {
@@ -234,11 +234,17 @@ public:
 #define FLAGS_MY_ADDRESS_ONLY        0x01	// Only process DCC Packets with My Address
 #define FLAGS_AUTO_FACTORY_DEFAULT   0x02	// Call notifyCVResetFactoryDefault() if CV 7 & 8 == 255
 #define FLAGS_SETCV_CALLED           0x10   // only used internally !!
-#define FLAGS_OUTPUT_ADDRESS_MODE    0x40  // CV 29/541 bit 6
-#define FLAGS_DCC_ACCESSORY_DECODER  0x80  // CV 29/541 bit 7
+#define FLAGS_EXTENDED_ADDRESS_MODE  0x20  // CV 29/541 bit 5	0 = 9-bit Board or Decoder Addressing mode, 1 = 11-bit Extended Address using middle 2 DD of the CDDD bits for the extra 2 bits  
+#define FLAGS_OUTPUT_ADDRESS_MODE    0x40  // CV 29/541 bit 6   0 = Board or Extended Addressing Mode, 1 = Signal Decoder Output Addressing Mode
+#define FLAGS_DCC_ACCESSORY_DECODER  0x80  // CV 29/541 bit 7   0 = Multifunction Decoder, 1 = Accessory Decoder
+
+#define FLAGS_MULTIFUNCTION_DECODER			()
+#define FLAGS_BASIC_ACCESSORY_DECODER		(FLAGS_DCC_ACCESSORY_DECODER)
+#define FLAGS_EXTENDED_ACCESSORY_DECODER	(FLAGS_DCC_ACCESSORY_DECODER | FLAGS_EXTENDED_ADDRESS_MODE)
+#define FLAGS_SIGNAL_ACCESSORY_DECODER		(FLAGS_DCC_ACCESSORY_DECODER | FLAGS_OUTPUT_ADDRESS_MODE)
 
 // Flag Bits that are cloned from CV29 relating the DCC Accessory Decoder
-#define FLAGS_CV29_BITS		(FLAGS_OUTPUT_ADDRESS_MODE | FLAGS_DCC_ACCESSORY_DECODER)
+#define FLAGS_CV29_BITS		(FLAGS_EXTENDED_ACCESSORY_DECODER | FLAGS_OUTPUT_ADDRESS_MODE | FLAGS_DCC_ACCESSORY_DECODER)
 
 
     /*+

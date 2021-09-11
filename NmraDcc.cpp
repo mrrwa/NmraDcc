@@ -50,7 +50,7 @@
 #include "EEPROM.h"
 
 // Uncomment to print DEBUG messages
-#define DEBUG_PRINT
+// #define DEBUG_PRINT
 
 //------------------------------------------------------------------------
 // DCC Receive Routine
@@ -889,7 +889,7 @@ uint16_t getMyAddr (void)
 
     if (DccProcState.cv29Value & CV29_ACCESSORY_DECODER)   // Accessory Decoder?
     {
-        if (DccProcState.cv29Value & CV29_OUTPUT_ADDRESS_MODE)
+        if (DccProcState.cv29Value & (CV29_OUTPUT_ADDRESS_MODE | CV29_EXT_ADDRESSING))
             DccProcState.myDccAddress = (readCV (CV_ACCESSORY_DECODER_ADDRESS_MSB) << 8) | readCV (CV_ACCESSORY_DECODER_ADDRESS_LSB);
         else
             DccProcState.myDccAddress = ( (readCV (CV_ACCESSORY_DECODER_ADDRESS_MSB) & 0b00000111) << 6) | (readCV (CV_ACCESSORY_DECODER_ADDRESS_LSB) & 0b00111111) ;
@@ -1366,9 +1366,9 @@ void execDccProcessor (DCC_MSG * pDccMsg)
 
                     if (DccProcState.inAccDecDCCAddrNextReceivedMode)
                     {
-                        if (DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE)
+                        if (DccProcState.Flags & (FLAGS_OUTPUT_ADDRESS_MODE | FLAGS_EXTENDED_ADDRESS_MODE))
                         {
-                            DB_PRINT ("eDP: Set Output Address: %d", OutputAddress);
+                            DB_PRINT ("eDP: 11-bit Accessory Address: %d", OutputAddress);
                             //uint16_t storedOutputAddress = OutputAddress + 1; // The value stored in CV1 & 9 for Output Addressing Mode is + 1
                             writeCV (CV_ACCESSORY_DECODER_ADDRESS_LSB, (uint8_t) (OutputAddress % 256));
                             writeCV (CV_ACCESSORY_DECODER_ADDRESS_MSB, (uint8_t) (OutputAddress / 256));
@@ -1378,7 +1378,7 @@ void execDccProcessor (DCC_MSG * pDccMsg)
                         }
                         else
                         {
-                            DB_PRINT ("eDP: Set Board Address: %d", BoardAddress);
+                            DB_PRINT ("eDP: Set 9-bit Board Address: %d", BoardAddress);
                             writeCV (CV_ACCESSORY_DECODER_ADDRESS_LSB, (uint8_t) (BoardAddress % 64));
                             writeCV (CV_ACCESSORY_DECODER_ADDRESS_MSB, (uint8_t) (BoardAddress / 64));
 
@@ -1393,7 +1393,7 @@ void execDccProcessor (DCC_MSG * pDccMsg)
                     if (DccProcState.Flags & FLAGS_MY_ADDRESS_ONLY)
                     {
                     	DB_PRINT ("eDP: Check if the Address matches");
-                        if (DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE)
+                        if (DccProcState.Flags & (FLAGS_OUTPUT_ADDRESS_MODE | FLAGS_EXTENDED_ADDRESS_MODE))
                         {
                             if (OutputAddress != getMyAddr()  &&  OutputAddress < 2045)
                             {
@@ -1437,7 +1437,7 @@ void execDccProcessor (DCC_MSG * pDccMsg)
                         if (notifyDccAccState)
                             notifyDccAccState (OutputAddress, BoardAddress, pDccMsg->Data[1] & 0b00000111, outputPower);
 
-                        if (DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE)
+                        if (DccProcState.Flags & FLAGS_EXTENDED_ADDRESS_MODE)
                         {
                             DB_PRINT ("eDP: Output Address: %d  Turnout Dir: %d  Output Power: %d", OutputAddress, direction, outputPower);
                             if (notifyDccAccTurnoutOutput)
@@ -1452,56 +1452,70 @@ void execDccProcessor (DCC_MSG * pDccMsg)
                     }
                     else if (pDccMsg->Size == 6) // Accessory Decoder OPS Mode Programming
                     {
-                        DB_PRINT ("eDP: OPS Mode CV Programming Command");
-                        // Check for unsupported OPS Mode Addressing mode
-                        if ( ( (pDccMsg->Data[1] & 0b10001001) != 1) && ( (pDccMsg->Data[1] & 0b10001111) != 0x80))
-                        {
-                            DB_PRINT ("eDP: Unsupported OPS Mode CV Addressing Mode");
-                            return;
-                        }
-
+                        DB_PRINT ("eDP: Accessory OPS Mode CV Programming Command");
 							// If its a "Basic Accessory Decoder Packet" OPS Command
-                        if ((pDccMsg->Data[1] & 0x80) == 0x80)
+                        if (pDccMsg->Data[1] & 0x80) 
 						{
-							DB_PRINT ("eDP: Basic Accessory Decoder Packet OPS Command");
+							DB_PRINT ("eDP: Handle Basic OPS Command");
 							
-								// If we're in FLAGS_OUTPUT_ADDRESS_MODE then return as this isn't for us
-                            DB_PRINT ("eDP: Check if in Output Address Mode");
 							if(DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE)
 							{
-								DB_PRINT ("eDP: Ignore Basic Accessory Decoder Packet in Output Address Mode");
+								DB_PRINT ("eDP: Ignore Basic OPS Command in Signal Address Mode");
 								return;
 							}
-							
-								// Check if this command is for our Board Address or the broadcast address
-							DB_PRINT ("eDP: Check Board Address: %d", BoardAddress);
-                            if ( (BoardAddress != getMyAddr()) && (BoardAddress < 511))
-                            {
-                                DB_PRINT ("eDP: Board Address Not Matched");
-                                return;
-                            }
+
+							if(pDccMsg->Data[1] & 0b00001111)
+							{
+								DB_PRINT ("eDP: Handle 11-bit Basic OPS Command");
+								if((DccProcState.Flags & FLAGS_EXTENDED_ADDRESS_MODE) == 0)
+								{
+									DB_PRINT ("eDP: Ignore 11-bit Basic OPS Command in Board Address Mode");
+									return;
+								}
+								
+								if((OutputAddress != getMyAddr()) && (OutputAddress < 2045))
+								{
+	                                DB_PRINT ("eDP: Extended Address Not Matched");
+    	                            return;
+								}
+							}
+							else
+							{
+								DB_PRINT ("eDP: Handle 9-bit Basic OPS Command");
+								if(DccProcState.Flags & FLAGS_EXTENDED_ADDRESS_MODE)
+								{
+									DB_PRINT ("eDP: Ignore 9-bit Basic OPS Command in Extended Address Mode");
+									return;
+								}
+
+								if ( (BoardAddress != getMyAddr()) && (BoardAddress < 511))
+								{
+									DB_PRINT ("eDP: Board Address Not Matched");
+									return;
+								}
+							}
                         }
 
-							// If its a "Extended Decoder Control Packet"  OPS Command
+							// If its a "Extended (Signal) Decoder OPS Command
 						else if ((pDccMsg->Data[1] & 0x81) == 0x01)
 						{
-							DB_PRINT ("eDP: Extended Decoder Control Packet OPS Command");
+							DB_PRINT ("eDP: Handle Signal Decoder OPS Command");
 							
 								// If we're not in FLAGS_OUTPUT_ADDRESS_MODE then return as this isn't for us
-                            DB_PRINT ("eDP: Check if in Board Address Mode");
 						 	if ((DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE) == 0)
 						 	{
-								DB_PRINT ("eDP: Ignore Extended Decoder Control Packet in Board Address Mode");
+								DB_PRINT ("eDP: Ignore Signal Decoder OPS Command in Board or Extended Address Mode");
 								return;
 							}
 
 								// Check if this command is for our Output Address or the broadcast address
-			                DB_PRINT ("eDP: Check Output Address: %d", OutputAddress);
+			                DB_PRINT ("eDP: Compare Signal Address: %d to MyAddr: %d", OutputAddress, getMyAddr());
                             if ( (OutputAddress != getMyAddr()) && (OutputAddress < 2045))
                             {
-                                DB_PRINT ("eDP: Output Address Not Matched");
+                                DB_PRINT ("eDP: Signal Address Not Matched");
                                 return;
-                            }                        }
+                            }
+                        }
 
                         uint16_t cvAddress = ( (pDccMsg->Data[2] & 0b00000011) << 8) + pDccMsg->Data[3] + 1;
                         uint8_t  cvValue   = pDccMsg->Data[4];

@@ -112,6 +112,7 @@ typedef struct
 #define CV_VERSION_ID                          7
 #define CV_MANUFACTURER_ID                     8
 #define CV_29_CONFIG                          29
+#define CV_MANUFACTURER_START				  33
 
 #if defined(ESP32)
     #include <esp_spi_flash.h>

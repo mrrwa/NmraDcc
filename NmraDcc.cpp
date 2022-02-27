@@ -48,6 +48,7 @@
 
 #include "NmraDcc.h"
 #include "EEPROM.h"
+#include <elapsedMillis.h>
 
 // Uncomment to print DEBUG messages
 // #define DEBUG_PRINT
@@ -242,8 +243,13 @@
 
 #endif
 #ifdef DEBUG_PRINT
+#ifdef ARDUINO_ARCH_RP2040
+    #define DB_PRINT( x, ... ) { char dbgbuf[80]; sprintf( dbgbuf, (const char*) F( x ) , ##__VA_ARGS__ ) ; Serial.println( dbgbuf ); }
+    #define DB_PRINT_( x, ... ) { char dbgbuf[80]; sprintf( dbgbuf, (const char*) F( x ) , ##__VA_ARGS__ ) ; Serial.print( dbgbuf ); }
+#else
     #define DB_PRINT( x, ... ) { char dbgbuf[80]; sprintf_P( dbgbuf, (const char*) F( x ) , ##__VA_ARGS__ ) ; Serial.println( dbgbuf ); }
     #define DB_PRINT_( x, ... ) { char dbgbuf[80]; sprintf_P( dbgbuf, (const char*) F( x ) , ##__VA_ARGS__ ) ; Serial.print( dbgbuf ); }
+#endif    
 #else
     #define DB_PRINT( x, ... ) ;
     #define DB_PRINT_( x, ... ) ;
@@ -322,6 +328,11 @@ typedef struct
     uint8_t	TickCount;
     uint8_t   NestedIrqCount;
     #endif
+    #if defined(ESP8266) ||  defined(ESP32) || defined(ARDUINO_ARCH_RP2040)
+	    elapsedMillis millisSinceEEPromWrite = 0;
+	    bool eepromChanged = false;
+	#endif
+
 }
 DCC_PROCESSOR_STATE ;
 
@@ -801,8 +812,10 @@ uint8_t readEEPROM (unsigned int CV)
 void writeEEPROM (unsigned int CV, uint8_t Value)
 {
     EEPROM.write (CV, Value) ;
+    
     #if defined(ESP8266) ||  defined(ESP32) || defined(ARDUINO_ARCH_RP2040)
-    EEPROM.commit();
+    DccProcState.eepromChanged = true;
+    DccProcState.millisSinceEEPromWrite = 0;
     #endif
 }
 
@@ -1756,6 +1769,15 @@ uint8_t NmraDcc::process()
             clearDccProcState (0) ;
         }
     }
+    
+	#if defined(ESP8266) ||  defined(ESP32) || defined(ARDUINO_ARCH_RP2040)
+	if(DccProcState.eepromChanged && (DccProcState.millisSinceEEPromWrite >= EEPROM_COMMIT_DELAY_MS))
+	{
+	    EEPROM.commit();
+	    DccProcState.eepromChanged = false;
+	    DB_PRINT ("process: EEPROM Commit");
+	}
+	#endif
 
     if (DccRx.DataReady)
     {
@@ -1785,6 +1807,8 @@ uint8_t NmraDcc::process()
         execDccProcessor (&Msg);
         return 1 ;
     }
+    
+    
 
     return 0 ;
 };

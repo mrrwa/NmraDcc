@@ -81,6 +81,10 @@ typedef struct
 #define MAN_ID_DIY              0x0D
 #define MAN_ID_SILICON_RAILWAY  0x21
 
+#if defined(ESP8266) ||  defined(ESP32) || defined(ARDUINO_ARCH_RP2040)
+#define EEPROM_COMMIT_DELAY_MS  3000
+#endif
+
 //--------------------------------------------------------------------------
 //  This section contains the Product/Version Id Codes for projects
 //

@@ -1,5 +1,3 @@
-#include <NmraDcc.h>
-
 // This Example shows how to use the library with the Iowa Scaled Engineering ARD-DCCSHIELD
 // You can find out more about this DCC Interface here: http://www.iascaled.com/store/ARD-DCCSHIELD
 //
@@ -16,6 +14,9 @@
 // JP6 - Boards without VIO                           - User Choice
 // JP7 - Enable Programming ACK                       - 1-2 ON 3-4 ON 
 // 
+#include <NmraDcc.h>
+#include <elapsedMillis.h>
+
 // It is a very basic DCC Accessory Decoder that does nothing except allow CV Read/Write and 
 // you can also print every DCC packet by uncommenting the "#define NOTIFY_DCC_MSG" line below
 #define NOTIFY_DCC_MSG
@@ -101,6 +102,8 @@ void notifyCVChange(uint16_t CV, uint8_t Value)
 void setup()
 {
   Serial.begin(115200);
+  elapsedMillis millisWaitedForUSB = 0;
+  while(!Serial && (millisWaitedForUSB < 3000));  // Wait up to 3 seconds for USB to Connect
   
   Serial.println("NMRA DCC Iowa Scaled Engineering ARD-DCCSHIELD Example");
   

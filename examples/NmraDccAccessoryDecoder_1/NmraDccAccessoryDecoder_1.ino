@@ -95,6 +95,8 @@ void notifyDccSigOutputState( uint16_t Addr, uint8_t State)
 void setup()
 {
   Serial.begin(115200);
+  elapsedMillis millisWaitedForUSB = 0;
+  while(!Serial && (millisWaitedForUSB < 3000));  // Wait up to 3 seconds for USB to Connect
   
   // Configure the DCC CV Programing ACK pin for an output
   pinMode( DccAckPin, OUTPUT );

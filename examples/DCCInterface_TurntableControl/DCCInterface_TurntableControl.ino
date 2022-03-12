@@ -32,6 +32,9 @@
 #define DISABLE_OUTPUTS_IDLE
 #endif
 
+// Uncomment the following line to enable Debug Print of DCC Messages
+//#define NOTIFY_DCC_MSG
+
 // By default the stepper motor will move the shortest distance to the desired position.
 // If you need the turntable to only move in the Positive/Increasing or Negative/Decreasing step numbers to better handle backlash in the mechanism
 // Then uncomment the appropriate line below
@@ -122,16 +125,11 @@ uint16_t lastAddr = 0xFFFF ;
 uint8_t lastDirection = 0xFF;
 int     lastStep = 0;
 
-// This function is called whenever a normal DCC Turnout Packet is received
-void notifyDccAccTurnoutOutput( uint16_t Addr, uint8_t Direction, uint8_t OutputPower )
-{
-  Serial.print(F("notifyDccAccTurnoutOutput: "));
-  Serial.print(Addr,DEC) ;
-  Serial.print(',');
-  Serial.print(Direction,DEC) ;
-  Serial.print(',');
-  Serial.println(OutputPower, HEX) ;
 
+void processTurnoutCommand(uint16_t Addr, uint8_t Direction, uint8_t OutputPower)
+{
+  Serial.print(F("processTurnoutCommand: "));
+  
   for (int i = 0; i < MAX_TURNOUT_POSITIONS ; i++)
   {
     if ((Addr == turnoutPositions[i].dccAddress) && ((Addr != lastAddr) || (Direction != lastDirection)) && OutputPower)
@@ -189,6 +187,22 @@ void notifyDccAccTurnoutOutput( uint16_t Addr, uint8_t Direction, uint8_t Output
       break;
     }
   }
+}
+
+
+// This function is called from the Library whenever a normal DCC Turnout Packet is received
+void notifyDccAccTurnoutBoard (uint16_t BoardAddr, uint8_t OutputPair, uint8_t Direction, uint8_t OutputPower)
+{
+  uint16_t Addr = ((BoardAddr - 1) * 4) + OutputPair + 1;
+
+  Serial.print(F("notifyDccAccTurnoutBoard: "));
+  Serial.print(Addr,DEC) ;
+  Serial.print(',');
+  Serial.print(Direction,DEC) ;
+  Serial.print(',');
+  Serial.println(OutputPower, HEX) ;
+
+  processTurnoutCommand(Addr, Direction, OutputPower);
 };
 
 #ifdef DISABLE_OUTPUTS_IDLE
@@ -256,7 +270,7 @@ void setupDCCDecoder()
 #endif
   
   // Call the main DCC Init function to enable the DCC Receiver
-  Dcc.init( MAN_ID_DIY, 10, CV29_ACCESSORY_DECODER | CV29_OUTPUT_ADDRESS_MODE, 0 );
+  Dcc.init( MAN_ID_DIY, 10, CV29_ACCESSORY_DECODER, 0 );
 }
 
 void setup()
@@ -296,7 +310,7 @@ void setup()
     setupDCCDecoder();
 
     // Fake a DCC Packet to cause the Turntable to move to Position 1
-    notifyDccAccTurnoutOutput(POSITION_01_DCC_ADDRESS, 1, 1);
+    processTurnoutCommand(POSITION_01_DCC_ADDRESS, 1, 1);
   }
 }
 
@@ -320,3 +334,16 @@ void loop()
   }
 #endif  
 }
+
+#ifdef  NOTIFY_DCC_MSG
+void notifyDccMsg( DCC_MSG * Msg)
+{
+  Serial.print("notifyDccMsg: ") ;
+  for(uint8_t i = 0; i < Msg->Size; i++)
+  {
+    Serial.print(Msg->Data[i], HEX);
+    Serial.write(' ');
+  }
+  Serial.println();
+}
+#endif

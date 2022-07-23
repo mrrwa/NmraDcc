@@ -258,8 +258,11 @@
 #elif defined ( ESP32 )
     static byte  ISREdge;   // Holder of the Next Edge we're looking for: RISING or FALLING
     static byte  ISRWatch;  // Interrupt Handler Edge Filter
-#elif defined ( ARDUINO_AVR_NANO_EVERY ) || defined(ARDUINO_ARCH_RP2040)
-    static PinStatus ISREdge;
+#elif defined ( ARDUINO_AVR_NANO_EVERY )
+    static PinStatus ISREdge;	// Holder of the Next Edge we're looking for: RISING or FALLING
+#elif defined ( ARDUINO_ARCH_RP2040)
+    static PinStatus ISREdge;	// Holder of the Next Edge we're looking for: RISING or FALLING
+    static byte  ISRWatch;  // Interrupt Handler Edge Filter
 #else
     static byte  ISREdge;   // Holder of the Next Edge we're looking for: RISING or FALLING
     static byte  ISRWatch;  // Interrupt Handler Edge Filter
@@ -339,7 +342,7 @@ DCC_PROCESSOR_STATE DccProcState ;
 {
     SET_TP3;
 
-    #ifdef ESP32
+    #if defined(ESP32) || defined ( ARDUINO_ARCH_RP2040)
 //   switch (ISRWatch)
 //   {
 //     case RISING: if (digitalRead(DccProcState.ExtIntPinNum)) break;
@@ -416,7 +419,7 @@ DCC_PROCESSOR_STATE DccProcState ;
         #if defined ( __STM32F1__ )
         detachInterrupt (DccProcState.ExtIntNum);
         #endif
-        #ifdef ESP32
+        #if defined(ESP32) || defined ( ARDUINO_ARCH_RP2040)
         ISRWatch = ISREdge;
         #else
         attachInterrupt (DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge);
@@ -507,7 +510,7 @@ DCC_PROCESSOR_STATE DccProcState ;
                     #if defined ( __STM32F1__ )
                     detachInterrupt (DccProcState.ExtIntNum);
                     #endif
-                    #if defined(ESP32)
+                    #if defined(ESP32) || defined ( ARDUINO_ARCH_RP2040)
                     ISRWatch = ISREdge;
                     #else
                     attachInterrupt (DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge);
@@ -564,7 +567,7 @@ DCC_PROCESSOR_STATE DccProcState ;
             #if defined ( __STM32F1__ )
             detachInterrupt (DccProcState.ExtIntNum);
             #endif
-            #if defined(ESP32)
+            #if defined(ESP32) || defined ( ARDUINO_ARCH_RP2040)
             ISRWatch = ISREdge;
             #else
             attachInterrupt (DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge);
@@ -613,7 +616,7 @@ DCC_PROCESSOR_STATE DccProcState ;
             detachInterrupt (DccProcState.ExtIntNum);
             #endif
 
-            #if defined(ESP32)
+            #if defined(ESP32) || defined ( ARDUINO_ARCH_RP2040)
             ISRWatch = ISREdge;
             #else
             attachInterrupt (DccProcState.ExtIntNum, ExternalInterruptHandler, ISREdge);
@@ -743,7 +746,7 @@ DCC_PROCESSOR_STATE DccProcState ;
                     #if defined ( __STM32F1__ )
                     detachInterrupt (DccProcState.ExtIntNum);
                     #endif
-                    #ifdef ESP32
+                    #if defined(ESP32) || defined ( ARDUINO_ARCH_RP2040)
                     ISRWatch = CHANGE;
                     #else
                     attachInterrupt (DccProcState.ExtIntNum, ExternalInterruptHandler, CHANGE);
@@ -1614,7 +1617,7 @@ void NmraDcc::init (uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, ui
     ISRLevel = DccProcState.ExtIntMask;
     ISRChkMask = DccProcState.ExtIntMask;
 
-    #ifdef ESP32
+    #if defined(ESP32)|| defined ( ARDUINO_ARCH_RP2040)
     ISRWatch = ISREdge;
     attachInterrupt (DccProcState.ExtIntNum, ExternalInterruptHandler, CHANGE);
     #else

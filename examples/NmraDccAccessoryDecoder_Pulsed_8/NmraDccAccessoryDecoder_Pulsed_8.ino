@@ -120,7 +120,10 @@ void initPinPulser(void)
 void setup()
 {
   Serial.begin(115200);
-
+  uint8_t maxWaitLoops = 255;
+  while(!Serial && maxWaitLoops--)
+    delay(20);
+    
   // Setup which External Interrupt, the Pin it's associated with that we're using and enable the Pull-Up
   // Many Arduino Cores now support the digitalPinToInterrupt() function that makes it easier to figure out the
   // Interrupt Number for the Arduino Pin number, which reduces confusion. 

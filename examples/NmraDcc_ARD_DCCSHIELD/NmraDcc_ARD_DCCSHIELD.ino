@@ -101,6 +101,9 @@ void notifyCVChange(uint16_t CV, uint8_t Value)
 void setup()
 {
   Serial.begin(115200);
+  uint8_t maxWaitLoops = 255;
+  while(!Serial && maxWaitLoops--)
+    delay(20);
   
   Serial.println("NMRA DCC Iowa Scaled Engineering ARD-DCCSHIELD Example");
   
@@ -108,7 +111,7 @@ void setup()
   // Many Arduino Cores now support the digitalPinToInterrupt() function that makes it easier to figure out the
   // Interrupt Number for the Arduino Pin number, which reduces confusion. 
 #ifdef digitalPinToInterrupt
-  Dcc.pin(DCC_PIN, 0);
+  Dcc.pin(DCC_PIN, 1);
 #else
   Dcc.pin(0, DCC_PIN, 1);
 #endif

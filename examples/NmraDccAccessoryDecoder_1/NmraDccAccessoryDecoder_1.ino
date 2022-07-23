@@ -95,7 +95,10 @@ void notifyDccSigOutputState( uint16_t Addr, uint8_t State)
 void setup()
 {
   Serial.begin(115200);
-  
+  uint8_t maxWaitLoops = 255;
+  while(!Serial && maxWaitLoops--)
+    delay(20);
+      
   // Configure the DCC CV Programing ACK pin for an output
   pinMode( DccAckPin, OUTPUT );
 

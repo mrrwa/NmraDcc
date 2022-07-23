@@ -276,8 +276,10 @@ void setupDCCDecoder()
 void setup()
 {
   Serial.begin(115200);
-  while(!Serial);   // Wait for the USB Device to Enumerate
-
+  uint8_t maxWaitLoops = 255;
+  while(!Serial && maxWaitLoops--)  // Wait for the USB Device to Enumerate
+    delay(20);
+    
   Serial.println(F("\nExample Stepper Motor Driver for DCC Turntable Control"));
 
   Serial.print(F("Full Rotation Steps: "));

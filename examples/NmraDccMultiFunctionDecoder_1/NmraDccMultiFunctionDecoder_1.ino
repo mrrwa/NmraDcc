@@ -164,6 +164,10 @@ void notifyCVAck(void)
 void setup()
 {
   Serial.begin(115200);
+  uint8_t maxWaitLoops = 255;
+  while(!Serial && maxWaitLoops--)
+    delay(20);
+
   Serial.println("NMRA Dcc Multifunction Decoder Demo 1");
 
   // Configure the DCC CV Programing ACK pin for an output
@@ -199,4 +203,3 @@ void loop()
     Dcc.setCV( FactoryDefaultCVs[FactoryDefaultCVIndex].CV, FactoryDefaultCVs[FactoryDefaultCVIndex].Value);
   }
 }
-

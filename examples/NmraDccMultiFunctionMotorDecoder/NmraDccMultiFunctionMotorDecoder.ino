@@ -207,6 +207,10 @@ void setup()
 {
   #ifdef DEBUG_PRINT
   Serial.begin(115200);
+  uint8_t maxWaitLoops = 255;
+  while(!Serial && maxWaitLoops--)
+    delay(20);
+
   Serial.println("NMRA Dcc Multifunction Motor Decoder Demo");
   #endif
 

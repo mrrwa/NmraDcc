@@ -30,8 +30,9 @@
 
 #define BUTTON_LONG_PRESS_DELAY 2000
 
-#define AJS_BOARD_SETTINGS
-//#define UWE_BOARD_SETTINGS
+// Uncomment ONE of the next 2 lines to enable AJS or UWE Board Settings
+//#define AJS_BOARD_SETTINGS
+#define UWE_BOARD_SETTINGS
 
 #if defined(AJS_BOARD_SETTINGS)  // Setting for AJS Dev System
 
@@ -84,6 +85,7 @@ long defaultPositions[NUM_LIFT_LEVELS] = {0, 161064, 32500, 483284, 645326, 8080
 #define STEPPER_INC_SPEED             (STEPPER_MAX_SPEED / 2)
 
 #define OLED_DISPLAY_I2C_ADDRESS  0x3C
+
 #else
 #error No Board Settings Defined
 #endif

@@ -8,12 +8,21 @@
 #include <SSD1306Ascii.h>
 #include <SSD1306AsciiWire.h>
 #include <EEPROM.h>
+#include <NmraDcc.h>
 
+// Define the Arduino Pin to connect to the DCC input signal
+#define DCC_PIN 2
+
+// Define the DCC Turnout Address to select the first level = 1 
+#define DCC_ACCESSORY_DECODER_BASE_ADDRESS  200
+
+// Define the manimus numbr of Levels
 #define NUM_LIFT_LEVELS  8
 
 #define PROGRAM_NAME     "Fahrstuhl"
-#define PROGRAM_VERSION  "1.0"
+#define PROGRAM_VERSION  "1.1"
 
+// Locate the Persistant State storage EEPROM space well above the DCC Accessory Decoder CV Storage
 #define EEPROM_BASE_ADDR  100
 #define EEPROM_VALID_DATA_SIGNATURE 0xA5A5
 // Uncomment the line below to force the EEPROM values to be reset to defaults
@@ -21,34 +30,12 @@
 
 #define BUTTON_LONG_PRESS_DELAY 2000
 
-#if defined (ARDUINO_AVR_NANO)  // Setting for Uwe's Fahrstuhl System
+#define AJS_BOARD_SETTINGS
+//#define UWE_BOARD_SETTINGS
 
-// Uncomment the next line to reverse the direction of the stepper movement 
-//#define REVERSE_STEPPER_DIRECTION
- 
-#define HOME_SENSOR_PIN     7
+#if defined(AJS_BOARD_SETTINGS)  // Setting for AJS Dev System
 
-#define STEPPER_PULSE_PIN   4
-#define STEPPER_ENABLE_PIN  5
-#define STEPPER_DIR_PIN     6
-
-#define STEPPER_MAX_SPEED             2100
-#define STEPPER_NORMAL_ACCELERATION   5000
-#define STEPPER_MAX_POSITION  30000U // Maximum Steps to allow the stepper to drive Up Saftey mechanism
-
-#define BUTTON_MANUAL     8
-#define BUTTON_DOWN       9
-#define BUTTON_UP         10
-#define BUTTON_STOP_HOME  11
-
-long defaultPositions[NUM_LIFT_LEVELS] = {1000, 4000, 7000, 10000, 13000, 16000, 19000, 22000}; // Default positions
-
-#define OLED_DISPLAY_I2C_ADDRESS  0x3C
-
-#else
-//#if defined(ARDUINO_AVR_UNO)  // Setting for AJS Dev System
-
-// Uncomment the next line to reverse the direction of the stepper movement 
+// Uncomment the next line to reverse the direction of the stepper movement
 #define REVERSE_STEPPER_DIRECTION
 
 #define HOME_SENSOR_PIN     10
@@ -59,7 +46,7 @@ long defaultPositions[NUM_LIFT_LEVELS] = {1000, 4000, 7000, 10000, 13000, 16000,
 
 #define STEPPER_MAX_SPEED             2100
 #define STEPPER_NORMAL_ACCELERATION   5000
-#define STEPPER_MAX_POSITION  30000U // Maximum Steps to allow the stepper to drive Up Saftey mechanism
+#define STEPPER_MAX_POSITION  300000U // Maximum Steps to allow the stepper to drive Up Saftey mechanism
 
 #define BUTTON_MANUAL     A3
 #define BUTTON_DOWN       A2
@@ -68,13 +55,41 @@ long defaultPositions[NUM_LIFT_LEVELS] = {1000, 4000, 7000, 10000, 13000, 16000,
 
 long defaultPositions[NUM_LIFT_LEVELS] = {1000, 4000, 7000, 10000, 13000, 16000, 19000, 22000}; // Default positions
 
+#define STEPPER_INC_SPEED             (STEPPER_MAX_SPEED / 10)
+
 #define OLED_DISPLAY_I2C_ADDRESS  0x3C
 
+#elif defined (UWE_BOARD_SETTINGS)  // Setting for Uwe's Fahrstuhl System
+
+// Uncomment the next line to reverse the direction of the stepper movement
+//#define REVERSE_STEPPER_DIRECTION
+
+#define HOME_SENSOR_PIN     7
+
+#define STEPPER_PULSE_PIN   4
+#define STEPPER_ENABLE_PIN  5
+#define STEPPER_DIR_PIN     6
+
+#define STEPPER_MAX_SPEED             2100
+#define STEPPER_NORMAL_ACCELERATION   5000
+#define STEPPER_MAX_POSITION  1970000U // Maximum Steps to allow the stepper to drive Up Saftey mechanism
+
+#define BUTTON_MANUAL     8
+#define BUTTON_DOWN       9
+#define BUTTON_UP         10
+#define BUTTON_STOP_HOME  11
+
+long defaultPositions[NUM_LIFT_LEVELS] = {0, 161064, 32500, 483284, 645326, 808041, 1967457, 1130774}; // Default positions
+
+#define STEPPER_INC_SPEED             (STEPPER_MAX_SPEED / 2)
+
+#define OLED_DISPLAY_I2C_ADDRESS  0x3C
+#else
+#error No Board Settings Defined
 #endif
 
 SSD1306AsciiWire oled;
-  
-#define STEPPER_INC_SPEED             (STEPPER_MAX_SPEED / 10)
+
 #define STEPPER_MAN_SPEED_CHANGE_MILLIS 5
 #define STEPPER_EMERGENCY_STOP_ACCELERATION   100000
 #define LIFT_LEVEL_NOT_SET -1
@@ -99,6 +114,9 @@ EncButton2<EB_BTN> btnManual(INPUT, BUTTON_MANUAL);
 EncButton2<EB_BTN> btnDown(INPUT, BUTTON_DOWN);
 EncButton2<EB_BTN> btnUp(INPUT, BUTTON_UP);
 EncButton2<EB_BTN> btnStopHome(INPUT, BUTTON_STOP_HOME);
+
+// NMRA DCC Accessory Decoder object
+NmraDcc  Dcc;
 
 void displayLevel(int newLevel)
 {
@@ -137,15 +155,15 @@ void displayPosition(long newPosition)
 void initPersistentValues()
 {
   EEPROM.get(EEPROM_BASE_ADDR, persistentValues);
-  
+
 #ifdef EEPROM_FORCE_RELOAD_DEFAULT_VALUES
   persistentValues.objectSignature = 0;
 #endif
-  
+
   if(persistentValues.objectSignature != EEPROM_VALID_DATA_SIGNATURE)
   {
     Serial.println("initPersistentValues: set detault values");
-    
+
     persistentValues.numLiftLevels = NUM_LIFT_LEVELS;
     persistentValues.lastLiftLevel = 0;
     persistentValues.lastStepperPosition = 0;
@@ -192,38 +210,44 @@ void setup()
   stepper.setCurrentPosition(persistentValues.lastStepperPosition);
 
   stepper.setEnablePin(STEPPER_ENABLE_PIN);
-#ifdef REVERSE_STEPPER_DIRECTION  
+#ifdef REVERSE_STEPPER_DIRECTION
   stepper.setPinsInverted(true, false, true);
 #else
   stepper.setPinsInverted(false, false, true);
 #endif
-  
+
   stepper.setMaxSpeed(STEPPER_MAX_SPEED);
 
   btnStopHome.setHoldTimeout(BUTTON_LONG_PRESS_DELAY);
   btnManual.setHoldTimeout(BUTTON_LONG_PRESS_DELAY);
+  
+    // Setup which External Interrupt, the Pin it's associated with that we're using and enable the Pull-Up 
+  Dcc.pin(DCC_PIN, 1);
+  
+    // Call the main DCC Init function to enable the DCC Receiver
+  Dcc.init(MAN_ID_DIY, 10, CV29_ACCESSORY_DECODER | CV29_OUTPUT_ADDRESS_MODE, 0);
 }
 
 void stepperMoveTo(long newPosition)
 {
   stepper.enableOutputs();
   stepper.setAcceleration(STEPPER_NORMAL_ACCELERATION);
-  stepper.moveTo(newPosition); 
+  stepper.moveTo(newPosition);
 }
 
 void stepperMove(long newRelPosition)
 {
   stepper.enableOutputs();
   stepper.setAcceleration(STEPPER_NORMAL_ACCELERATION);
-  stepper.move(newRelPosition); 
+  stepper.move(newRelPosition);
 }
 void stopStepper(void)
 {
   stepper.setAcceleration(STEPPER_EMERGENCY_STOP_ACCELERATION);
-  stepper.move(0); 
+  stepper.move(0);
   stepper.stop();
   while(stepper.run());
-  stepper.disableOutputs(); 
+  stepper.disableOutputs();
 }
 
 int lastSpeed = 0;
@@ -233,8 +257,32 @@ bool configMode = false;
 bool homing = false;
 elapsedMillis lastSpeedChange = 0;
 
+
+  // This function is called whenever a normal DCC Turnout Packet is received
+  // The DCC Turnout Address is checked to see if it is within the range used to Select Elevator levels and starts a Move if a new level is selected 
+void notifyDccAccTurnoutOutput(uint16_t receivedAddress, uint8_t direction, uint8_t outputPower)
+{
+  if((receivedAddress >= DCC_ACCESSORY_DECODER_BASE_ADDRESS) && (receivedAddress < (DCC_ACCESSORY_DECODER_BASE_ADDRESS + NUM_LIFT_LEVELS)))
+  {
+    uint8_t newLevel = receivedAddress - DCC_ACCESSORY_DECODER_BASE_ADDRESS;
+    if(persistentValues.lastLiftLevel != newLevel)
+    {
+      persistentValues.lastLiftLevel = newLevel;
+
+      long newPos = persistentValues.levelPositions[persistentValues.lastLiftLevel];
+      stepperMoveTo(newPos);
+
+      Serial.print("notifyDccAccTurnoutOutput: Move to Level: "); Serial.print(persistentValues.lastLiftLevel); Serial.print("  Pos: "); Serial.println(newPos);
+
+      displayMessageNumber("Mv To: ", persistentValues.lastLiftLevel + 1);
+    }
+  }
+}
+
 void loop()
 {
+  Dcc.process();
+  
     //First check the Home Sensor and stop the motor if going in the down direction
   homeSensor.tick();
   if(homeSensor.state())
@@ -254,9 +302,9 @@ void loop()
       persistentValues.lastLiftLevel = 0;
       persistentValues.lastStepperPosition = 0;
       stepper.setCurrentPosition(persistentValues.lastStepperPosition);
-      
+
       EEPROM.put(EEPROM_BASE_ADDR, persistentValues);
-      
+
       if(homing)
       {
         long newPos = persistentValues.levelPositions[persistentValues.lastLiftLevel];
@@ -273,19 +321,19 @@ void loop()
     if(configMode && stepper.isRunning() && (lastSpeed >= 0))
     {
       stopStepper();
-      
+
       Serial.print("Maximum Position Hit - LastSpeed: ");
       Serial.print(lastSpeed);
       Serial.print("  Last Position: ");
       Serial.println(stepper.currentPosition());
-      
+
       newSpeed = 0;
       lastSpeed = newSpeed;
 
       displayMessage("At Max");
     }
   }
-  
+
   btnStopHome.tick();
   if(btnStopHome.press())
   {
@@ -305,7 +353,7 @@ void loop()
     homing = true;
     newSpeed = -STEPPER_MAX_SPEED;
   }
-  
+
   btnManual.tick();
   if(btnManual.press())
   {
@@ -331,11 +379,11 @@ void loop()
       newSpeed = lastSpeed + STEPPER_INC_SPEED;
       lastSpeedChange = STEPPER_MAN_SPEED_CHANGE_MILLIS;
       Serial.print("Down Press - Current Pos: "); Serial.print(stepper.currentPosition()); Serial.print("  New Speed: "); Serial.println(newSpeed);
-  
+
       displayMessage("Down");
     }
   }
-  
+
   else if((btnDown.press() || btnDown.step()) && persistentValues.lastLiftLevel > 0)
   {
     Serial.print("Down Press - Current Level: "); Serial.print(persistentValues.lastLiftLevel);
@@ -346,7 +394,7 @@ void loop()
 
     displayMessageNumber("Dn To: ", persistentValues.lastLiftLevel + 1);
   }
-  
+
   btnUp.tick();
   if(configMode)
   {
@@ -355,7 +403,7 @@ void loop()
       newSpeed = lastSpeed - STEPPER_INC_SPEED;
       lastSpeedChange = STEPPER_MAN_SPEED_CHANGE_MILLIS;
       Serial.print("Up Press - Current Pos: "); Serial.print(stepper.currentPosition()); Serial.print("  New Speed: "); Serial.println(newSpeed);
-  
+
       displayMessage("Up");
     }
   }
@@ -371,12 +419,12 @@ void loop()
     displayMessageNumber("Up To: ", persistentValues.lastLiftLevel + 1);
   }
 
-    
+
   if(lastSpeed != newSpeed)
   {
 //    Serial.print("Speed Change: Last: "); Serial.print(lastSpeed); Serial.print("  New: "); Serial.print(newSpeed);
 //    Serial.print(" - Current Pos: "); Serial.print(stepper.currentPosition());
-    
+
     if( newSpeed == 0)
     {
       lastSpeed = newSpeed;

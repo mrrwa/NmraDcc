@@ -9,7 +9,7 @@
 #define NOTIFY_TURNOUT_MSG
 
 // You can also print other Debug Messages uncommenting the line below
-#define DEBUG_MSG
+//#define DEBUG_MSG
 
 // Un-Comment the line below to force CVs to be written to the Factory Default values
 // defined in the FactoryDefaultCVs below on Start-Up
@@ -134,7 +134,7 @@ void setup()
 #endif
   
   // Call the main DCC Init function to enable the DCC Receiver
-  Dcc.init( MAN_ID_DIY, DCC_DECODER_VERSION_NUM, CV29_ACCESSORY_DECODER, 0 );
+  Dcc.init( MAN_ID_DIY, DCC_DECODER_VERSION_NUM, FLAGS_OUTPUT_ADDRESS_MODE | FLAGS_DCC_ACCESSORY_DECODER, 0 );
 
 #ifdef DEBUG_MSG
   Serial.print("\nNMRA DCC 8-Turnout Accessory Decoder. Ver: "); Serial.println(DCC_DECODER_VERSION_NUM,DEC);

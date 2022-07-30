@@ -10,6 +10,9 @@
 #include <EEPROM.h>
 #include <NmraDcc.h>
 
+// You can print every DCC packet by un-commenting the line below
+//#define NOTIFY_DCC_MSG
+
 // Define the Arduino Pin to connect to the DCC input signal
 #define DCC_PIN 2
 
@@ -469,3 +472,16 @@ void loop()
   }
   wasRunning = stepper.isRunning();
 }
+
+#ifdef  NOTIFY_DCC_MSG
+void notifyDccMsg( DCC_MSG * Msg)
+{
+  Serial.print("notifyDccMsg: ") ;
+  for(uint8_t i = 0; i < Msg->Size; i++)
+  {
+    Serial.print(Msg->Data[i], HEX);
+    Serial.write(' ');
+  }
+  Serial.println();
+}
+#endif

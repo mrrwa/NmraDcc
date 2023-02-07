@@ -47,7 +47,7 @@
 //------------------------------------------------------------------------
 
 #include "NmraDcc.h"
-#ifdef __SAMD21G18A__
+#ifdef ARDUINO_SAMD_ZERO
 #include <FlashStorage_SAMD.h>
 #else
 #include "EEPROM.h"

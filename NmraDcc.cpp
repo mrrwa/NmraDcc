@@ -47,7 +47,11 @@
 //------------------------------------------------------------------------
 
 #include "NmraDcc.h"
+#ifdef __SAMD21G18A__
+#include <FlashStorage_SAMD.h>
+#else
 #include "EEPROM.h"
+#endif
 
 // Uncomment to print DEBUG messages
 // #define DEBUG_PRINT
@@ -804,9 +808,18 @@ uint8_t readEEPROM (unsigned int CV)
 void writeEEPROM (unsigned int CV, uint8_t Value)
 {
     EEPROM.write (CV, Value) ;
+    
+	#if defined(ESP8266) || defined(ESP32)
+	noInterrupts();
+	#endif
+
     #if defined(ESP8266) ||  defined(ESP32) || defined(ARDUINO_ARCH_RP2040)
     EEPROM.commit();
     #endif
+    
+	#if defined(ESP8266) || defined(ESP32)
+	interrupts();
+	#endif
 }
 
 bool readyEEPROM()

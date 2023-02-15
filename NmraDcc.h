@@ -175,8 +175,9 @@ typedef enum
     FN_13_20,
     FN_21_28,
     #ifdef NMRA_DCC_ENABLE_14_SPEED_STEP_MODE
-    FN_0				 /** function light is controlled by base line package (14 speed steps) */
+    FN_0,				 /** function light is controlled by base line package (14 speed steps) */
     #endif
+    FN_LAST
 } FN_GROUP;
 
 #define FN_BIT_00	0x10

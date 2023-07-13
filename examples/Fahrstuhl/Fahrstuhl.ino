@@ -17,7 +17,7 @@
 #define DCC_PIN 2
 
 // Define the DCC Turnout Address to select the first level = 1 
-#define DCC_ACCESSORY_DECODER_BASE_ADDRESS  200
+#define DCC_ACCESSORY_DECODER_BASE_ADDRESS  500
 
 // Define the manimus numbr of Levels
 #define NUM_LIFT_LEVELS  8
@@ -34,7 +34,7 @@
 #define BUTTON_LONG_PRESS_DELAY 2000
 
 // Uncomment ONE of the next 2 lines to enable AJS or UWE Board Settings
-//#define AJS_BOARD_SETTINGS
+// #define AJS_BOARD_SETTINGS
 #define UWE_BOARD_SETTINGS
 
 #if defined(AJS_BOARD_SETTINGS)  // Setting for AJS Dev System
@@ -267,9 +267,9 @@ elapsedMillis lastSpeedChange = 0;
   // The DCC Turnout Address is checked to see if it is within the range used to Select Elevator levels and starts a Move if a new level is selected 
 void notifyDccAccTurnoutOutput(uint16_t receivedAddress, uint8_t direction, uint8_t outputPower)
 {
-  if((receivedAddress >= DCC_ACCESSORY_DECODER_BASE_ADDRESS) && (receivedAddress < (DCC_ACCESSORY_DECODER_BASE_ADDRESS + NUM_LIFT_LEVELS)))
+  if((receivedAddress >= DCC_ACCESSORY_DECODER_BASE_ADDRESS) && (receivedAddress < (DCC_ACCESSORY_DECODER_BASE_ADDRESS + (NUM_LIFT_LEVELS/2))))
   {
-    uint8_t newLevel = receivedAddress - DCC_ACCESSORY_DECODER_BASE_ADDRESS;
+    uint8_t newLevel = (receivedAddress - DCC_ACCESSORY_DECODER_BASE_ADDRESS) * 2 + direction;
     if(persistentValues.lastLiftLevel != newLevel)
     {
       persistentValues.lastLiftLevel = newLevel;

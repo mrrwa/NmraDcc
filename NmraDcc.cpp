@@ -809,7 +809,7 @@ void writeEEPROM (unsigned int CV, uint8_t Value)
 {
     EEPROM.write (CV, Value) ;
     
-	#if defined(ESP8266) || defined(ESP32)
+	#if defined(ESP8266)
 	noInterrupts();
 	#endif
 
@@ -817,7 +817,7 @@ void writeEEPROM (unsigned int CV, uint8_t Value)
     EEPROM.commit();
     #endif
     
-	#if defined(ESP8266) || defined(ESP32)
+	#if defined(ESP8266)
 	interrupts();
 	#endif
 }

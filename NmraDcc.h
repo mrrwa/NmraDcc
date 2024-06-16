@@ -127,7 +127,9 @@ typedef struct
     #define PRIO_DCC_IRQ    9
     #define PRIO_SYSTIC     8               // MUST be higher priority than DCC Irq
 #elif defined(ARDUINO_ARCH_RP2040)
-    #define MAXCV    256	     				    // todo: maybe somebody knows a good define for it
+    #define MAXCV    256	     			    // todo: maybe somebody knows a good define for it
+#elif defined ( ARDUINO_ARCH_RENESAS_UNO)
+    #define MAXCV	EEPROM.length()
 #elif defined(ARDUINO_SAMD_ZERO) 
     #define MAXCV    EEPROM_EMULATION_SIZE
 #else

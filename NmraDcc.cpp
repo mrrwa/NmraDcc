@@ -683,7 +683,7 @@ DCC_PROCESSOR_STATE DccProcState ;
                 portENTER_CRITICAL_ISR (&mux);
                 #endif
                 DccRx.PacketCopy = DccRx.PacketBuf ;
-                DccRx.DataReady = 1 ;
+                DccRx.DataReady += 1 ;
                 #ifdef ESP32
                 portEXIT_CRITICAL_ISR (&mux);
                 #endif
@@ -1731,6 +1731,8 @@ void NmraDcc::setAccDecDCCAddrNextReceived (uint8_t enable)
 ////////////////////////////////////////////////////////////////////////
 uint8_t NmraDcc::process()
 {
+	uint8_t	copyDataReady ;
+	
     if (DccProcState.inServiceMode)
     {
         if ( (millis() - DccProcState.LastServiceModeMillis) > 20L)
@@ -1748,6 +1750,7 @@ uint8_t NmraDcc::process()
         noInterrupts();
         #endif
         Msg = DccRx.PacketCopy ;
+        copyDataReady = DccRx.DataReady;
         DccRx.DataReady = 0 ;
 
         #ifdef ESP32
@@ -1765,7 +1768,7 @@ uint8_t NmraDcc::process()
         if (notifyDccMsg) 	notifyDccMsg (&Msg);
 
         execDccProcessor (&Msg);
-        return 1 ;
+        return copyDataReady ;
     }
 
     return 0 ;

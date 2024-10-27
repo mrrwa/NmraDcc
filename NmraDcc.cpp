@@ -262,6 +262,8 @@
 #elif defined ( ESP32 )
     static byte  ISREdge;   // Holder of the Next Edge we're looking for: RISING or FALLING
     static byte  ISRWatch;  // Interrupt Handler Edge Filter
+#elif defined( ESP8266 )
+    static byte  ISREdge;   // Holder of the Next Edge we're looking for: RISING or FALLING
 #elif defined ( ARDUINO_AVR_NANO_EVERY )
     static PinStatus ISREdge;	// Holder of the Next Edge we're looking for: RISING or FALLING
 #elif defined ( ARDUINO_ARCH_RP2040) 
@@ -342,7 +344,7 @@ DCC_PROCESSOR_STATE DccProcState ;
 
     void IRAM_ATTR ExternalInterruptHandler (void)
 #elif defined(ESP8266)
-    void ICACHE_RAM_ATTR ExternalInterruptHandler (void)
+void IRAM_ATTR ExternalInterruptHandler(void)
 #else
     void ExternalInterruptHandler (void)
 #endif
@@ -376,9 +378,10 @@ DCC_PROCESSOR_STATE DccProcState ;
     uint8_t DccBitVal;
     static int8_t  bit1, bit2 ;
     static unsigned int  lastMicros = 0;
-    static byte halfBit, DCC_IrqRunning, preambleBitCount;
+    static byte halfBit, preambleBitCount;
     unsigned int  actMicros, bitMicros;
     #ifdef ALLOW_NESTED_IRQ
+    static byte DCC_IrqRunning;
     if (DCC_IrqRunning)
     {
         // nested DCC IRQ - obviously there are glitches

@@ -97,6 +97,11 @@ void setup()
      delay (tim_delay/10);
   }
   delay( tim_delay);
+  // Setup which External Interrupt, the Pin it's associated with that we're using and enable the Pull-Up 
+  Dcc.pin(0, 2, 0);
+  // Call the main DCC Init function to enable the DCC Receiver
+  Dcc.init( MAN_ID_DIY, 601, FLAGS_MY_ADDRESS_ONLY, 0 );
+
   #if defined(DECODER_LOADED)
   if ( Dcc.getCV(CV_DECODER_MASTER_RESET)== CV_DECODER_MASTER_RESET ) 
   #endif  
@@ -107,10 +112,6 @@ void setup()
          delay (1000);
          digitalWrite(ledpins[14], 0);
      }  
-  // Setup which External Interrupt, the Pin it's associated with that we're using and enable the Pull-Up 
-  Dcc.pin(0, 2, 0);
-  // Call the main DCC Init function to enable the DCC Receiver
-  Dcc.init( MAN_ID_DIY, 601, FLAGS_MY_ADDRESS_ONLY, 0 );
 }
 void loop()
 {

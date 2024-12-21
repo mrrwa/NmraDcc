@@ -290,7 +290,7 @@ public:
      *                                                          and a single address refers to all 4 outputs.
      *                                                          Setting FLAGS_OUTPUT_ADDRESS_MODE causes each
      *                                                          address to refer to a single output.
-     *    OpsModeAddressBaseCV  - Ops Mode base address. Set it to 0?
+     *    OpsModeAddressBaseCV  - Ops Mode base address. 0 or CV lsb(+1 msb) with offset address.
      *
      *  Returns:
      *    None.
@@ -307,7 +307,7 @@ public:
      *    VersionId             - Version ID returned in CV 7.
      *    Flags                 - ORed flags beginning with FLAGS_...
      *                            FLAGS_DCC_ACCESSORY_DECODER will be set for init() call.
-     *    OpsModeAddressBaseCV  - Ops Mode base address. Set it to 0?
+     *    OpsModeAddressBaseCV  - Ops Mode base address. 0 or CV lsb(+1 msb) with offset address.
      *
      *  Returns:
      *    None.

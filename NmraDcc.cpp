@@ -928,6 +928,17 @@ uint16_t getMyAddr (void)
     return DccProcState.myDccAddress ;
 }
 
+uint16_t getOpsAddr (void)
+{
+    if ( DccProcState.OpsModeAddressBaseCV == 0)
+            return getMyAddr();
+    
+    // has OpsModeAddress
+    uint16_t OpsAddr = readCV (DccProcState.OpsModeAddressBaseCV) | (readCV (DccProcState.OpsModeAddressBaseCV + 1) << 8) ;
+    
+    return OpsAddr ;
+}
+
 void processDirectCVOperation (uint8_t Cmd, uint16_t CVAddr, uint8_t Value, void (*ackFunction) ())
 {
     // is it a Byte Operation
@@ -1486,7 +1497,7 @@ void execDccProcessor (DCC_MSG * pDccMsg)
                         if (DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE)
                         {
                             DB_PRINT ("eDP: Check Output Address:%d", OutputAddress);
-                            if ( (OutputAddress != getMyAddr()) && (OutputAddress < 2045))
+                            if ( (OutputAddress != getOpsAddr()) && (OutputAddress < 2045))
                             {
                                 DB_PRINT ("eDP: Output Address Not Matched");
                                 return;
@@ -1495,7 +1506,7 @@ void execDccProcessor (DCC_MSG * pDccMsg)
                         else
                         {
                             DB_PRINT ("eDP: Check Board Address:%d", BoardAddress);
-                            if ( (BoardAddress != getMyAddr()) && (BoardAddress < 511))
+                            if ( (BoardAddress != getOpsAddr()) && (BoardAddress < 511))
                             {
                                 DB_PRINT ("eDP: Board Address Not Matched");
                                 return;

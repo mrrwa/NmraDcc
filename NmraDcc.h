@@ -530,8 +530,8 @@ extern void    notifyDccFunc (uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP Fu
  *  Returns:
  *    None
  */
-
 extern void    notifyDccAccTurnoutBoard (uint16_t BoardAddr, uint8_t OutputPair, uint8_t Direction, uint8_t OutputPower) __attribute__ ( (weak));
+
 /*+
  *  notifyDccAccTurnoutOutput() Output oriented callback for a turnout accessory decoder.
  *                              Most useful when CV29_OUTPUT_ADDRESS_MODE IS set.

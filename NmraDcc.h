@@ -236,11 +236,11 @@ public:
     NmraDcc();
 
 // Flag values to be logically ORed together and passed into the init() method
-#define FLAGS_MY_ADDRESS_ONLY        0x01	// Only process DCC Packets with My Address
-#define FLAGS_AUTO_FACTORY_DEFAULT   0x02	// Call notifyCVResetFactoryDefault() if CV 7 & 8 == 255
-#define FLAGS_SETCV_CALLED           0x10   // only used internally !!
-#define FLAGS_OUTPUT_ADDRESS_MODE    0x40  // CV 29/541 bit 6
-#define FLAGS_DCC_ACCESSORY_DECODER  0x80  // CV 29/541 bit 7
+#define FLAGS_MY_ADDRESS_ONLY        0x01   // Only process DCC Packets with My Address
+#define FLAGS_AUTO_FACTORY_DEFAULT   0x02   // Call notifyCVResetFactoryDefault() if CV 7 & 8 == 255
+#define FLAGS_SETCV_CALLED           0x10   // Only used internally !!
+#define FLAGS_OUTPUT_ADDRESS_MODE    0x40   // CV 29/541 bit 6
+#define FLAGS_DCC_ACCESSORY_DECODER  0x80   // CV 29/541 bit 7
 
 // Flag Bits that are cloned from CV29 relating the DCC Accessory Decoder
 #define FLAGS_CV29_BITS		(FLAGS_OUTPUT_ADDRESS_MODE | FLAGS_DCC_ACCESSORY_DECODER)

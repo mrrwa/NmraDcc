@@ -35,7 +35,7 @@
 //------------------------------------------------------------------------
 //
 // purpose:   Provide a simplified interface to decode NMRA DCC packets
-//			  and build DCC MutliFunction and Stationary Decoders
+//			  and build DCC MultiFunction and Stationary Decoders
 //
 //------------------------------------------------------------------------
 

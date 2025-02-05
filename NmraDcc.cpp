@@ -322,16 +322,16 @@ typedef struct
     uint8_t   PageRegister ;  // Used for Paged Operations in Service Mode Programming
     uint8_t   DuplicateCount ;
     DCC_MSG   LastMsg ;
-    uint8_t	ExtIntNum;
-    uint8_t	ExtIntPinNum;
+    uint8_t   ExtIntNum;
+    uint8_t   ExtIntPinNum;
     volatile uint8_t   *ExtIntPort;     // use port and bitmask to read input at AVR in ISR
     uint8_t   ExtIntMask;     // digitalRead is too slow on AVR
     int16_t   myDccAddress;	// Cached value of DCC Address from CVs
     uint8_t   inAccDecDCCAddrNextReceivedMode;
-    uint8_t	cv29Value;
+    uint8_t   cv29Value;
     #ifdef DCC_DEBUG
-    uint8_t	IntCount;
-    uint8_t	TickCount;
+    uint8_t   IntCount;
+    uint8_t   TickCount;
     uint8_t   NestedIrqCount;
     #endif
 }

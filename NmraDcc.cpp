@@ -419,7 +419,7 @@ void IRAM_ATTR ExternalInterruptHandler(void)
     //if ( bitMicros > MAX_ZEROBITFULL ) {
     if (bitMicros > (bitMax*2))
     {
-        // too long - my be false protocol -> start over
+        // too long - may be wrong protocol -> start over
         DccRx.State = WAIT_PREAMBLE ;
         DccRx.BitCount = 0 ;
         preambleBitCount = 0;

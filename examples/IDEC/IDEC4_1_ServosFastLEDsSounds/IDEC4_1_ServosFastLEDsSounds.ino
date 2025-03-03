@@ -38,17 +38,17 @@ PRO MINI PIN ASSIGNMENT:
 //#define DEBUG
 
 #include <NmraDcc.h>
-#include <SoftwareServo.h> 
+#include <Servo.h> 
 #include <SoftwareSerial.h>
 #include <DFRobotDFPlayerMini.h>
 SoftwareSerial DFSerial1(22,15); // PRO MINI RX, PRO MINI TX serial to DFPlayer
 DFRobotDFPlayerMini Player1;
 
-SoftwareServo servo1;
-SoftwareServo servo2;
-SoftwareServo servo3;
-SoftwareServo servo4;
-SoftwareServo servo5;
+Servo servo1;
+Servo servo2;
+Servo servo3;
+Servo servo4;
+Servo servo5;
 
 #define This_Decoder_Address 24
 uint8_t CV_DECODER_MASTER_RESET = 252;
@@ -467,8 +467,7 @@ void loop()   //****************************************************************
 {
   //MUST call the NmraDcc.process() method frequently from the Arduino loop() function for correct library operation
   Dcc.process();
-  SoftwareServo::refresh();
-  delay(1);
+    delay(1);
 //  INPUT OVER RIDES
    // Check Master Input Over ride
    MasterDecoderDisable = 0;

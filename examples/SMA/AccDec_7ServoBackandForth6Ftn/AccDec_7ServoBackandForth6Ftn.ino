@@ -23,9 +23,9 @@
 //#define DEBUG
   
 #include <NmraDcc.h>
-#include <SoftwareServo.h> 
+#include <Servo.h> 
 
-SoftwareServo servo[17];
+Servo servo[17];
 #define servo_start_delay 50
 #define servo_init_delay 7
 #define servo_slowdown  12   //servo loop counter limit
@@ -275,7 +275,7 @@ void setup()   //******************************************************
 #endif
 	 servo[i].write(ftn_queue[i].start_value);
          for (t=0; t<servo_start_delay; t++) 
-		{SoftwareServo::refresh();delay(servo_init_delay);}
+		{delay(servo_init_delay);}
         ftn_queue[i].inuse = 0;
         servo[i].detach();
         }
@@ -321,8 +321,7 @@ void loop()   //****************************************************************
   //MUST call the NmraDcc.process() method frequently 
   // from the Arduino loop() function for correct library operation
   Dcc.process();
-  SoftwareServo::refresh();
-  delay(3);
+    delay(3);
   for (int i=0; i < numfpins; i++) {
     if (ftn_queue[i].inuse==1)  {
 
@@ -416,13 +415,11 @@ void exec_function (int function, int FuncState)  {
             ftn_queue[function].stop_value = Dcc.getCV( 33+(function*5));
 	    for (servo_temp=ftn_queue[function].start_value; servo_temp<ftn_queue[function].stop_value; servo_temp=servo_temp+ftn_queue[function].increment) {
 		  servo[function].write(servo_temp);
-		  SoftwareServo::refresh();
-		  delay(4);
+		  		  delay(4);
 		  }
 		for (servo_temp=ftn_queue[function].stop_value; servo_temp>ftn_queue[function].start_value; servo_temp=servo_temp-ftn_queue[function].increment) {
 		  servo[function].write(servo_temp);
-		  SoftwareServo::refresh();
-		  delay(4);
+		  		  delay(4);
 		  }
       ftn_queue[function].inuse = 1;
 	  }

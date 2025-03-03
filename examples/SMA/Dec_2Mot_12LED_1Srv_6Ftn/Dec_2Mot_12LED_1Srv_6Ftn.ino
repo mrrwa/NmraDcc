@@ -27,9 +27,9 @@
 //#define DEBUG
 
 #include <NmraDcc.h>
-#include <SoftwareServo.h> 
+#include <Servo.h> 
 
-SoftwareServo servo[13];
+Servo servo[13];
 #define servo_start_delay 50
 #define servo_init_delay 7
 #define servo_slowdown  12   //servo loop counter limit
@@ -291,7 +291,7 @@ void setup()   //******************************************************
 #endif
 	 servo[i].write(ftn_queue[i].start_value);
          for (t=0; t<servo_start_delay; t++) 
-		{SoftwareServo::refresh();delay(servo_init_delay);}
+		{delay(servo_init_delay);}
         ftn_queue[i].inuse = 0;
         servo[i].detach();
         }
@@ -336,8 +336,7 @@ void loop()   //****************************************************************
   //MUST call the NmraDcc.process() method frequently 
   // from the Arduino loop() function for correct library operation
   Dcc.process();
-  SoftwareServo::refresh();
-  delay(2);
+    delay(2);
 #ifdef DEBUG
    Serial.print("Motor1Speed= ");
    Serial.println(Motor1Speed, DEC) ;

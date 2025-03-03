@@ -256,7 +256,12 @@ void notifyDccReset(uint8_t hardReset) {
   setMotor(true);
   setFunc(false);
   if (ShowData & S_RESET) {
-    Serial.printf(F("notifyDccReset: %6s.\n"), hardReset ? "HARD" : "NORMAL");
+    Serial.print(F("notifyDccReset: "));
+    if( hardReset ) {
+      Serial.println(F("HARD."));
+    } else {
+      Serial.println(F("NORMAL."));
+    }
   }
 }
 #endif // NOTIFY_DCC_RESET
@@ -276,8 +281,14 @@ void notifyDccIdle()
 // Uncomment the #define below to print changed CV values.
 #define NOTIFY_CV_CHANGE
 #ifdef  NOTIFY_CV_CHANGE
-void notifyCVChange( uint16_t CV, uint8_t Value) {
-  Serial.printf(F("notifyCVChange: CV %4u value changed to %3u 0x%02X.\n"), CV, Value, Value);
+void notifyCVChange( uint16_t CV, uint8_t Value ) {
+  Serial.print(F("notifyCVChange: CV "));
+  Serial.print(CV >> 8,    HEX);  
+  Serial.print(CV & 0xFF,  HEX);
+  Serial.print(F(" value changed to "));
+  Serial.print(Value, HEX);
+  Serial.print(Value);
+  Serial.println(F("."));
 }
 #endif // NOTIFY_CV_CHANGE
 
@@ -323,8 +334,11 @@ void notifyCVAck(void)
 
 void setMotor(bool fwd) {
   #ifdef DCC_STATUS
+  Serial.print(F("Motor    changed to "));
   if (MotorFwd != fwd) {
-    Serial.printf(F("Motor    changed to %3s.\n"), fwd ? "FWD" : "REV");
+    Serial.println(F("FWD."));
+  } else {
+    Serial.println(F("REV."));
   }
   #endif // DCC_STATUS
   MotorFwd = fwd;
@@ -334,8 +348,11 @@ void setMotor(bool fwd) {
 
 void setFunc(bool on) {
   #ifdef DCC_STATUS
+    Serial.print(F("Function changed to "));
   if (FuncOn != on) {
-    Serial.printf(F("Function changed to %3s.\n"), on ? "ON" : "OFF");
+    Serial.println(F("ON."));
+  } else {
+    Serial.println(F("OFF."));
   }
   #endif // DCC_STATUS
   FuncOn = on;
@@ -346,11 +363,17 @@ void setFunc(bool on) {
 void setup()
 {
   Serial.begin(115200);
+  
   Serial.print(F("NMRA Dcc Loco_Test "));
-  Serial.printf(F("    Version %d.%d, Build date %s %s\n"), VER_MAJOR,
-                                                            VER_MINOR,
-                                                            __DATE__,
-                                                            __TIME__);
+  Serial.print(F("    Version "));
+  Serial.print(VER_MAJOR);
+  Serial.print(F("."));
+  Serial.print(VER_MINOR);
+  Serial.print(F(", Build date "));
+  Serial.print(__DATE__);
+  Serial.print(F(" "));
+  Serial.println(__TIME__);
+  
   Serial.println(F("Cmds: a - All, d - DCC, i - Idle, r - Reset, c - CV Ack off,"));
   Serial.println(F("      <Other> - Everything off."));
   
@@ -467,7 +490,8 @@ void loop()
   }
 
   if ((EndTime != 0) && (millis() > EndTime)) {
-    Serial.printf(F("Clearing ShowData 0x%02x\n"), ShowData);
+    Serial.print(F("Clearing ShowData "));
+    Serial.println(ShowData);
     ShowData = 0x00;
     EndTime  = 0;
   }
@@ -475,12 +499,19 @@ void loop()
   if( FactoryDefaultCVIndex && Dcc.isSetCVReady())
   {
     FactoryDefaultCVIndex--; // Decrement first as initially it is the size of the array
-    Serial.printf(F("CV %4u reset to factory default %3u 0x%02X.\n"),
-                FactoryDefaultCVs[FactoryDefaultCVIndex].CV,
-                FactoryDefaultCVs[FactoryDefaultCVIndex].Value,
-                FactoryDefaultCVs[FactoryDefaultCVIndex].Value);
-    Dcc.setCV(  FactoryDefaultCVs[FactoryDefaultCVIndex].CV,
-                FactoryDefaultCVs[FactoryDefaultCVIndex].Value);
+
+    uint16_t CV   = FactoryDefaultCVs[FactoryDefaultCVIndex].CV;
+    uint8_t Value = FactoryDefaultCVs[FactoryDefaultCVIndex].Value;
+    
+    Serial.print(F("CV "));
+    Serial.print(CV >> 8,    HEX);  
+    Serial.print(CV & 0xFF,  HEX);
+    Serial.print(F(" reset to factory default "));
+    Serial.print(Value, HEX);
+    Serial.print(Value);
+    Serial.println(F("."));
+
+    Dcc.setCV( CV, Value );
   }
 }
 

@@ -51,7 +51,7 @@
 //#define DEBUG
 
 #include <NmraDcc.h>
-#include <SoftwareServo.h> 
+#include <Servo.h> 
 #include <SoftwareSerial.h>
 #include <DFPlayer_Mini_Mp3.h>
 SoftwareSerial mySerial(6,7); // PRO MINI RX, PRO MINI TX serial to DFPlayer
@@ -62,7 +62,7 @@ int del_tim = 4000;
 int tctr, tctr2, i;
 byte audio_on = 0;            // Audio ON sets this to 1; otherwise 0
 
-SoftwareServo servo[10];
+Servo servo[10];
 #define servo_start_delay 50
 #define servo_init_delay  7
 #define servo_slowdown    4   //servo loop counter limit
@@ -289,7 +289,7 @@ void setup()   //******************************************************
 #endif
 	 servo[i].write(ftn_queue[i].start_value);
          for (t=0; t<servo_start_delay; t++) 
-		{SoftwareServo::refresh();delay(servo_init_delay);}
+		{delay(servo_init_delay);}
         ftn_queue[i].inuse = 0;
         servo[i].detach();
         }
@@ -350,8 +350,7 @@ void loop()   //****************************************************************
   //MUST call the NmraDcc.process() method frequently 
   // from the Arduino loop() function for correct library operation
   Dcc.process();
-  SoftwareServo::refresh();
-  delay(2);
+    delay(2);
 #ifdef DEBUG
    Serial.print("Motor1Speed= ");
    Serial.println(Motor1Speed, DEC) ;

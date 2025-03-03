@@ -211,8 +211,13 @@ void notifyDccSigOutputState( uint16_t Addr, uint8_t State)
 #ifdef  NOTIFY_DCC_RESET
 void notifyDccReset(uint8_t hardReset )
 {
-  if (ShowData & S_RESET) {  // Show Reset packets if S_RESET is set.  
-    Serial.printf(F("notifyDccReset: %6s.\n"), hardReset ? "HARD" : "NORMAL");
+  if (ShowData & S_RESET) {
+    Serial.print(F("notifyDccReset: "));
+    if( hardReset ) {
+      Serial.println(F("HARD."));
+    } else {
+      Serial.println(F("NORMAL."));
+    }
   }
 }
 #endif // NOTIFY_DCC_RESET
@@ -233,7 +238,13 @@ void notifyDccIdle()
 #define NOTIFY_CV_CHANGE
 #ifdef  NOTIFY_CV_CHANGE
 void notifyCVChange( uint16_t CV, uint8_t Value) {
-  Serial.printf(F("notifyCVChange: CV %4u value changed to %3u 0x%02X.\n"), CV, Value, Value);
+  Serial.print(F("notifyCVChange: CV "));
+  Serial.print(CV & 0xFF,  HEX);
+  Serial.print(CV >> 8,    HEX);  
+  Serial.print(F(" value changed to "));
+  Serial.print(Value, HEX);
+  Serial.print(Value);
+  Serial.println(F("."));
 }
 #endif // NOTIFY_CV_CHANGE
 
@@ -282,7 +293,12 @@ bool                  on;                               // Output on/off.
   on = dir == NORM ? true : false;
   #ifdef DCC_STATUS
   if (AccDir != dir) {
-    Serial.printf(F("Accessory changed to %4s.\n"), on ? "NORM" : "REV");
+    Serial.print(F("Accessory changed to "));
+    if (on) {
+      Serial.println(F("NORM."));
+    } else {
+      Serial.println(F("REV."));
+    }
   }
   #endif // DCC_STATUS
   AccDir = dir;
@@ -293,19 +309,38 @@ bool                  on;                               // Output on/off.
 void setup()
 {
   Serial.begin(115200);
-  Serial.printf(F("Starting Accessory_Test Version %d.%d, Build date %s %s\n"),
-                                                            VER_MAJOR,
-                                                            VER_MINOR,
-                                                            __DATE__,
-                                                            __TIME__);
-  Serial.printf(F("Default ACC_ADDR %4u "), ACC_ADDR);
-  Serial.printf(F("BD_ADDR %4u 0x%04X, BD_LSB %3u 0x%02X, BD_MSB %3u 0x%02X.\n"),
-                                                            BD_ADDR,
-                                                            BD_ADDR,
-                                                            BD_LSB,
-                                                            BD_LSB,
-                                                            BD_MSB,
-                                                            BD_MSB);
+ 
+  Serial.print(F("Starting Accessory_Test Version "));
+  Serial.print(VER_MAJOR);
+  Serial.print(F("."));
+  Serial.print(VER_MINOR);
+  Serial.print(F(", Build date "));
+  Serial.print(__DATE__);
+  Serial.print(F(" "));
+  Serial.println(__TIME__);
+
+
+  Serial.print(F("Default ACC_ADDR "));
+  Serial.print(ACC_ADDR >> 8,   HEX);
+  Serial.println(ACC_ADDR & 0xFF, HEX);
+  
+  Serial.print(F("BD_ADDR "));
+  Serial.print(BD_ADDR);
+  Serial.print(F(" "));
+  Serial.print(BD_LSB >> 8,   HEX);
+  Serial.print(BD_LSB & 0xFF, HEX);
+
+  Serial.print(F(", BD_LSB "));
+  Serial.print(BD_LSB);
+  Serial.print(F(" "));
+  Serial.print(BD_LSB, HEX);
+
+  Serial.print(F(", BD_MSB "));
+  Serial.print(BD_MSB);
+  Serial.print(F(" "));
+  Serial.print(BD_MSB, HEX);
+
+
   Serial.println(F("Cmds: a - All, d - DCC, i - Idle, r - Reset, c - CV Ack off,"));
   Serial.println(F("      <Other> - Everything off."));
 
@@ -419,7 +454,8 @@ void loop()
   }
 
   if ((EndTime != 0) && (millis() > EndTime)) {
-    Serial.printf(F("Clearing ShowData 0x%02X\n"), ShowData);
+    Serial.print(F("Clearing ShowData "));
+    Serial.println(ShowData);
     ShowData = 0x00;
     EndTime  = 0;
   }
@@ -427,12 +463,18 @@ void loop()
   if( FactoryDefaultCVIndex && Dcc.isSetCVReady())
   {
     FactoryDefaultCVIndex--; // Decrement first as initially it is the size of the array 
-    Serial.printf(F("CV %4u reset to factory default %3u 0x%02X.\n"),
-                FactoryDefaultCVs[FactoryDefaultCVIndex].CV,
-                FactoryDefaultCVs[FactoryDefaultCVIndex].Value,
-                FactoryDefaultCVs[FactoryDefaultCVIndex].Value);
-    Dcc.setCV(  FactoryDefaultCVs[FactoryDefaultCVIndex].CV,
-                FactoryDefaultCVs[FactoryDefaultCVIndex].Value);
+
+    uint16_t CV   = FactoryDefaultCVs[FactoryDefaultCVIndex].CV;
+    uint8_t Value = FactoryDefaultCVs[FactoryDefaultCVIndex].Value;
+
+    Serial.print(F("CV "));
+    Serial.print(CV & 0xFF,  HEX);
+    Serial.print(CV >> 8,    HEX);  
+    Serial.print(F(" reset to factory default "));
+    Serial.print(Value, HEX);
+    Serial.print(Value);
+    Serial.println(F("."));
+
+    Dcc.setCV( CV, Value );
   }
 }
-

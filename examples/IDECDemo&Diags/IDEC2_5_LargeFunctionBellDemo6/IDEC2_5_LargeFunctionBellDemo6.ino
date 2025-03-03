@@ -69,10 +69,10 @@ PRO MINI PIN ASSIGNMENT:
 
 
 #include <NmraDcc.h>
-#include <SoftwareServo.h>
+#include <Servo.h>
 
 #ifdef USE_SERVO14
-SoftwareServo sservo;
+Servo sservo;
 #endif
 byte default_servo_pin = 14;
 byte servo_start_position = 90;
@@ -443,8 +443,7 @@ void setup()   //******************************************************
   servo_pos.delta = 0;
   servo_pos.target_position = servo_start_position;
   delay(500);
-  SoftwareServo::refresh();
-#endif
+  #endif
 
   // Setup which External Interrupt, the Pin it's associated with that we're using 
   Dcc.pin(0, 2, 0);
@@ -516,8 +515,7 @@ void loop()   //****************************************************************
   //MUST call the NmraDcc.process() method frequently from the Arduino loop() function for correct library operation
   Dcc.process();
 #ifdef USE_SERVO14
-  SoftwareServo::refresh();
-  if (servo_slow_counter > Dcc.getCV(servo_master_slowdown_CV) )  update_servos();
+    if (servo_slow_counter > Dcc.getCV(servo_master_slowdown_CV) )  update_servos();
     else servo_slow_counter++;
 #endif
 
@@ -970,8 +968,7 @@ void exec_switch_function (byte switch_function, byte fpin,byte fbit)  {
 	}
 	break;
 	}
- SoftwareServo::refresh();
-}     //   end    exec_switch_function()
+ }     //   end    exec_switch_function()
 
 boolean Weighted_ON()  {
 	if (random (0, 100 ) > 40) return true;  //This will reyrn ON/true 60% of the time

@@ -71,8 +71,8 @@ PRO MINI PIN ASSIGNMENT:
 #include <NmraDcc.h>
 
 #ifdef USE_SERVO14
-#include <SoftwareServo.h>
-SoftwareServo servo[2];
+#include <Servo.h>
+Servo servo[2];
 #endif
 #define default_servo_pin  14
 
@@ -401,8 +401,7 @@ void setup()   //******************************************************
 #ifdef USE_SERVO14
   servo[0].attach(default_servo_pin);  // Start Servo on default_servo_pin  //Position Servo
   delay(50);
-  SoftwareServo::refresh();
-#endif
+  #endif
 
   pinMode (MasterDecoderDisablePin,INPUT_PULLUP); //  Master Decoder Disable Input Pin Active LOW
   
@@ -492,8 +491,7 @@ void loop()   //****************************************************************
   //MUST call the NmraDcc.process() method frequently from the Arduino loop() function for correct library operation
   Dcc.process();
 #ifdef USE_SERVO14
-  SoftwareServo::refresh();
-#endif
+  #endif
 
   //delay(1);
 //  INPUT OVER RIDES

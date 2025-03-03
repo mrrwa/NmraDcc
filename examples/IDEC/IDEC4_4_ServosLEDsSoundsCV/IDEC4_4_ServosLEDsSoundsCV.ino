@@ -39,13 +39,13 @@ PRO MINI PIN ASSIGNMENT:
 //#define DEBUG
 
 #include <NmraDcc.h>
-#include <SoftwareServo.h> 
+#include <Servo.h> 
 #include <SoftwareSerial.h>
 #include <DFRobotDFPlayerMini.h>
 SoftwareSerial DFSerial1(22,15); // PRO MINI RX, PRO MINI TX serial to DFPlayer
 DFRobotDFPlayerMini Player1;
 
-SoftwareServo servo[5];
+Servo servo[5];
 
 #define This_Decoder_Address 24
 uint8_t CV_DECODER_MASTER_RESET = 252;
@@ -380,22 +380,21 @@ void setup()   //******************************************************
   //Set up servos
    for (i=0; i<5; i++) {
     servo[i].attach(Vs_pins[i]);  // Start Servos
-    //for (t=0; t<180; t++) SoftwareServo::refresh();
    }
    servo[0].write(Vs1[5]);                          // Set Servos Initial positions 
-   SoftwareServo::refresh();
+
    servo_pos[0].current_position = Vs1[5];
    servo[1].write(Vs2[5]);
-   SoftwareServo::refresh();
+
    servo_pos[1].current_position = Vs2[5];
    servo[2].write(Vs3[5]);
-   SoftwareServo::refresh();
+
    servo_pos[2].current_position = Vs3[5];
    servo[3].write(Vs4[5]);
-   SoftwareServo::refresh();
+
    servo_pos[3].current_position = Vs4[5];
    servo[4].write(Vs5[5]);
-   SoftwareServo::refresh();
+
    servo_pos[4].current_position = Vs5[5];
    for (i=0; i<5; i++)  servo_pos[i].delta = 0;
 
@@ -512,7 +511,6 @@ void loop()   //****************************************************************
 {
   //MUST call the NmraDcc.process() method frequently from the Arduino loop() function for correct library operation
   Dcc.process();
-  SoftwareServo::refresh();
   if (servo_slow_counter > servo_master_slowdown)  update_servos();
     else servo_slow_counter++;
   delay(1);

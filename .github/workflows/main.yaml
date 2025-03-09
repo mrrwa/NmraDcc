@@ -36,5 +36,5 @@ jobs:
         with:
           required-libraries: AccelStepper,Servo,DFRobotDFPlayerMini,U8g2,EncButton,DFPlayerMini_Fast
           platform-url: https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
-          sketches-exclude: Dec_2Mot_4LED_Aud_8Ftn,Dec_2Mot_3LED_TrigAud,NmraDccMultiFunctionMotorDecoder-XIAO-Expansion,Fahrstuhl
+          sketches-exclude: Dec_2Mot_4LED_Aud_8Ftn,Dec_2Mot_3LED_TrigAud,NmraDccMultiFunctionMotorDecoder-XIAO-Expansion,Fahrstuhl,Loco_Test,Accessory_Test
           arduino-board-fqbn: ${{ matrix.arduino-boards-fqbn }}

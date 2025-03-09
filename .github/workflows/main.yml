@@ -22,7 +22,14 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@master
+        uses: actions/checkout@v3
+
+      - name: Checkout custom library
+        uses: actions/checkout@v3
+        with:
+          repository: chatelao/SoftwareServo
+          ref: main
+          path: CustomLibrary_SoftwareServo
 
       - name: Compile all examples
         uses: ArminJo/arduino-test-compile@v3

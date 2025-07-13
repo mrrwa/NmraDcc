@@ -415,7 +415,7 @@ void setup()   //******************************************************
    // Master Decoder Disable
    MasterDecoderDisable = 0;
    if (digitalRead(MasterDecoderDisablePin)==LOW) MasterDecoderDisable = 1;
-   setVolumeOnChannel (starting_volume);
+   // setVolumeOnChannel (starting_volume);
 #ifdef DEBUG
     Serial.println("CV Dump:");
     for (i=30; i<41; i++) { Serial.print(i,DEC); Serial.print("\t"); }

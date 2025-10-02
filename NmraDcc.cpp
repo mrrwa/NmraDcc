@@ -1631,7 +1631,6 @@ void NmraDcc::initAccessoryDecoder (uint8_t ManufacturerId, uint8_t VersionId, u
 ////////////////////////////////////////////////////////////////////////
 void NmraDcc::deInit (bool deInitEEPROM)
 {
-    Serial.println("Shutting down DCC");
     detachInterrupt (digitalPinToInterrupt(DccProcState.ExtIntNum));
 
     if (deInitEEPROM)

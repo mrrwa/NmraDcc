@@ -35,7 +35,7 @@
 //------------------------------------------------------------------------
 //
 // purpose:   Provide a simplified interface to decode NMRA DCC packets
-//			  and build DCC MutliFunction and Stationary Decoders
+//			  and build DCC MultiFunction and Stationary Decoders
 //
 //------------------------------------------------------------------------
 
@@ -65,8 +65,8 @@
 
 typedef struct
 {
-    uint8_t	Size ;
-    uint8_t	PreambleBits ;
+    uint8_t Size ;
+    uint8_t PreambleBits ;
     uint8_t Data[MAX_DCC_MESSAGE_LEN] ;
 } DCC_MSG ;
 
@@ -112,7 +112,7 @@ typedef struct
 #define CV_VERSION_ID                          7
 #define CV_MANUFACTURER_ID                     8
 #define CV_29_CONFIG                          29
-#define CV_MANUFACTURER_START				  33
+#define CV_MANUFACTURER_START                 33
 
 #if defined(ESP32)
     #include <esp_spi_flash.h>
@@ -237,11 +237,11 @@ public:
     NmraDcc(int Eeprom_Offset);
 
 // Flag values to be logically ORed together and passed into the init() method
-#define FLAGS_MY_ADDRESS_ONLY        0x01	// Only process DCC Packets with My Address
-#define FLAGS_AUTO_FACTORY_DEFAULT   0x02	// Call notifyCVResetFactoryDefault() if CV 7 & 8 == 255
-#define FLAGS_SETCV_CALLED           0x10   // only used internally !!
-#define FLAGS_OUTPUT_ADDRESS_MODE    0x40  // CV 29/541 bit 6
-#define FLAGS_DCC_ACCESSORY_DECODER  0x80  // CV 29/541 bit 7
+#define FLAGS_MY_ADDRESS_ONLY        0x01   // Only process DCC Packets with My Address
+#define FLAGS_AUTO_FACTORY_DEFAULT   0x02   // Call notifyCVResetFactoryDefault() if CV 7 & 8 == 255
+#define FLAGS_SETCV_CALLED           0x10   // Only used internally !!
+#define FLAGS_OUTPUT_ADDRESS_MODE    0x40   // CV 29/541 bit 6
+#define FLAGS_DCC_ACCESSORY_DECODER  0x80   // CV 29/541 bit 7
 
 // Flag Bits that are cloned from CV29 relating the DCC Accessory Decoder
 #define FLAGS_CV29_BITS		(FLAGS_OUTPUT_ADDRESS_MODE | FLAGS_DCC_ACCESSORY_DECODER)
@@ -532,8 +532,8 @@ extern void    notifyDccFunc (uint16_t Addr, DCC_ADDR_TYPE AddrType, FN_GROUP Fu
  *  Returns:
  *    None
  */
-
 extern void    notifyDccAccTurnoutBoard (uint16_t BoardAddr, uint8_t OutputPair, uint8_t Direction, uint8_t OutputPower) __attribute__ ( (weak));
+
 /*+
  *  notifyDccAccTurnoutOutput() Output oriented callback for a turnout accessory decoder.
  *                              Most useful when CV29_OUTPUT_ADDRESS_MODE IS set.
@@ -753,6 +753,50 @@ extern void    notifyAdvancedCVAck (void) __attribute__ ( (weak));
  *    None
  */
 extern void    notifyServiceMode (bool) __attribute__ ( (weak));
+
+
+/*+ 
+ * RCN-211
+ * Called when a fastclock message is received.
+ *
+ *  Inputs:
+ *      WeekDay - 0=Monday ... 6=Sunday.
+ *      Hour    - 0..23.
+ *      Minute  - 0..59.
+ *      Factor  - 0..63  0=clock stopped, 1 = real time, 2 = 2x real time, 3 = 3x real time etc.
+ *      Update  - true means clock has changed significantly.
+ *
+ *  Returns:
+ *      None
+ */
+extern void notifyFastClockTime( uint8_t  WeekDay, uint8_t Hour, uint8_t Minute, uint8_t Factor, bool Update) __attribute__ ( (weak));
+
+/*+ 
+ * RCN-211
+ * Called when a fastclock date message is received.
+ *
+ *  Inputs:
+ *      DayOfMonth  - 1..31.
+ *      Month       - 1..12  1=January ... 12=December.
+ *      Year        - 0-4095.
+ *
+ *  Returns:
+ *      None
+ */
+extern void notifyFastClockDate( uint8_t  DayOfMonth, uint8_t Month, uint16_t Year) __attribute__ ( (weak));
+
+/*+ 
+ * RCN-211
+ * Called when a system time message is received.
+ *
+ *  Inputs:
+ *      MillisSinceStartup  - milli seconds since system start. Wraps to zero approx. every 65 seconds.
+ *
+ *  Returns:
+ *      None
+ *
+ */
+extern void notifySystemTime( uint16_t MillisSinceStartup) __attribute__ ( (weak));
 
 // Deprecated, only for backward compatibility with version 1.4.2.
 // Don't use in new designs. These functions may be dropped in future versions

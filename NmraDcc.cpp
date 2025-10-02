@@ -279,6 +279,7 @@
 byte ISRLevel;          // expected Level at DCC input during ISR ( to detect glitches )
 byte ISRChkMask;       // Flag if Level must be checked
 static word  bitMax, bitMin;
+static int eepromOffset;
 
 typedef enum
 {
@@ -808,12 +809,12 @@ void ackAdvancedCV (void)
 
 uint8_t readEEPROM (unsigned int CV)
 {
-    return EEPROM.read (CV) ;
+    return EEPROM.read (CV + eepromOffset) ;
 }
 
 void writeEEPROM (unsigned int CV, uint8_t Value)
 {
-    EEPROM.write (CV, Value) ;
+    EEPROM.write (CV + eepromOffset, Value) ;
     
 	#if defined(ESP8266)
 	noInterrupts();
@@ -1574,6 +1575,12 @@ void execDccProcessor (DCC_MSG * pDccMsg)
 ////////////////////////////////////////////////////////////////////////
 NmraDcc::NmraDcc()
 {
+    eepromOffset = 0;
+}
+
+NmraDcc::NmraDcc(int offset)
+{
+    eepromOffset = offset;
 }
 
 #ifdef digitalPinToInterrupt
@@ -1622,10 +1629,22 @@ void NmraDcc::initAccessoryDecoder (uint8_t ManufacturerId, uint8_t VersionId, u
 }
 
 ////////////////////////////////////////////////////////////////////////
-void NmraDcc::init (uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, uint8_t OpsModeAddressBaseCV)
+void NmraDcc::deInit (bool deInitEEPROM)
+{
+    Serial.println("Shutting down DCC");
+    detachInterrupt (digitalPinToInterrupt(DccProcState.ExtIntNum));
+
+    if (deInitEEPROM)
+        EEPROM.end();
+}
+
+////////////////////////////////////////////////////////////////////////
+void NmraDcc::init (uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, 
+                    uint8_t OpsModeAddressBaseCV, bool initEEPROM)
 {
     #if defined(ESP8266) ||  defined(ESP32) || defined(ARDUINO_ARCH_RP2040)
-    EEPROM.begin (MAXCV);
+    if (initEEPROM)
+        EEPROM.begin (MAXCV);
     #endif
     // Clear all the static member variables
     memset (&DccRx, 0, sizeof (DccRx));

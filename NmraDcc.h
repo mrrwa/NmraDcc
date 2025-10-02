@@ -234,6 +234,7 @@ private:
 
 public:
     NmraDcc();
+    NmraDcc(int Eeprom_Offset);
 
 // Flag values to be logically ORed together and passed into the init() method
 #define FLAGS_MY_ADDRESS_ONLY        0x01	// Only process DCC Packets with My Address
@@ -295,7 +296,8 @@ public:
      *  Returns:
      *    None.
      */
-    void init (uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, uint8_t OpsModeAddressBaseCV);
+    void init (uint8_t ManufacturerId, uint8_t VersionId, uint8_t Flags, uint8_t OpsModeAddressBaseCV, bool initEEPROM=true);
+    void deInit(bool deInitEEPROM=true);
 
     /*+
      *  initAccessoryDecoder() is called from setup() for accessory decoders.

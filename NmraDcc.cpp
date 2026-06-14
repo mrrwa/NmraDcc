@@ -54,7 +54,7 @@
 #endif
 
 // Uncomment to print DEBUG messages
-// #define DEBUG_PRINT
+//#define DEBUG_PRINT
 
 //------------------------------------------------------------------------
 // DCC Receive Routine
@@ -1530,7 +1530,48 @@ void execDccProcessor (DCC_MSG * pDccMsg)
                     {
                         DB_PRINT ("eDP: OPS Mode CV Programming Command");
                         // Check for unsupported OPS Mode Addressing mode
-                        if ( ( (pDccMsg->Data[1] & 0b10001001) != 1) && ( (pDccMsg->Data[1] & 0b10001111) != 0x80))
+
+
+
+//                        if ( ( (pDccMsg->Data[1] & 0b10001001) != 1) && ( (pDccMsg->Data[1] & 0b10001111) != 0x80))
+// from https://www.nmra.org/sites/default/files/standards/sandrp/DCC/S/s-9.2.1_dcc_extended_packet_formats.pdf
+// para 2.4.3 Accessory Decoder Configuration Variable Access Instruction
+//
+// Basic Accessory Decoder Operations Mode Programming
+//
+// byte 2 pDccMsg->Data[1] bits are:
+//
+// 1Ā10Ā9Ā81A1A00
+//
+// Bit 7:   1
+// Bit 6-4: Ā10Ā9Ā8  where Ā is one's compliment
+// Bit 3:   1
+// Bit 2-1: A1A0
+// Bit 0:   0
+//
+// so binary mask needs to be b010001000
+//
+//
+// Extended Accessory Decoder Operations Mode Programming
+//
+//
+// byte 2 pDccMsg->Data[1] bits are:
+//
+// 0Ā10Ā9Ā80A1A01
+// 
+// Bit 7:   0
+// Bit 6-4: Ā10Ā9Ā8  where Ā is one's compliment
+// Bit 3:   0
+// Bit 2-1: A1A0
+// Bit 0:   1
+//
+// so binary mask needs to be b000000001
+// 
+// to implement need to change first if to
+// if ( ( (pDccMsg->Data[1] & 0b10001000) != 0b10001000) || (pDccMsg->Data[1] & 0b00000001) != 0b00000001) )
+// 
+//
+                        if ( (pDccMsg->Data[1] & 0b10001000) != 0b10001000) 
                         {
                             DB_PRINT ("eDP: Unsupported OPS Mode CV Addressing Mode");
                             return;
@@ -1539,8 +1580,29 @@ void execDccProcessor (DCC_MSG * pDccMsg)
                         // Check if this command is for our address or the broadcast address
                         if (DccProcState.Flags & FLAGS_OUTPUT_ADDRESS_MODE)
                         {
-                            DB_PRINT ("eDP: Check Output Address:%d", OutputAddress);
-                            if ( (OutputAddress != getOpsAddr()) && (OutputAddress < 2045))
+
+//                            if ( (OutputAddress != getOpsAddr()) && (OutputAddress < 2045))
+//
+// use the address stored in CV1 and CV9 directly rather than through getOpsAddr
+// the address returned by getOpsAddr doesn't appear to work correctly for this situation
+//
+// (((Dcc.getCV(CV_ACCESSORY_DECODER_ADDRESS_MSB) * 256) + Dcc.getCV(CV_ACCESSORY_DECODER_ADDRESS_LSB) - 1) * 4) + 1
+//   baseAddress = Dcc.getCV(CV_ACCESSORY_DECODER_ADDRESS_LSB) | (Dcc.getCV(CV_ACCESSORY_DECODER_ADDRESS_MSB) << 6);
+//                            if ( (OutputAddress != getOpsAddr()) && (OutputAddress < 2045))
+//
+
+
+                            int msgAddr = ((~pDccMsg->Data[1] & 0x70) << 4) | 
+                                              ((pDccMsg->Data[0] & 0x3F) << 2) | 
+                                              ((pDccMsg->Data[1] >> 1) & 0x03);
+
+//                            int baseAddress = (((readCV(CV_ACCESSORY_DECODER_ADDRESS_MSB) * 256) + readCV(CV_ACCESSORY_DECODER_ADDRESS_LSB) - 1) * 4) + 1;
+                            int baseAddress = readCV(CV_ACCESSORY_DECODER_ADDRESS_LSB & 0b00111111) | (readCV(CV_ACCESSORY_DECODER_ADDRESS_MSB) << 6);
+   
+                            DB_PRINT ("eDP: msgAddr:%d", msgAddr);
+                            DB_PRINT ("eDP: baseAddress:%d", baseAddress);
+
+                            if ( (msgAddr != baseAddress) && (OutputAddress < 2045))
                             {
                                 DB_PRINT ("eDP: Output Address Not Matched");
                                 return;

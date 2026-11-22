@@ -115,8 +115,15 @@ typedef struct
 #define CV_MANUFACTURER_START                 33
 
 #if defined(ESP32)
-    #include <esp_spi_flash.h>
-    #define MAXCV     SPI_FLASH_SEC_SIZE
+    #include <esp_idf_version.h>
+
+    #if ESP_IDF_VERSION_MAJOR >= 5
+        #include <spi_flash_mmap.h>
+    #else
+        #include <esp_spi_flash.h>
+    #endif
+
+    #define MAXCV SPI_FLASH_SEC_SIZE
 #elif defined(ESP8266)
     #include <spi_flash.h>
     #define MAXCV     SPI_FLASH_SEC_SIZE
